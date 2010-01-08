@@ -43,7 +43,6 @@ require_once "../../../class/centreonDB.class.php";
 require_once "../../../class/centreonXML.class.php";
 
 require_once "./class/centreon.Config.Poller.class.php";
-require_once "./class/centreon.Poller.Management.Class.php";
 
 /*
  * Declare Centreon API
