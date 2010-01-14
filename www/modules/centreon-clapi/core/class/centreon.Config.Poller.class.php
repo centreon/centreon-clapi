@@ -37,6 +37,18 @@ class CentreonConfigPoller {
 		}
 			
 	}
+	
+	private function isPollerLocalhost($id) {
+		$DBRESULT =& $this->DB->query("SELECT localhost FROM nagios_server WHERE `id` = '$id'");
+		if ($data =& $DBRESULT->fetchRow())
+			return $data["localhost"];
+		else {
+			print "ERROR: Unknown poller...\n";
+			$this->getPollerList($this->format);
+			exit(1);
+		}
+			
+	}
 
 	public function getPollerList($format) {
 		$DBRESULT =& $this->DB->query("SELECT id,name FROM nagios_server ORDER BY id");
@@ -169,6 +181,7 @@ class CentreonConfigPoller {
 		require_once "../../../include/common/common-Func.php";
 		
 		$this->testPollerId($variables);
+		$tab["localhost"] = $this->isPollerLocalhost($variables);
 		
 		$centreon_path = $this->centreon_path;
 		global $pearDB;
@@ -199,6 +212,16 @@ class CentreonConfigPoller {
 		$oreon->user->version = 3; 
 		
 		$tab['id'] = $variables;
+		
+		if ($this->optGen["version"] == "2.2")
+			CentreonSession::start();
+		else
+			Session::start();
+		/*
+		 * Insert session in session table
+		 */
+		$pearDB->query("INSERT INTO `session` (`session_id` , `user_id` , `current_page` , `last_reload`, `ip_address`) VALUES ('".session_id()."', '".$centreon->user->user_id."', '1', '".time()."', '".$_SERVER["REMOTE_ADDR"]."')");	
+		
 		/*
 		 * Generate dependancies tree.
 		 */
@@ -228,6 +251,33 @@ class CentreonConfigPoller {
 		require $path."genEscalations.php";
 		require $path."genDependencies.php";
 		require $path."centreon_pm.php";
+  
+ 		chdir("../../..");
+ 		if ($tab['localhost']) {
+			$flag_localhost = $tab['localhost'];
+			/*
+			 * Meta Services Generation
+			 */
+			if ($files = glob("./include/configuration/configGenerate/metaService/*.php"))
+				foreach ($files as $filename)
+					require_once($filename);
+			
+			/*
+			 * Module Generation
+			 */
+			foreach ($oreon->modules as $key => $value) {
+				if (file_exists("./modules/".$key."/core/common/functions.php"))
+					require_once "./modules/".$key."/core/common/functions.php";
+				if ($files = glob("./modules/".$key."/generate_files/*.php"))
+					foreach ($files as $filename) {
+						require_once ($filename);
+					}
+			}
+		}
+		chdir("./modules/centreon-clapi/core/");
+		unset($generatedHG);
+		unset($generatedSG);
+		unset($generatedS);
  
  		print "Configuration files generated for poller ".$variables;
 	}

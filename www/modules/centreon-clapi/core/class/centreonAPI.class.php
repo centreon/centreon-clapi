@@ -41,6 +41,10 @@
  */
 require_once "../../../class/centreonDB.class.php";
 require_once "../../../class/centreonXML.class.php";
+if (file_exists("../../../class/centreonSession.class.php"))
+	require_once "../../../class/centreonSession.class.php";
+else
+	require_once "../../../class/Session.class.php";
 
 require_once "./class/centreon.Config.Poller.class.php";
 
@@ -110,7 +114,11 @@ class CentreonAPI {
 			exit(1);
 		}
 	}
-
+	
+	public function endOfLine() {
+		print "\n";
+	}
+	
 	public function close() {
 		print "\n";
 	}
@@ -217,8 +225,11 @@ class CentreonAPI {
 	public function APPLYCFG() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
 		$poller->pollerGenerate($this->variables);
+		$this->endOfLine();
 		$poller->pollerTest($this->format, $this->variables);
+		$this->endOfLine();
 		$poller->cfgMove($this->variables);
+		$this->endOfLine();
 		$poller->pollerRestart($this->variables);
 	}
 	
