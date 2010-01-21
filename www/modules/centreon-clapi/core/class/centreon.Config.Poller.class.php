@@ -203,15 +203,17 @@ class CentreonConfigPoller {
 		require_once $this->centreon_path."/www/class/centreonLog.class.php";
 		
 		global $oreon;
-		
+
+		chdir("../../..");
+
 		$CentreonLog = new CentreonUserLog(-1, $pearDB);
 		$centreonAuth = new CentreonAuth($this->login, $this->password, 0, $this->DB, $CentreonLog,NULL);
 		$user =& new User($centreonAuth->userInfos, $this->optGen["nagios_version"]);
-	    $oreon = new Oreon($user); 
-		
-		$oreon->user->version = 3; 
-		
+		$oreon = new Oreon($user); 
+		$oreon->user->version = 3; 		
 		$tab['id'] = $variables;
+
+    	chdir("./modules/centreon-clapi/core/");
 		
 		if ($this->optGen["version"] == "2.2")
 			CentreonSession::start();
@@ -232,11 +234,19 @@ class CentreonConfigPoller {
 		 * Generate Configuration
 		 */
 		$path = "../../../include/configuration/configGenerate/";
+		$path2 = "./include/configuration/configGenerate/";
+
 		require $path."genCGICFG.php";
-		require $path."genNagiosCFG.php";
+
+		chdir("../../..");
+
+		require $path2."genNagiosCFG.php";
+		require $path2."genNagiosCFG-DEBUG.php";
+
+		chdir("./modules/centreon-clapi/core/");
+
 		require $path."genNdomod.php";
 		require $path."genNdo2db.php";
-		require $path."genNagiosCFG-DEBUG.php";
 		require $path."genResourceCFG.php";
 		require $path."genTimeperiods.php";
 		require $path."genCommands.php";

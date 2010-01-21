@@ -223,6 +223,14 @@ class CentreonAPI {
 	}
 	
 	public function APPLYCFG() {
+		/*
+		 * Display time for logs
+		 */
+		print date("Y-m-d H:i:s") . " - APPLYCFG\n";
+		
+		/*
+		 * Launch Actions
+		 */
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
 		$poller->pollerGenerate($this->variables);
 		$this->endOfLine();
