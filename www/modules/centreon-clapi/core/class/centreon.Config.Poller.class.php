@@ -228,6 +228,7 @@ class CentreonConfigPoller {
 		$nagiosCFGPath = $this->nagiosCFGPath;
 		$DebugPath = "filesGeneration/nagiosCFG/";
 		
+		$ret["comment"] = 0;
 		/*
 		 * Init environnement
 		 */
