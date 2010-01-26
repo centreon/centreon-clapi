@@ -187,9 +187,11 @@ class CentreonConfigPoller {
 					 * Detect Errors
 					 */
 					if (preg_match("/Total Warnings: ([0-9])*/", $line, $matches))
-						$this->resultTest["warning"] = $matches[1];
+						if (isset($matches[1]))
+							$this->resultTest["warning"] = $matches[1];
 					if (preg_match("/Total Errors: ([0-9])*/", $line, $matches))
-						$this->resultTest["errors"] = $matches[1];
+						if (isset($matches[1]))
+							$this->resultTest["errors"] = $matches[1];
 					if (preg_match("/^Error:/", $line, $matches))
 						$this->resultTest["errors"]++;
 					if (preg_match("/^Errors:/", $line, $matches))
@@ -212,7 +214,7 @@ class CentreonConfigPoller {
 		return;
 	}
 	
-	public function pollerGenerate($variables) {
+	public function pollerGenerate($variables, $login, $password) {
 		require_once "../../../include/configuration/configGenerate/DB-Func.php";
 		require_once "../../../include/common/common-Func.php";
 		
@@ -238,27 +240,30 @@ class CentreonConfigPoller {
 		require_once $this->centreon_path."/www/class/centreonAuth.class.php";
 		require_once $this->centreon_path."/www/class/centreonLog.class.php";
 		
-		global $oreon;
+		global $oreon, $_SERVER;
 
+		$_SERVER["REMOTE_ADDR"] = "127.0.0.1"; 
+		
 		chdir("../../..");
 
 		$CentreonLog = new CentreonUserLog(-1, $pearDB);
-		$centreonAuth = new CentreonAuth($this->login, $this->password, 0, $this->DB, $CentreonLog,NULL);
+		$centreonAuth = new CentreonAuth($login, $password, 0, $this->DB, $CentreonLog,NULL);
 		$user =& new User($centreonAuth->userInfos, $this->optGen["nagios_version"]);
 		$oreon = new Oreon($user); 
 		$oreon->user->version = 3; 		
 		$tab['id'] = $variables;
 
     	chdir("./modules/centreon-clapi/core/");
-		
+		/*
 		if ($this->optGen["version"] == "2.2")
 			CentreonSession::start();
 		else
 			Session::start();
+		*/
 		/*
 		 * Insert session in session table
 		 */
-		$pearDB->query("INSERT INTO `session` (`session_id` , `user_id` , `current_page` , `last_reload`, `ip_address`) VALUES ('".session_id()."', '".$centreon->user->user_id."', '1', '".time()."', '".$_SERVER["REMOTE_ADDR"]."')");	
+		$pearDB->query("INSERT INTO `session` (`session_id` , `user_id` , `current_page` , `last_reload`, `ip_address`) VALUES ('1', '".$oreon->user->user_id."', '1', '".time()."', '".$_SERVER["REMOTE_ADDR"]."')");	
 		
 		/*
 		 * Generate dependancies tree.

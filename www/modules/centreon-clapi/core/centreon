@@ -1,4 +1,4 @@
-#! /usr/bin/php5
+#! /usr/bin/php
 <?php
 /*
  * Copyright 2005-2009 MERETHIS
@@ -38,7 +38,7 @@
  */
 	$debug = 0;
 	
-	ini_set("html_errors", "On");
+	ini_set("html_errors", "Off");
 
 	/*
 	 * Declare Options 

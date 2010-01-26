@@ -209,7 +209,7 @@ class CentreonAPI {
 
 	public function POLLERGENERATE() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$poller->pollerGenerate($this->variables);
+		$poller->pollerGenerate($this->variables, $this->login, $this->password);
 	}
 
 	public function POLLERTEST() {
@@ -232,7 +232,7 @@ class CentreonAPI {
 		 * Launch Actions
 		 */
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$poller->pollerGenerate($this->variables);
+		$poller->pollerGenerate($this->variables, $this->login, $this->password);
 		$this->endOfLine();
 		$poller->pollerTest($this->format, $this->variables);
 		$this->endOfLine();
