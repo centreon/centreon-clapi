@@ -97,7 +97,7 @@ class CentreonService {
 						if (strstr($value, ":")) {
 							$tab = split(":", $value);
 							if (isset($tab[1]) && $tab[1] != "") {
-								$request = "INSERT INTO on_demand_macro_service (svc_macro_name, svc_macro_value, svc_svc_id) VALUE ('".$tab[0]."', '".$tab[1]."', '$service_id')";
+								$request = "INSERT INTO on_demand_macro_service (svc_macro_name, svc_macro_value, svc_svc_id) VALUE ('_SERVICE".$tab[0]."', '".$tab[1]."', '$service_id')";
 								$this->DB->query($request);
 							}
 						}
