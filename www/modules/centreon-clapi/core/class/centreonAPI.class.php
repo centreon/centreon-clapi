@@ -130,26 +130,27 @@ class CentreonAPI {
 	public function printHelp() {
 		$this->printLegals();
 		print "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n";
-		print "and you are welcome to modify and redistribute it under the GPL license\n";
-		print "usage: centreon -u <LOGIN> -p <PASSWORD> -a <ACTION> [-v]\n";
+		print "and you are welcome to modify and redistribute it under the GPL license\n\n";
+		print "usage: ./centreon -u <LOGIN> -p <PASSWORD> -a <ACTION> [-v]\n";
 		print "  -v 	variables \n";
 		print "  -h 	Print help \n";
 		print "  -V 	Print version \n";
 		print "  -a 	Launch action on Centreon\n";
 		print "     Actions are the followings :\n";
 		print "       - POLLERGENERATE: Build nagios configuration for a poller (poller id in -v parameters)\n";
-		print "           #> centreon -u LOGIN -p PASSWORD -a POLLERRESTART -v 1 \n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERGENERATE -v 1 \n";
 		print "       - POLLERTEST: Test nagios configuration for a poller (poller id in -v parameters)\n";
-		print "           #> centreon -u LOGIN -p PASSWORD -a POLLERTEST -v 1 \n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERTEST -v 1 \n";
 		print "       - CFGMOVE: move nagios configuration for a poller to final directory (poller id in -v parameters)\n";
-		print "           #> centreon -u LOGIN -p PASSWORD -a CFGMOVE -v 1 \n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a CFGMOVE -v 1 \n";
 		print "       - POLLERRESTART: Restart a poller (poller id in -v parameters)\n";
-		print "           #> centreon -u LOGIN -p PASSWORD -a POLLERRESTART -v 1 \n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRESTART -v 1 \n";
 		print "       - POLLERRELOAD: Reload a poller poller id in -v parameters)\n";
-		print "           #> centreon -u LOGIN -p PASSWORD -a POLLERRELOAD -v 1 \n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRELOAD -v 1 \n";
 		print "\n\n";
 		print "Notes:\n";
-		print "  - Actions can be sen in minuscule chars\n";
+		print "  - Actions can be writed in lowercase chars\n";
+		print "  - LOGIN and PASSWORD is an admin account of Centreon\n";
 		print "\n";
 	}
 
