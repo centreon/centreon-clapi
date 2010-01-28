@@ -76,7 +76,7 @@ class CentreonService {
 		} else {
 			$information["service_description"] = str_replace("/", "#S#", $information["service_description"]);
 			$information["service_description"] = str_replace("\\", "#BS#", $information["service_description"]);
-			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register) VALUES ('".$information["service_description"]."', '".$information["template"]."', '1', '1')";
+			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".$information["service_description"]."', '".$information["template"]."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 			
 			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".$information["service_description"]."' AND service_activate = '1' AND service_register = '1'";

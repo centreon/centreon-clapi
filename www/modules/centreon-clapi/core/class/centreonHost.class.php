@@ -111,8 +111,8 @@ class CentreonHost {
 			/*
 			 * Insert Host
 			 */
-			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate) " .
-						"VALUES ('".$information["host_name"]."', '".$information["host_alias"]."', '".$information["host_address"]."', '1', '1')";
+			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
+						"VALUES ('".$information["host_name"]."', '".$information["host_alias"]."', '".$information["host_address"]."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 			$host_id = $this->getHostID($information["host_name"]);
 			
