@@ -67,12 +67,14 @@ class CentreonAPI {
 	public $debug;
 	public $variables;
 	public $centreon_path;
-
+	private $return_code;
+	
 	public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
 		/*
 		 * Set variables
 		 */
-		$this->debug = 0;
+		$this->debug 	= 0;
+		$this->return_code = 0;
 		$this->login 	= htmlentities($user, ENT_QUOTES);
 		$this->password = htmlentities($password, ENT_QUOTES);
 		$this->action 	= htmlentities($action, ENT_QUOTES);
@@ -152,6 +154,7 @@ class CentreonAPI {
 		print "  - Actions can be writed in lowercase chars\n";
 		print "  - LOGIN and PASSWORD is an admin account of Centreon\n";
 		print "\n";
+		$this->return_code = 0;
 	}
 
 	public function getVar($str) {
@@ -167,11 +170,12 @@ class CentreonAPI {
 		$action = strtoupper($this->action);
  		if ($this->debug)
  			print "DEBUG : $action\n";
- 		if (method_exists($this, $action))
+ 		if (method_exists($this, $action)) {
  			$this->$action();
- 		else
+ 		} else {
 			print "Sorry unavailable fonction.";
- 		return;
+ 		}
+		return $this->return_code;
 	}
 
 	public function printLegals() {
@@ -190,39 +194,60 @@ class CentreonAPI {
 	}
 
 	/*
-	 * API POssibilities
+	 * API Possibilities
 	 */
 
+	/*
+	 * List all poller declared in Centreon
+	 */
 	public function POLLERLIST() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$poller->getPollerList($this->format);
+		$this->return_code = $poller->getPollerList($this->format);
 	}
 
+	/*
+	 * Launch poller restart
+	 */
 	public function POLLERRESTART() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$poller->pollerRestart($this->variables);
+		$this->return_code = $poller->pollerRestart($this->variables);
 	}
 	
+	/*
+	 * Launch poller reload
+	 */
 	public function POLLERRELOAD() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$poller->pollerReload($this->variables);
+		$this->return_code = $poller->pollerReload($this->variables);
 	}
 
+	/*
+	 * Launch poller configuration files generation
+	 */
 	public function POLLERGENERATE() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$poller->pollerGenerate($this->variables, $this->login, $this->password);
+		$this->return_code = $poller->pollerGenerate($this->variables, $this->login, $this->password);
 	}
 
+	/*
+	 * Launch poller configuration test
+	 */	
 	public function POLLERTEST() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$poller->pollerTest($this->format, $this->variables);
+		$this->return_code = $poller->pollerTest($this->format, $this->variables);
 	}
 	
+	/*
+	 * move configuration files into final directory
+	 */	
 	public function CFGMOVE() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$poller->cfgMove($this->variables);
+		$this->return_code = $poller->cfgMove($this->variables);
 	}
-	
+
+	/*
+	 * Apply configuration Generation + move + restart 
+	 */
 	public function APPLYCFG() {
 		/*
 		 * Display time for logs
@@ -233,14 +258,19 @@ class CentreonAPI {
 		 * Launch Actions
 		 */
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$poller->pollerGenerate($this->variables, $this->login, $this->password);
+		$this->return_code = $poller->pollerGenerate($this->variables, $this->login, $this->password);
 		$this->endOfLine();
-		$poller->pollerTest($this->format, $this->variables);
-		$this->endOfLine();
-		$poller->cfgMove($this->variables);
-		$this->endOfLine();
-		$poller->pollerRestart($this->variables);
-	}
-	
+		if ($this->return_code == 0) {
+			$this->return_code = $poller->pollerTest($this->format, $this->variables);
+			$this->endOfLine();
+		}
+		if ($this->return_code == 0) {
+			$this->return_code = $poller->cfgMove($this->variables);
+			$this->endOfLine();
+		}
+		if ($this->return_code == 0) {
+			$this->return_code = $poller->pollerRestart($this->variables);
+		}	
+	}	
 }
 ?>
