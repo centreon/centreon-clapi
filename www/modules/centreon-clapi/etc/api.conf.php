@@ -31,8 +31,8 @@
  * 
  * For more information : contact@centreon.com
  * 
- * SVN : $URL: http://svn.centreon.com/branches/centreon-2.1/www/class/Oreon.class.php $
- * SVN : $Id: Oreon.class.php 9179 2009-10-08 10:27:34Z jmathis $
+ * SVN : $URL$
+ * SVN : $Id$
  * 
  */
  
