@@ -175,7 +175,7 @@ class CentreonAPI {
  		} else {
 			print "Sorry unavailable fonction.";
  		}
-		return $this->return_code;
+		exit $this->return_code;
 	}
 
 	public function printLegals() {

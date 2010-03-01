@@ -95,9 +95,12 @@ class CentreonConfigPoller {
 	    }
 		$DBRESULT->free();
 		unset($data);
+		return 0;
 	}
 	
 	public function pollerReload($variables) {
+		$return_value = 0;
+		
 		if (!isset($variables)) {
 			print "Cannot get poller id.";
 			exit(1);
@@ -127,6 +130,7 @@ class CentreonConfigPoller {
 		}
 		print $msg_restart;
 		$DBRESULT =& $this->DB->query("UPDATE `nagios_server` SET `last_restart` = '".time()."' WHERE `id` = '".$variables."' LIMIT 1");
+		
 	}
 	
 	public function pollerRestart($variables) {
