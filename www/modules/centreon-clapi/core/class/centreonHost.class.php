@@ -63,6 +63,14 @@ class CentreonHost {
 		}
 	}
 
+	public function delHost($host_name) {
+		$request = "DELETE FROM host WHERE host_name LIKE '$host_name'";
+		$DBRESULT =& $this->DB->query($request);
+		$this->return_code = 0;
+		return;
+	}
+	
+	
 	public function getHostName($host_id) {
 		$request = "SELECT host_name FROM host WHERE host_id = '$host_id'";
 		$DBRESULT =& $this->DB->query($request);
@@ -147,7 +155,18 @@ class CentreonHost {
 		} else {
 			return 0;
 		}
-	}	
+	}
+	
+	public function listHost() {
+		$request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '1' ORDER BY host_name";
+		$DBRESULT =& $this->DB->query($request);
+		while ($data =& $DBRESULT->fetchRow()) {
+			print $data["host_id"].";".$data["host_name"].";".$data["host_alias"].";".$data["host_address"]."\n";
+		}
+		$DBRESULT->free();
+		unset($data);
+		
+	}
 	
 }
  

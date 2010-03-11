@@ -90,10 +90,16 @@ class CentreonAPI {
 		 */ 
 		$this->DB = new CentreonDB();
 		$this->dateStart = time();
-		if (!isset($this->options["V"]) && !isset($this->options["h"]))
-			$this->checkUser();
 	}
 
+	public function setLogin($login) {
+		$this->login = $login;
+	}
+
+	public function setPassword($password) {
+		$this->password = $password;
+	}
+	
 	public function checkUser() {
 		if (!isset($this->login) || $this->login == "") {
 			print "ERROR: Can not connect to centreon without login.\n";
@@ -149,6 +155,12 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRESTART -v 1 \n";
 		print "       - POLLERRELOAD: Reload a poller poller id in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRELOAD -v 1 \n";
+		print "       - ADDHOST: Add an host (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOST -v \"host:host:127.0.0.1:2:1\" \n";
+		print "       - LISTHOST: List all hosts in configuration\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOST \n";
+		print "       - DELHOST: Delete an host (name in -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOST -v \"host\" \n";
 		print "\n\n";
 		print "Notes:\n";
 		print "  - Actions can be writed in lowercase chars\n";
@@ -175,7 +187,7 @@ class CentreonAPI {
  		} else {
 			print "Sorry unavailable fonction.";
  		}
-		exit $this->return_code;
+		exit($this->return_code);
 	}
 
 	public function printLegals() {
@@ -271,6 +283,71 @@ class CentreonAPI {
 		if ($this->return_code == 0) {
 			$this->return_code = $poller->pollerRestart($this->variables);
 		}	
+	}
+
+	/*
+	 * Add Hosts
+	 */
+	public function ADDHOST() {
+		require_once "./class/centreonHost.class.php";
+		require_once "./class/centreonService.class.php";
+		
+		if (!isset($this->options["v"]) || $this->options["v"] == "") {
+			print "No options. Cannot create host.\n";
+			$this->eeturn_code = 1;
+			return;
+		}
+		$host = new CentreonHost($this->DB);
+		$svc = new CentreonService($this->DB);
+		$info = split(":", $this->options["v"]);
+		if (!$host->hostExists($info[0])) {
+			$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template", 4 => "host_poller", 5 => "hostgroup");
+			$informations = array();
+			foreach ($info as $key => $value) {
+				$informations[$convertionTable[$key]] = $value;
+			}
+			$host_id = $host->addHost($informations);
+			$host->deployServiceTemplates($host_id, $svc);
+		} else {
+			print "Host ".$information[0]." already exists.\n";
+			$this->return_code = 1;
+			return;
+		}
+	}
+
+	/*
+	 * Add Hosts
+	 */
+	public function DELHOST() {
+		
+		require_once "./class/centreonHost.class.php";
+		
+		if (!isset($this->options["v"]) || $this->options["v"] == "") {
+			print "No options. Cannot create host.\n";
+			$this->return_code = 1;
+			return;
+		}
+		$host = new CentreonHost($this->DB);
+		$host->delHost($this->options["v"]);
 	}	
+
+	/*
+	 * Add Hosts
+	 */
+	public function LISTHOST() {
+		
+		require_once "./class/centreonHost.class.php";
+		
+		/*
+		if (!isset($this->options["v"]) || $this->options["v"] == "") {
+			print "No options. Cannot create host.\n";
+			$this->return_code = 1;
+			return;
+		}
+		*/
+		$host = new CentreonHost($this->DB);
+		$host->listHost();
+	}	
+	
 }
 ?>
