@@ -76,9 +76,34 @@
 	/*
 	 * Now works
 	 */
-	if (!isset($api->login) || !isset($api->password) || !isset($api->action)) {
- 	   $api->printHelp();
+	if ($api->login == "" || $api->password == "" || $api->action == "") {
+		if (file_exists($_SERVER["HOME"]."/.centreonApi")) {
+			$uid = posix_getpwuid (fileowner($_SERVER["HOME"]."/.centreonApi"));
+			$perms = substr(sprintf('%o', fileperms($_SERVER["HOME"]."/.centreonApi")), -3);
+			if (strcmp($perms,'400') == 0  && strcmp($_SERVER['USER'], $uid['name']) == 0) {
+				$handle = @fopen($_SERVER["HOME"]."/.centreonApi", "r");
+				if ($handle) {
+					/*
+					 * Read Only the first line 
+					 */
+					$str = fgets($handle);
+					fclose($handle);
+					$credential = split(":", $str);
+					$api->setLogin($credential[0]);
+					$api->setPassword($credential[1]);
+					$api->checkUser();
+				}
+				$api->launchAction();
+			} else {
+				print "Please check access on login file.... \n\n";
+				$api->printHelp();
+			}
+		} else {
+	 	   $api->printHelp();
+		}
 	} else {
+	  if (!isset($api->options["V"]) && !isset($api->options["h"]))
+			$api->checkUser();
 	  $api->launchAction();
 	}
 	$api->close();
