@@ -90,7 +90,6 @@ class CentreonHost {
 			$request = "SELECT host_tpl_id FROM host_template_relation WHERE host_host_id = '$tpl_id'";
 			$DBRESULT =& $this->DB->query($request);
 			while ($data =& $DBRESULT->fetchRow()) {
-				print $this->getHostName($data["host_tpl_id"]) . "\n";
 				/*
 				 * Check if service is linked
 				 */
@@ -100,7 +99,6 @@ class CentreonHost {
 					$name = $objService->getServiceName($svc["service_service_id"]);
 					if (!$objService->testServiceExistence($name, $host_id)) {
 						$objService->addService(array("service_description" => $name, "template" => $svc["service_service_id"], "host" => $host_id, "macro" => array()));
-						print "TPL : ".$svc["service_service_id"]." = ".$name."\n";
 					}
 				}
 				$DBRESULT2->free();
