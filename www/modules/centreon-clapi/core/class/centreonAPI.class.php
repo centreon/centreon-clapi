@@ -162,11 +162,11 @@ class CentreonAPI {
 		print "       - DELHOST: Delete an host (name in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOST -v \"host\" \n";
 		print "       - ADDHOSTGROUP: Add an hostgroup (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOSTGROUP -v \"hostgroup:hostgroup\" \n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOSTGROUP -v \"name:alias\" \n";
 		print "       - LISTHOSTGROUP: List all hostgroups in configuration\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOSTGROUP \n";
 		print "       - DELHOSTGROUP: Delete an hostgroup (name in -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOSTGROUP -v \"hostgroup\" \n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOSTGROUP -v \"hostgroup_name\" \n";
 		print "\n\n";
 		print "Notes:\n";
 		print "  - Actions can be writed in lowercase chars\n";
