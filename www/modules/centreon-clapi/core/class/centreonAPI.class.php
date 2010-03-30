@@ -161,6 +161,12 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOST \n";
 		print "       - DELHOST: Delete an host (name in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOST -v \"host\" \n";
+		print "       - ADDHOSTGROUP: Add an hostgroup (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOSTGROUP -v \"hostgroup:hostgroup\" \n";
+		print "       - LISTHOSTGROUP: List all hostgroups in configuration\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOSTGROUP \n";
+		print "       - DELHOSTGROUP: Delete an hostgroup (name in -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOSTGROUP -v \"hostgroup\" \n";
 		print "\n\n";
 		print "Notes:\n";
 		print "  - Actions can be writed in lowercase chars\n";
@@ -309,7 +315,7 @@ class CentreonAPI {
 			$host_id = $host->addHost($informations);
 			$host->deployServiceTemplates($host_id, $svc);
 		} else {
-			print "Host ".$information[0]." already exists.\n";
+			print "Host ".$info[0]." already exists.\n";
 			$this->return_code = 1;
 			return;
 		}
@@ -349,5 +355,45 @@ class CentreonAPI {
 		$host->listHost();
 	}	
 	
+	public function ADDHOSTGROUP() {
+		require_once "./class/centreonHostGroup.class.php";
+		
+		$host = new CentreonHostGroup($this->DB);
+		
+		$info = split(":", $this->options["v"]);
+		
+		if (!$host->hostGroupExists($info[0])) {
+			$convertionTable = array(0 => "hg_name", 1 => "hg_alias");
+			$informations = array();
+			foreach ($info as $key => $value) {
+				$informations[$convertionTable[$key]] = $value;
+			}
+			$host->addHostGroup($informations);
+		} else {
+			print "Hostgroup ".$info[0]." already exists.\n";
+			$this->return_code = 1;
+			return;
+		}
+	}
+	
+	public function LISTHOSTGROUP() {
+		require_once "./class/centreonHostGroup.class.php";
+		
+		$host = new CentreonHostGroup($this->DB);
+		$host->listHostGroup();
+	}
+	
+	public function DELHOSTGROUP() {
+		require_once "./class/centreonHostGroup.class.php";
+		
+		if (!isset($this->options["v"]) || $this->options["v"] == "") {
+			print "No options. Cannot create hostgroup.\n";
+			$this->return_code = 1;
+			return;
+		}
+		
+		$host = new CentreonHostGroup($this->DB);
+		$host->delHostGroup($this->options["v"]);
+	}
 }
 ?>

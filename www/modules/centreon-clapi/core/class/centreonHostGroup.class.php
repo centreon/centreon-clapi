@@ -43,6 +43,70 @@ class CentreonHostGroup {
 		$this->DB = $DB;
 	}
 
+	/*
+	 * Check host existance
+	 */
+	public function hostGroupExists($name) {
+		if (!isset($name))
+			return 0;
+		
+		/*
+		 * Get informations
+		 */
+		$DBRESULT =& $this->DB->query("SELECT hg_name, hg_id FROM hostgroup WHERE hg_name = '".htmlentities($name, ENT_QUOTES)."'");
+		if ($DBRESULT->numRows() >= 1) {
+			$host =& $DBRESULT->fetchRow();
+			$DBRESULT->free();
+			return $host["hg_id"];
+		} else {
+			return 0;
+		}
+	}
 	
+	public function delHostGroup($name) {
+		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '$name'";
+		$DBRESULT =& $this->DB->query($request);
+		$this->return_code = 0;
+		return;
+	}
+	
+	public function listHostGroup($search = NULL) {
+		$searchStr = "";
+		if (isset($search) && $search != "") {
+			$searchStr = " WHERE hg_name LILE '%".htmlentities($search, ENT_QUOTES)."%'";
+		}
+		$request = "SELECT hg_name, hg_alias FROM hostgroup $searchStr ORDER BY hg_name";
+		$DBRESULT =& $this->DB->query($request);
+		while ($data =& $DBRESULT->fetchRow()) {
+			print $data["hg_name"].";".$data["hg_alias"]."\n";
+		}
+		$DBRESULT->free();
+		
+	}
+	
+	public function addHostGroup($information) {
+		if (!isset($information["hg_name"])) {
+			return 0;
+		} else {
+			if (!isset($information["hg_alias"]) || $information["hg_alias"] == "")
+				$information["hg_alias"] = $information["hg_name"];
+			
+			$request = "INSERT INTO hostgroup (hg_name, hg_alias, hg_activate) VALUES ('".htmlentities($information["hg_name"], ENT_QUOTES)."', '".htmlentities($information["hg_alias"], ENT_QUOTES)."', '1')";
+			$DBRESULT =& $this->DB->query($request);
+	
+			$hg_id = $this->getHostGroupID($information["hg_name"]);
+			return $hg_id;
+		}
+	}
+	
+	public function getHostGroupID($hg_name = NULL) {
+		if (!isset($hg_name))
+			return;
+			
+		$request = "SELECT hg_id FROM hostgroup WHERE hg_name LIKE '$hg_name'";
+		$DBRESULT =& $this->DB->query($request);
+		$data =& $DBRESULT->fetchRow();
+		return $data["hg_id"];
+	}
 }
 ?>

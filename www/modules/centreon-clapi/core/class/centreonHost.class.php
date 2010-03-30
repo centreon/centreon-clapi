@@ -63,6 +63,9 @@ class CentreonHost {
 		}
 	}
 
+	/*
+	 * Delete Host
+	 */
 	public function delHost($host_name) {
 		$request = "DELETE FROM host WHERE host_name LIKE '$host_name'";
 		$DBRESULT =& $this->DB->query($request);
@@ -70,7 +73,9 @@ class CentreonHost {
 		return;
 	}
 	
-	
+	/*
+	 * Get Name of an host
+	 */
 	public function getHostName($host_id) {
 		$request = "SELECT host_name FROM host WHERE host_id = '$host_id'";
 		$DBRESULT =& $this->DB->query($request);
@@ -83,6 +88,9 @@ class CentreonHost {
 			return "";
 	}
 
+	/*
+	 * Deploy all services of an host
+	 */
 	public function deployServiceTemplates($host_id, $objService, $tpl_id = NULL) {
 		if (!isset($tpl_id))
 			$tpl_id = $host_id;
@@ -108,6 +116,9 @@ class CentreonHost {
 		}
 	}
 
+	/*
+	 * Add an host
+	 */
 	public function addHost($information) {
 		if (!isset($information["host_name"]) || !isset($information["host_address"]) || !isset($information["host_template"]) || !isset($information["host_poller"])) {
 			return 0;
@@ -143,6 +154,9 @@ class CentreonHost {
 		}
 	}
 	
+	/*
+	 * Get id of host
+	 */
 	public function getHostID($name) {
 		$request = "SELECT host_id FROM host WHERE host_name = '".trim($name)."' AND host_register = '1'";
 		$DBRESULT =& $this->DB->query($request);
@@ -155,6 +169,9 @@ class CentreonHost {
 		}
 	}
 	
+	/*
+	 * List all hosts
+	 */
 	public function listHost() {
 		$request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '1' ORDER BY host_name";
 		$DBRESULT =& $this->DB->query($request);
