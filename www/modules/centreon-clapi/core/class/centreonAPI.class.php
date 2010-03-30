@@ -358,17 +358,17 @@ class CentreonAPI {
 	public function ADDHOSTGROUP() {
 		require_once "./class/centreonHostGroup.class.php";
 		
-		$host = new CentreonHostGroup($this->DB);
+		$hostgroup = new CentreonHostGroup($this->DB);
 		
 		$info = split(":", $this->options["v"]);
 		
-		if (!$host->hostGroupExists($info[0])) {
+		if (!$hostgroup->hostGroupExists($info[0])) {
 			$convertionTable = array(0 => "hg_name", 1 => "hg_alias");
 			$informations = array();
 			foreach ($info as $key => $value) {
 				$informations[$convertionTable[$key]] = $value;
 			}
-			$host->addHostGroup($informations);
+			$hostgroup->addHostGroup($informations);
 		} else {
 			print "Hostgroup ".$info[0]." already exists.\n";
 			$this->return_code = 1;
@@ -379,8 +379,8 @@ class CentreonAPI {
 	public function LISTHOSTGROUP() {
 		require_once "./class/centreonHostGroup.class.php";
 		
-		$host = new CentreonHostGroup($this->DB);
-		$host->listHostGroup();
+		$hostgroup = new CentreonHostGroup($this->DB);
+		$hostgroup->listHostGroup();
 	}
 	
 	public function DELHOSTGROUP() {
@@ -392,8 +392,8 @@ class CentreonAPI {
 			return;
 		}
 		
-		$host = new CentreonHostGroup($this->DB);
-		$host->delHostGroup($this->options["v"]);
+		$hostgroup = new CentreonHostGroup($this->DB);
+		$hostgroup->delHostGroup($this->options["v"]);
 	}
 }
 ?>
