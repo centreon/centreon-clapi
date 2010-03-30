@@ -56,7 +56,7 @@
 		print_r($options);
 
 	if (!file_exists("../etc/api.conf.php")) {
-		chdir(__DIR__);
+		chdir(dirname(__FILE__));
 	}
 
 	require_once "../etc/api.conf.php";
