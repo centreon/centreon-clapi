@@ -1,7 +1,7 @@
 <?php
 $module_conf['centreon-clapi']["rname"] = "Centreon Command Line API";
 $module_conf['centreon-clapi']["name"] = "centreon-clapi";
-$module_conf['centreon-clapi']["mod_release"] = "1.0.0";
+$module_conf['centreon-clapi']["mod_release"] = "1.1.0";
 $module_conf['centreon-clapi']["infos"] = "";
 $module_conf['centreon-clapi']["is_removeable"] = "1";
 $module_conf['centreon-clapi']["author"] = "Merethis Team";
