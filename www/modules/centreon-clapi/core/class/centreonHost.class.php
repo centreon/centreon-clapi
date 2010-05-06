@@ -41,6 +41,7 @@ class CentreonHost {
 	
 	public function __construct($DB) {
 		$this->DB = $DB;
+		print "ok class";
 	}
 	
 	/*
@@ -57,6 +58,7 @@ class CentreonHost {
 		if ($DBRESULT->numRows() >= 1) {
 			$host =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
+			print_r($host);
 			return $host["host_id"];
 		} else {
 			return 0;
@@ -104,7 +106,7 @@ class CentreonHost {
 				$request2 = "SELECT service_service_id FROM host_service_relation WHERE host_host_id = '".$data["host_tpl_id"]."'";
 				$DBRESULT2 =& $this->DB->query($request2);
 				while ($svc =& $DBRESULT2->fetchRow()) {
-					$name = $objService->getServiceName($svc["service_service_id"]);
+					$name = $objService->getServiceAlias($svc["service_service_id"]);
 					if (!$objService->testServiceExistence($name, $host_id)) {
 						$objService->addService(array("service_description" => $name, "template" => $svc["service_service_id"], "host" => $host_id, "macro" => array()));
 					}
@@ -129,9 +131,9 @@ class CentreonHost {
 			 * Insert Host
 			 */
 			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
-						"VALUES ('".$information["host_name"]."', '".$information["host_alias"]."', '".$information["host_address"]."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+						"VALUES ('".htmlentities(trim($information["host_name"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_alias"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
-			$host_id = $this->getHostID($information["host_name"]);
+			$host_id = $this->getHostID(htmlentities($information["host_name"], ENT_QUOTES));
 			
 			/*
 			 * Insert Template Relation

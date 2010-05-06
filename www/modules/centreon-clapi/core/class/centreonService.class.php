@@ -70,6 +70,17 @@ class CentreonService {
 			return "";
 	}
 	
+	public function getServiceAlias($service_id) {
+		$request = "SELECT service_alias FROM service WHERE service_id = '$service_id'";
+		$DBRESULT =& $this->DB->query($request);
+		$data =& $DBRESULT->fetchRow();
+		$DBRESULT->free();
+		if (isset($data["service_alias"]) && $data["service_alias"])
+			return $data["service_alias"];
+		else
+			return "";
+	}
+	
 	public function addService($information) {
 		if (!isset($information["service_description"]) || !isset($information["host"]) || !isset($information["template"])) {
 			return 0;
