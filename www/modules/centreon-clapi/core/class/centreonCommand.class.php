@@ -94,8 +94,9 @@ class CentreonCommand {
 		} else {
 			
 			$request = 	"INSERT INTO command " .
-						"(command_name, command_line) VALUES " .
-						"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".htmlentities($information["command_line"], ENT_QUOTES)."')";
+						"(command_name, command_line, command_type) VALUES " .
+						"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".htmlentities($information["command_line"], ENT_QUOTES)."'" .
+						", '".htmlentities($information["command_type"], ENT_QUOTES)."')";
 			$DBRESULT =& $this->DB->query($request);	
 			$command_id = $this->getCommandID($information["command_name"]);
 			return $command_id;

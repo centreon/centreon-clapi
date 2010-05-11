@@ -588,10 +588,15 @@ class CentreonAPI {
 		$info = split(";", $this->options["v"]);
 		
 		if (!$command->commandExists($info[0])) {
-			$convertionTable = array(0 => "command_name", 1 => "command_line");
+			$type = array("notif" => 1, "check" => 2, "misc" => 3);
+			$convertionTable = array(0 => "command_name", 1 => "command_line", 2 => "command_type");
 			$informations = array();
 			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
+				if ($key != 2) {
+					$informations[$convertionTable[$key]] = $value;
+				} else {
+					$informations[$convertionTable[$key]] = $type[$value];
+				}
 			}
 			$command->addCommand($informations);
 		} else {
