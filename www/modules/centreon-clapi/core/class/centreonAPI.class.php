@@ -129,6 +129,7 @@ class CentreonAPI {
 	
 	public function close() {
 		print "\n";
+		exit ($this->exitcode);
 	}
 
 	public function setFormat($format) {
@@ -153,7 +154,9 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a CFGMOVE -v 1 \n";
 		print "       - POLLERRESTART: Restart a poller (poller id in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRESTART -v 1 \n";
-		print "       - POLLERRELOAD: Reload a poller poller id in -v parameters)\n";
+		print "       - POLLERRELOAD: Reload a poller (poller id in -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRELOAD -v 1 \n";
+		print "       - POLLERLIST: list all pollers\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRELOAD -v 1 \n";
 		print "       - ADDHOST: Add an host (need -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOST -v \"host:host:127.0.0.1:2:1\" \n";
@@ -161,12 +164,18 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOST \n";
 		print "       - DELHOST: Delete an host (name in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOST -v \"host\" \n";
-		print "       - ADDHOSTGROUP: Add an hostgroup (need -v parameters)\n";
+		print "       - ADDHG: Add an hostgroup (need -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOSTGROUP -v \"name:alias\" \n";
-		print "       - LISTHOSTGROUP: List all hostgroups in configuration\n";
+		print "       - LISTHG: List all hostgroups in configuration\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOSTGROUP \n";
-		print "       - DELHOSTGROUP: Delete an hostgroup (name in -v parameters)\n";
+		print "       - DELHG: Delete an hostgroup (name in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOSTGROUP -v \"hostgroup_name\" \n";
+		print "       - ADDSG: Add an servicegroup (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDSG -v \"name:alias\" \n";
+		print "       - LISTSG: List all servicegroups in configuration\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTSG \n";
+		print "       - DELSG: Delete an servicegroup (name in -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELSG -v \"servicegroup_name\" \n";
 		print "\n\n";
 		print "Notes:\n";
 		print "  - Actions can be writed in lowercase chars\n";
@@ -180,18 +189,27 @@ class CentreonAPI {
  		return $res[1];
 	}
 
+	private function checkParameters($str) {
+		if (!isset($this->options["v"]) || $this->options["v"] == "") {
+			print "No options defined. $str\n";
+			$this->return_code = 1;
+			return 1;
+		}
+	}
+
 	public function initXML() {
 		$this->xmlObj = new CentreonXML();
 	}
 
 	public function launchAction() {
 		$action = strtoupper($this->action);
- 		if ($this->debug)
+ 		if ($this->debug) {
  			print "DEBUG : $action\n";
+ 		}
  		if (method_exists($this, $action)) {
  			$this->$action();
  		} else {
-			print "Sorry unavailable fonction.";
+			print "Unavailable fonction.";
  		}
 		exit($this->return_code);
 	}
@@ -291,6 +309,10 @@ class CentreonAPI {
 		}	
 	}
 
+	/* ********************************************************************
+	 * Host Functions
+	 */
+
 	/*
 	 * Add Hosts
 	 */
@@ -298,11 +320,8 @@ class CentreonAPI {
 		require_once "./class/centreonHost.class.php";
 		require_once "./class/centreonService.class.php";
 		
-		if (!isset($this->options["v"]) || $this->options["v"] == "") {
-			print "No options. Cannot create host.\n";
-			$this->eeturn_code = 1;
-			return;
-		}
+		$this->checkParameters("Cannot create host.");
+		
 		$host = new CentreonHost($this->DB);
 		$svc = new CentreonService($this->DB);
 		$info = split(":", $this->options["v"]);
@@ -322,17 +341,13 @@ class CentreonAPI {
 	}
 
 	/*
-	 * Add Hosts
+	 * Delete Hosts
 	 */
 	public function DELHOST() {
-		
 		require_once "./class/centreonHost.class.php";
 		
-		if (!isset($this->options["v"]) || $this->options["v"] == "") {
-			print "No options. Cannot create host.\n";
-			$this->return_code = 1;
-			return;
-		}
+		$this->checkParameters("Cannot delete host.");
+		
 		$host = new CentreonHost($this->DB);
 		$host->delHost($this->options["v"]);
 	}	
@@ -344,18 +359,18 @@ class CentreonAPI {
 		
 		require_once "./class/centreonHost.class.php";
 		
-		/*
-		if (!isset($this->options["v"]) || $this->options["v"] == "") {
-			print "No options. Cannot create host.\n";
-			$this->return_code = 1;
-			return;
-		}
-		*/
 		$host = new CentreonHost($this->DB);
 		$host->listHost();
 	}	
 	
-	public function ADDHOSTGROUP() {
+	/* ***********************************************************
+	 * Host groups functions
+	 */
+	 
+	/*
+	 * Add a hostgroup 
+	 */
+	public function ADDHG() {
 		require_once "./class/centreonHostGroup.class.php";
 		
 		$hostgroup = new CentreonHostGroup($this->DB);
@@ -376,24 +391,48 @@ class CentreonAPI {
 		}
 	}
 	
-	public function LISTHOSTGROUP() {
+	public function LISTHG() {
 		require_once "./class/centreonHostGroup.class.php";
 		
 		$hostgroup = new CentreonHostGroup($this->DB);
 		$hostgroup->listHostGroup();
 	}
 	
-	public function DELHOSTGROUP() {
+	public function DELHGP() {
 		require_once "./class/centreonHostGroup.class.php";
 		
-		if (!isset($this->options["v"]) || $this->options["v"] == "") {
-			print "No options. Cannot create hostgroup.\n";
-			$this->return_code = 1;
-			return;
-		}
+		$this->checkParameters("Cannot create hostgroup.");
 		
 		$hostgroup = new CentreonHostGroup($this->DB);
-		$hostgroup->delHostGroup($this->options["v"]);
+		$exitcode = $hostgroup->delHostGroup($this->options["v"]);
+		return $exitcode;
+	}
+	
+	/* ***********************************************************
+	 * Service group Launch Function
+	 * 
+	 */
+	 
+	public function ADDSG() {
+		require_once "./class/centreonServiceGroup.class.php";
+	
+	}
+	
+	public function LISTSG() {
+		require_once "./class/centreonServiceGroup.class.php";
+	
+		$servicegroup = new CentreonServiceGroup($this->DB);
+		$servicegroup->listServiceGroup();
+	}
+	
+	public function DELSG() {
+		require_once "./class/centreonServiceGroup.class.php";
+	
+		$this->checkParameters("Cannot create servicegroup.");
+		
+		$servicegroup = new CentreonServiceGroup($this->DB);
+		$exitcode = $servicegroup->delServiceGroup($this->options["v"]);
+		return $exitcode;
 	}
 }
 ?>
