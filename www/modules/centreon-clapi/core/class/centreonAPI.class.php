@@ -170,18 +170,25 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOSTGROUP \n";
 		print "       - DELHG: Delete an hostgroup (name in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOSTGROUP -v \"hostgroup_name\" \n";
-		print "       - ADDSG: Add an servicegroup (need -v parameters)\n";
+		print "       - ADDSG: Add a servicegroup (need -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDSG -v \"name:alias\" \n";
 		print "       - LISTSG: List all servicegroups in configuration\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTSG \n";
-		print "       - DELSG: Delete an servicegroup (name in -v parameters)\n";
+		print "       - DELSG: Delete a servicegroup (name in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELSG -v \"servicegroup_name\" \n";
-		print "\n\n";
+		print "       - ADDCCT: Add a contact (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDCCT -v \"name:alias\" \n";
+		print "       - LISTCCT: List all contact in configuration\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTCCT \n";
+		print "       - DELCCT: Delete a contact (name in -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELCCT -v \"contact_name\" \n";
+		print "\n";
 		print "Notes:\n";
 		print "  - Actions can be writed in lowercase chars\n";
 		print "  - LOGIN and PASSWORD is an admin account of Centreon\n";
 		print "\n";
 		$this->return_code = 0;
+		exit($this->return_code);
 	}
 
 	public function getVar($str) {
@@ -432,6 +439,69 @@ class CentreonAPI {
 		
 		$servicegroup = new CentreonServiceGroup($this->DB);
 		$exitcode = $servicegroup->delServiceGroup($this->options["v"]);
+		return $exitcode;
+	}
+	
+	
+	/* ***********************************************************
+	 * Contact Launch Function
+	 * 
+	 */
+	 
+	public function ADDCCT() {
+		require_once "./class/centreonContact.class.php";
+	
+		$contact = new CentreonContact($this->DB);
+		
+		$info = split(";", $this->options["v"]);
+		
+		if (!$contact->contactExists($info[0])) {
+			// contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_lang, contact_auth_type, contact_passwd
+			//test;test;jmathis@merethis.com;test;1;1;en_US;local
+			$convertionTable = array(
+				0 => "contact_name", 1 => "contact_alias", 
+				2 => "contact_email", 3 => "contact_passwd", 
+				4 => "contact_admin", 5 => "contact_oreon",
+				6 => "contact_lang", 7 => "contact_auth_type"
+			);
+			$informations = array();
+			foreach ($info as $key => $value) {
+				$informations[$convertionTable[$key]] = $value;
+			}
+			$contact->addContact($informations);
+		} else {
+			print "Contact ".$info[0]." already exists.\n";
+			$this->return_code = 1;
+			return;
+		}
+	
+	}
+	
+	/*
+	 * List all contact in Centreon configuration
+	 */
+	public function LISTCCT() {
+		require_once "./class/centreonContact.class.php";
+	
+		$search = "";
+		if (isset($this->options["v"]) && $this->options["v"] != "") {
+			$search = $this->options["v"];
+		}
+	
+		$contact = new CentreonContact($this->DB);
+		$contact->listContact($search);
+	}
+	
+	/*
+	 * Delete a contact in centreon configuration panel
+	 */
+	public function DELCCT() {
+		require_once "./class/centreonContact.class.php";
+	
+		$this->checkParameters("Cannot create contact.");
+		
+		$contact = new CentreonContact($this->DB);
+		$exitcode = $contact->delContact($this->options["v"]);
 		return $exitcode;
 	}
 }
