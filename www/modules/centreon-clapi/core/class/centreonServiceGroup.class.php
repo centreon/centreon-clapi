@@ -78,7 +78,7 @@ class CentreonServiceGroup {
 		$request = "SELECT sg_name, sg_alias FROM servicegroup $searchStr ORDER BY sg_name";
 		$DBRESULT =& $this->DB->query($request);
 		while ($data =& $DBRESULT->fetchRow()) {
-			print $data["sg_name"].";".$data["sg_alias"]."\n";
+			print html_entity_decode($data["sg_name"], ENT_QUOTES).";".html_entity_decode($data["sg_alias"], ENT_QUOTES)."\n";
 		}
 		$DBRESULT->free();
 		

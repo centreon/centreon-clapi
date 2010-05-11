@@ -78,7 +78,7 @@ class CentreonHostGroup {
 		$request = "SELECT hg_name, hg_alias FROM hostgroup $searchStr ORDER BY hg_name";
 		$DBRESULT =& $this->DB->query($request);
 		while ($data =& $DBRESULT->fetchRow()) {
-			print $data["hg_name"].";".$data["hg_alias"]."\n";
+			print html_entity_decode($data["hg_name"], ENT_QUOTES).";".html_entity_decode($data["hg_alias"], ENT_QUOTES)."\n";
 		}
 		$DBRESULT->free();
 		
