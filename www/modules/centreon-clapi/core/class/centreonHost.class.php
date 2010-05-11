@@ -41,7 +41,6 @@ class CentreonHost {
 	
 	public function __construct($DB) {
 		$this->DB = $DB;
-		print "ok class";
 	}
 	
 	/*
@@ -58,7 +57,6 @@ class CentreonHost {
 		if ($DBRESULT->numRows() >= 1) {
 			$host =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
-			print_r($host);
 			return $host["host_id"];
 		} else {
 			return 0;
