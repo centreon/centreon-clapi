@@ -178,10 +178,22 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELSG -v \"servicegroup_name\" \n";
 		print "       - ADDCCT: Add a contact (need -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDCCT -v \"name:alias\" \n";
-		print "       - LISTCCT: List all contact in configuration\n";
+		print "       - LISTCCT: List all contacts in configuration\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTCCT \n";
 		print "       - DELCCT: Delete a contact (name in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELCCT -v \"contact_name\" \n";
+		print "       - ADDCG: Add a contactgroup (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDCG -v \"name:alias\" \n";
+		print "       - LISTCG: List all contactgroups in configuration\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTCG \n";
+		print "       - DELCG: Delete a contactgroup (name in -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELCG -v \"contactgroup_name\" \n";
+		print "       - ADDCMD: Add a command (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDCMD -v \"name:alias\" \n";
+		print "       - LISTCMD: List all commands in configuration\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTCMD \n";
+		print "       - DELCMD: Delete a command (name in -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELCMD -v \"command_name\" \n";
 		print "\n";
 		print "Notes:\n";
 		print "  - Actions can be writed in lowercase chars\n";
@@ -558,6 +570,62 @@ class CentreonAPI {
 		
 		$contactgroup = new CentreonContactGroup($this->DB);
 		$exitcode = $contactgroup->delContactGroup($this->options["v"]);
+		return $exitcode;
+	}
+	
+	/* ***********************************************************
+	 * Commands functions
+	 */
+	 
+	/*
+	 * Add a command
+	 */
+	public function ADDCMD() {
+		require_once "./class/centreonCommand.class.php";
+		
+		$command = new CentreonCommand($this->DB);
+		
+		$info = split(";", $this->options["v"]);
+		
+		if (!$command->commandExists($info[0])) {
+			$convertionTable = array(0 => "command_name", 1 => "command_line");
+			$informations = array();
+			foreach ($info as $key => $value) {
+				$informations[$convertionTable[$key]] = $value;
+			}
+			$command->addCommand($informations);
+		} else {
+			print "Command ".$info[0]." already exists.\n";
+			$this->return_code = 1;
+			return;
+		}
+	}
+	
+	/*
+	 * List all contactgroup
+	 */
+	public function LISTCMD() {
+		require_once "./class/centreonCommand.class.php";
+		
+		$search = "";
+		if (isset($this->options["v"]) && $this->options["v"] != "") {
+			$search = $this->options["v"];
+		}
+		
+		$command = new CentreonCommand($this->DB);
+		$command->listCommand($search);
+	}
+	
+	/*
+	 * Del a contactgroup
+	 */
+	public function DELCMD() {
+		require_once "./class/centreonCommand.class.php";
+		
+		$this->checkParameters("Cannot create command.");
+		
+		$command = new CentreonCommand($this->DB);
+		$exitcode = $command->delCommand($this->options["v"]);
 		return $exitcode;
 	}
 }
