@@ -31,12 +31,12 @@
  *
  * For more information : contact@centreon.com
  *
- * SVN : $URL: http://svn.modules.centreon.com/centreon-clapi/trunk/www/modules/centreon-clapi/core/class/centreonHost.class.php $
- * SVN : $Id: centreonHost.class.php 25 2010-03-30 05:52:19Z jmathis $
+ * SVN : $URL: http://svn.modules.centreon.com/centreon-clapi/trunk/www/modules/centreon-clapi/core/class/centreonContact.class.php $
+ * SVN : $Id: centreonContact.class.php 25 2010-03-30 05:52:19Z jmathis $
  *
  */
  
-class CentreonHostGroup {
+class CentreonContactGroup {
 	private $DB;
 	
 	public function __construct($DB) {
@@ -44,69 +44,69 @@ class CentreonHostGroup {
 	}
 
 	/*
-	 * Check host existance
+	 * Check contact existance
 	 */
-	public function hostGroupExists($name) {
+	public function contactGroupExists($name) {
 		if (!isset($name))
 			return 0;
 		
 		/*
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT hg_name, hg_id FROM hostgroup WHERE hg_name = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT cg_name, cg_id FROM contactgroup WHERE cg_name = '".htmlentities($name, ENT_QUOTES)."'");
 		if ($DBRESULT->numRows() >= 1) {
-			$host =& $DBRESULT->fetchRow();
+			$contact =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
-			return $host["hg_id"];
+			return $contact["cg_id"];
 		} else {
 			return 0;
 		}
 	}
 	
-	public function delHostGroup($name) {
-		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '$name'";
+	public function delContactGroup($name) {
+		$request = "DELETE FROM contactgroup WHERE cg_name LIKE '$name'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return;
 	}
 	
-	public function listHostGroup($search = NULL) {
+	public function listContactGroup($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
-			$searchStr = " WHERE hg_name LIKE '%".htmlentities($search, ENT_QUOTES)."%'";
+			$searchStr = " WHERE cg_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' OR cg_alias LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
 		}
-		$request = "SELECT hg_name, hg_alias FROM hostgroup $searchStr ORDER BY hg_name";
+		$request = "SELECT cg_name, cg_alias FROM contactgroup $searchStr ORDER BY cg_name";
 		$DBRESULT =& $this->DB->query($request);
 		while ($data =& $DBRESULT->fetchRow()) {
-			print html_entity_decode($data["hg_name"], ENT_QUOTES).";".html_entity_decode($data["hg_alias"], ENT_QUOTES)."\n";
+			print html_entity_decode($data["cg_name"], ENT_QUOTES).";".html_entity_decode($data["cg_alias"], ENT_QUOTES)."\n";
 		}
 		$DBRESULT->free();
 		
 	}
 	
-	public function addHostGroup($information) {
-		if (!isset($information["hg_name"])) {
+	public function addContactGroup($information) {
+		if (!isset($information["cg_name"])) {
 			return 0;
 		} else {
-			if (!isset($information["hg_alias"]) || $information["hg_alias"] == "")
-				$information["hg_alias"] = $information["hg_name"];
+			if (!isset($information["cg_alias"]) || $information["cg_alias"] == "")
+				$information["cg_alias"] = $information["cg_name"];
 			
-			$request = "INSERT INTO hostgroup (hg_name, hg_alias, hg_activate) VALUES ('".htmlentities($information["hg_name"], ENT_QUOTES)."', '".htmlentities($information["hg_alias"], ENT_QUOTES)."', '1')";
+			$request = "INSERT INTO contactgroup (cg_name, cg_alias, cg_activate) VALUES ('".htmlentities($information["cg_name"], ENT_QUOTES)."', '".htmlentities($information["cg_alias"], ENT_QUOTES)."', '1')";
 			$DBRESULT =& $this->DB->query($request);
 	
-			$hg_id = $this->getHostGroupID($information["hg_name"]);
-			return $hg_id;
+			$cg_id = $this->getContactGroupID($information["cg_name"]);
+			return $cg_id;
 		}
 	}
 	
-	public function getHostGroupID($hg_name = NULL) {
-		if (!isset($hg_name))
+	public function getContactGroupID($cg_name = NULL) {
+		if (!isset($cg_name))
 			return;
 			
-		$request = "SELECT hg_id FROM hostgroup WHERE hg_name LIKE '$hg_name'";
+		$request = "SELECT cg_id FROM contactgroup WHERE cg_name LIKE '$cg_name'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
-		return $data["hg_id"];
+		return $data["cg_id"];
 	}
 }
 ?>
