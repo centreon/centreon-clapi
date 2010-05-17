@@ -191,7 +191,7 @@ class CentreonHost {
 			return 1;
 		}
 		
-		$request = "SELECT host_id FROM host WHERE host_name IN ('$child_name', '$parent_name') AND host_register = '1'";				
+		$request = "SELECT host_id FROM host WHERE host_name IN ('$child_name', '$parent_name')";				
 		$DBRESULT =& $this->DB->query($request);
 		if ($DBRESULT->numRows() == 2) {
 			/*
@@ -263,14 +263,24 @@ class CentreonHost {
 		 */
 		$host_id_field = array("host" => "host_id", "extended_host_information" => "host_host_id");
 		
-		$request = "SELECT host_id FROM host WHERE host_name IN ('$host_name') AND host_register = '1'";				
+		/*
+		 * Check timeperiod case
+		 */
+		if ($parameter == "tpcheck") {
+			$request = "SELECT tp_id FROM timeperiod WHERE tp_name LIKE '$value'";
+			$DBRESULT =& $this->DB->query($request);
+			$data = $DBRESULT->fetchRow();
+			$value = $data["tp_id"];
+		}
+
+		$request = "SELECT host_id FROM host WHERE host_name IN ('$host_name')";				
 		$DBRESULT =& $this->DB->query($request);
 		if ($DBRESULT->numRows() == 1) {
 			if ($value != "NULL" && $value != "'NULL'") {
 				$value = "'".$value."'";
 			}
 			if ($tabName[$parameter] == "host") {
-				$request = "UPDATE ".$tabName[$parameter]." SET ".$realNameField[$parameter]." = ".$value." WHERE ".$host_id_field[$tabName[$parameter]]." = (SELECT host_id FROM host WHERE host_name LIKE '$host_name')";
+				$request = "UPDATE ".$tabName[$parameter]." SET ".$realNameField[$parameter]." = ".$value." WHERE host_name LIKE '$host_name'";
 			} else {
 				$request = "UPDATE ".$tabName[$parameter]." SET ".$realNameField[$parameter]." = ".$value." WHERE ".$host_id_field[$tabName[$parameter]]." = (SELECT host_id FROM host WHERE host_name LIKE '$host_name')";
 			}
