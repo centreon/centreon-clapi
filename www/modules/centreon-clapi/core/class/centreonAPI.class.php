@@ -228,7 +228,7 @@ class CentreonAPI {
  		if (method_exists($this, $action)) {
  			$this->$action();
  		} else {
-			print "Unavailable fonction.";
+			print "Unavailable fonction.\n";
  		}
 		exit($this->return_code);
 	}
@@ -631,6 +631,42 @@ class CentreonAPI {
 		
 		$command = new CentreonCommand($this->DB);
 		$exitcode = $command->delCommand($this->options["v"]);
+		return $exitcode;
+	}
+	
+	public function SETPARAMETER() {
+		require_once "./class/centreonHost.class.php";
+		
+		$this->checkParameters("Cannot set parameter for host.");
+		
+		$host = new CentreonHost($this->DB);
+		$elem = split(";", $this->options["v"]);
+		$exitcode = $host->setParameter($elem[0], $elem[1], $elem[2]);
+		return $exitcode;
+	}
+	
+	/*
+	 * Set Parents
+	 */
+	public function SETPARENT() {
+		require_once "./class/centreonHost.class.php";
+		
+		$this->checkParameters("Cannot set parents for host.");
+		
+		$host = new CentreonHost($this->DB);
+		
+		$elem = split(";", $this->options["v"]);
+		if (strstr($elem[1], ",")) {
+			$elem2 = split(",", $elem[1]);
+			foreach ($elem2 as $value) {
+				$exitcode = $host->setParent($elem[0], $value);
+				if ($exitcode != 0) {
+					return $exitcode;
+				}
+			}			
+		} else {
+			$exitcode = $host->setParent($elem[0], $elem[1]);		
+		}
 		return $exitcode;
 	}
 }

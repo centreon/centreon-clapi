@@ -180,9 +180,103 @@ class CentreonHost {
 		}
 		$DBRESULT->free();
 		unset($data);
-		
 	}
 	
+	/*
+	 * Set parents
+	 */
+	public function setParent($child_name, $parent_name) {
+		if ($child_name == $parent_name) {
+			print "Error in arguments. A host cannot be the parent of himself....\n";
+			return 1;
+		}
+		
+		$request = "SELECT host_id FROM host WHERE host_name IN ('$child_name', '$parent_name') AND host_register = '1'";				
+		$DBRESULT =& $this->DB->query($request);
+		if ($DBRESULT->numRows() == 2) {
+			/*
+			 * Check Circular link
+			 */
+			$request = 	"SELECT * FROM host_hostparent_relation " .
+						"WHERE host_parent_hp_id IN (SELECT host_id FROM host WHERE host_name LIKE '$child_name') " .
+						"AND host_host_id IN (SELECT host_id FROM host WHERE host_name LIKE '$parent_name')";
+			$DBRESULT =& $this->DB->query($request);
+			if ($DBRESULT->numRows() != 0) {
+				print "Circular parent link. Can process this action.\n";
+				return 1;	
+			}
+			
+			/*
+			 * Check parent state
+			 */
+			$request = 	"SELECT * FROM host_hostparent_relation " .
+						"WHERE host_host_id IN (SELECT host_id FROM host WHERE host_name LIKE '$child_name') " .
+						"AND host_parent_hp_id IN (SELECT host_id FROM host WHERE host_name LIKE '$parent_name')";
+			$DBRESULT =& $this->DB->query($request);
+			if ($DBRESULT->numRows() != 0) {
+				print "Host $child_name is already the child of host $parent_name.\n";
+				return 1;	
+			}
+			
+			/*
+			 * Insert all data
+			 */
+			$request = 	"INSERT INTO host_hostparent_relation (host_parent_hp_id, host_host_id) " .
+						"VALUES ((SELECT host_id FROM host WHERE host_name LIKE '$parent_name'), (SELECT host_id FROM host WHERE host_name LIKE '$child_name'))";
+						
+			$DBRESULT =& $this->DB->query($request);
+			return 0;		
+		} else {
+			print "Child or parent host unknown.\n";
+			return 1;	
+		}
+	}
+	
+	/*
+	 * Set Parameters
+	 */
+	public function setParameter($host_name, $parameter, $value) {
+		/*
+		 * Parameters List
+		 */
+		$tabName = array(
+			"community" => "host",
+			"version" => "host",
+			"tpcheck" => "host",
+			"url" => "extended_host_information",
+			"actionurl" => "extended_host_information",
+		);
+		
+		/*
+		 * Set Real field name
+		 */
+		$realNameField = array(
+			"community" => "host_snmp_community",
+			"version" => "host_snmp_version",
+			"tpcheck" => "timeperiod_tp_id",
+			"url" => "ehi_notes_url",
+			"actionurl" => "ehi_action_url",
+		);
+		
+		/*
+		 * Host or host_extentended info
+		 */
+		$host_id_field = array("host" => "host_id", "extended_host_information" => "host_host_id");
+		
+		$request = "SELECT host_id FROM host WHERE host_name IN ('$host_name') AND host_register = '1'";				
+		$DBRESULT =& $this->DB->query($request);
+		if ($DBRESULT->numRows() == 1) {
+			if ($value != "NULL" && $value != "'NULL'") {
+				$value = "'".$value."'";
+			}
+			$request = "UPDATE ".$tabName[$parameter]." SET ".$realNameField[$parameter]." = ".$value." WHERE ".$host_id_field[$tabName[$parameter]]." = (SELECT host_id FROM host WHERE host_name LIKE '$host_name')";
+			$DBRESULT =& $this->DB->query($request);
+		} else {
+			print "Unknown host : $host_name.\n";
+			return 1;
+		}
+	} 
+	 
 }
  
 ?>
