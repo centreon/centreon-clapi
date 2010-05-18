@@ -168,6 +168,16 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHMACRO -v \"host;macroname;macrovalue\" \n";
 		print "       - DELHMACRO: Delete an host macro (need -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHMACRO -v \"host;macroname\" \n";
+		print "       - ADDHTPL: Add an host template (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOST -v \"host;host;127.0.0.1;2;1\" \n";
+		print "       - LISTHTPL: List all host templates in configuration\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOST \n";
+		print "       - DELHTPL: Delete an host template (name in -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOST -v \"host\" \n";
+		print "       - SETHTPLMACRO: Add an host template macro (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHMACRO -v \"host;macroname;macrovalue\" \n";
+		print "       - DELHTPLMACRO: Delete an host template macro (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHMACRO -v \"host;macroname\" \n";
 		print "       - ADDHG: Add an hostgroup (need -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOSTGROUP -v \"name;alias\" \n";
 		print "       - LISTHG: List all hostgroups in configuration\n";
@@ -401,6 +411,84 @@ class CentreonAPI {
 		require_once "./class/centreonHost.class.php";
 
 		$host = new CentreonHost($this->DB);
+		$info = split(";", $this->options["v"]);
+		$host->delMacro($info[0], $info[1]);
+	}
+	
+	/*
+	 * Host Template function
+	 */
+	/*
+	 * Add Host template
+	 */
+	public function ADDHTPL() {
+		require_once "./class/centreonHost.class.php";
+		require_once "./class/centreonService.class.php";
+		
+		$this->checkParameters("Cannot create host.");
+		
+		$host = new CentreonHost($this->DB);
+		$host->setTemplateFlag();
+		
+		$svc = new CentreonService($this->DB);
+		$info = split(":", $this->options["v"]);
+		if (!$host->hostExists($info[0])) {
+			$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template", 4 => "host_poller", 5 => "hostgroup");
+			$informations = array();
+			foreach ($info as $key => $value) {
+				$informations[$convertionTable[$key]] = $value;
+			}
+			$host_id = $host->addHost($informations);
+			$host->deployServiceTemplates($host_id, $svc);
+		} else {
+			print "Host ".$info[0]." already exists.\n";
+			$this->return_code = 1;
+			return;
+		}
+	}
+
+	/*
+	 * Delete Hosts
+	 */
+	public function DELHTPL() {
+		require_once "./class/centreonHost.class.php";
+		
+		$this->checkParameters("Cannot delete host.");
+		
+		$host = new CentreonHost($this->DB);
+		$host->setTemplateFlag();
+		$host->delHost($this->options["v"]);
+	}	
+
+	/*
+	 * Add Hosts
+	 */
+	public function LISTHTPL() {
+		
+		require_once "./class/centreonHost.class.php";
+		
+		$host = new CentreonHost($this->DB);
+		$host->setTemplateFlag();
+		$host->listHost();
+	}	
+	
+	/*
+	 * Set host Macro
+	 */
+	public function SETHTPLMACRO() {
+		require_once "./class/centreonHost.class.php";
+
+		$host = new CentreonHost($this->DB);
+		$host->setTemplateFlag();
+		$info = split(";", $this->options["v"]);
+		$host->setMacro($info[0], $info[1], $info[2]);
+	}
+	
+	public function DELHTPLMACRO() {
+		require_once "./class/centreonHost.class.php";
+
+		$host = new CentreonHost($this->DB);
+		$host->setTemplateFlag();
 		$info = split(";", $this->options["v"]);
 		$host->delMacro($info[0], $info[1]);
 	}

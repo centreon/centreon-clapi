@@ -40,9 +40,15 @@ class CentreonHost {
 	private $DB;
 	private $host_name;
 	private $host_id;
+	private $register;
 		
 	public function __construct($DB) {
 		$this->DB = $DB;
+		$this->register = 1;
+	}
+	
+	public function setTemplateFlag() {
+		$this->register = 0;
 	}
 	
 	/*
@@ -55,7 +61,7 @@ class CentreonHost {
 		/*
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT host_name, host_id FROM host WHERE host_name = '".htmlentities($name, ENT_QUOTES)."' AND host_register = '1'");
+		$DBRESULT =& $this->DB->query("SELECT host_name, host_id FROM host WHERE host_name = '".htmlentities($name, ENT_QUOTES)."' AND host_register = '".$this->register."'");
 		if ($DBRESULT->numRows() >= 1) {
 			$host =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
@@ -131,7 +137,7 @@ class CentreonHost {
 			 * Insert Host
 			 */
 			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
-						"VALUES ('".htmlentities(trim($information["host_name"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_alias"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+						"VALUES ('".htmlentities(trim($information["host_name"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_alias"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 			$host_id = $this->getHostID(htmlentities($information["host_name"], ENT_QUOTES));
 			
@@ -159,6 +165,9 @@ class CentreonHost {
 	 * Set Poller link for an host 
 	 */
 	public function setPoller($host_id, $poller_id) {
+		if ($this->register == 0) {
+			return ;
+		}
 		if (!isset($host_id) || !isset($poller_id)) {
 			print "Bad parameters\n";
 			exit(1);
@@ -173,6 +182,10 @@ class CentreonHost {
 	 * Free Poller link
 	 */
 	public function unsetPoller($host_id) {
+		if ($this->register == 0) {
+			return ;
+		}
+		
 		if (!isset($host_id)) {
 			print "Bad parameters\n";
 			exit(1);
@@ -187,7 +200,7 @@ class CentreonHost {
 	 * Get id of host
 	 */
 	public function getHostID($name) {
-		$request = "SELECT host_id FROM host WHERE host_name = '".trim($name)."' AND host_register = '1'";
+		$request = "SELECT host_id FROM host WHERE host_name = '".trim($name)."' AND host_register = '".$this->register."'";
 		$DBRESULT =& $this->DB->query($request);
 		if ($DBRESULT->numRows()) {
 			$info =& $DBRESULT->fetchRow();
@@ -203,7 +216,7 @@ class CentreonHost {
 	 * List all hosts
 	 */
 	public function listHost() {
-		$request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '1' ORDER BY host_name";
+		$request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '".$this->register."' ORDER BY host_name";
 		$DBRESULT =& $this->DB->query($request);
 		while ($data =& $DBRESULT->fetchRow()) {
 			print $data["host_id"].";".$data["host_name"].";".$data["host_alias"].";".$data["host_address"]."\n";
@@ -216,6 +229,10 @@ class CentreonHost {
 	 * Set parents
 	 */
 	public function setParent($child_name, $parent_name) {
+		if ($this->register == 0) {
+			return ;
+		}
+		
 		if ($child_name == $parent_name) {
 			print "Error in arguments. A host cannot be the parent of himself....\n";
 			return 1;
@@ -327,7 +344,7 @@ class CentreonHost {
 			return $this->setPoller($host_id, $data["id"]);
 		}
 
-		$request = "SELECT host_id FROM host WHERE host_name IN ('$host_name')";				
+		$request = "SELECT host_id FROM host WHERE host_name IN ('$host_name') AND host_register = '".$this->register."'";				
 		$DBRESULT =& $this->DB->query($request);
 		if ($DBRESULT->numRows() == 1) {
 			if ($value != "NULL" && $value != "'NULL'") {
