@@ -240,6 +240,9 @@ class CentreonHost {
 		 * Parameters List
 		 */
 		$tabName = array(
+			"name" => "host",
+			"alias" => "host",
+			"address" => "host",
 			"community" => "host",
 			"version" => "host",
 			"tpcheck" => "host",
@@ -251,6 +254,9 @@ class CentreonHost {
 		 * Set Real field name
 		 */
 		$realNameField = array(
+			"name" => "host_name",
+			"alias" => "host_alias",
+			"address" => "host_address",
 			"community" => "host_snmp_community",
 			"version" => "host_snmp_version",
 			"tpcheck" => "timeperiod_tp_id",
@@ -262,6 +268,11 @@ class CentreonHost {
 		 * Host or host_extentended info
 		 */
 		$host_id_field = array("host" => "host_id", "extended_host_information" => "host_host_id");
+		
+		if (!isset($tabName[$parameter])) {
+			print "Unknown parameters for host.\n";
+			return 1;
+		}
 		
 		/*
 		 * Check timeperiod case
