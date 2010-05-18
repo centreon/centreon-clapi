@@ -148,9 +148,22 @@ class CentreonHost {
 			/*
 			 * Insert Host Poller
 			 */
-			$request = "INSERT INTO ns_host_relation (nagios_server_id, host_host_id) VALUES ('".$information["host_poller"]."', '".$host_id."')";
-			$this->DB->query($request);
+			$this->setPoller($host_id, $information["host_poller"]);
 			return $host_id;
+		}
+	}
+	
+	/*
+	 * Set Poller link for an host 
+	 */
+	public function setPoller($host_id, $poller_id) {
+		if (!isset($host_id) || !isset($poller_id)) {
+			print "Bad parameters\n";
+			exit(1);
+		} else {
+			$request = "INSERT INTO ns_host_relation (nagios_server_id, host_host_id) VALUES ('".$poller_id."', '".$host_id."')";
+			$this->DB->query($request);
+			return 0;			
 		}
 	}
 	
@@ -243,6 +256,7 @@ class CentreonHost {
 			"name" => "host",
 			"alias" => "host",
 			"address" => "host",
+			"poller" => "host",
 			"community" => "host",
 			"version" => "host",
 			"tpcheck" => "host",
@@ -278,10 +292,22 @@ class CentreonHost {
 		 * Check timeperiod case
 		 */
 		if ($parameter == "tpcheck") {
-			$request = "SELECT tp_id FROM timeperiod WHERE tp_name LIKE '$value'";
+			$request = "SELECT tp_id FROM timeperiod WHERE tp_name LIKE '".htmlentities($value, ENT_QUOTES)."'";
 			$DBRESULT =& $this->DB->query($request);
 			$data = $DBRESULT->fetchRow();
 			$value = $data["tp_id"];
+		}
+
+		/*
+		 * Check poller case
+		 */
+		if ($parameter == "poller") {
+			$host_id = $this->getHostID(htmlentities($host_name, ENT_QUOTES));
+			
+			$request = "SELECT id FROM nagios_server WHERE name LIKE '".htmlentities($value, ENT_QUOTES)."'";
+			$DBRESULT =& $this->DB->query($request);
+			$data = $DBRESULT->fetchRow();
+			return $this->setPoller($host_id, $data["id"]);
 		}
 
 		$request = "SELECT host_id FROM host WHERE host_name IN ('$host_name')";				
