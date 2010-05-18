@@ -440,7 +440,7 @@ class CentreonAPI {
 		$hostgroup->listHostGroup();
 	}
 	
-	public function DELHGP() {
+	public function DELHG() {
 		require_once "./class/centreonHostGroup.class.php";
 		
 		$this->checkParameters("Cannot create hostgroup.");
