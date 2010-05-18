@@ -38,7 +38,9 @@
  
 class CentreonHost {
 	private $DB;
-	
+	private $host_name;
+	private $host_id;
+		
 	public function __construct($DB) {
 		$this->DB = $DB;
 	}
@@ -190,6 +192,7 @@ class CentreonHost {
 		if ($DBRESULT->numRows()) {
 			$info =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
+			$this->host_id = $info["host_id"];
 			return $info["host_id"];
 		} else {
 			return 0;
@@ -341,6 +344,49 @@ class CentreonHost {
 			return 1;
 		}
 	} 
+	
+	/*
+	 * Set host macro
+	 */
+	public function setMacro($host_name, $macro_name, $macro_value) {
+		if (!isset($host_name) || !isset($macro_name)) {
+			print "Bad parameters\n";
+			return 1;
+		}
+		
+		$macro_name = strtoupper($macro_name);
+		
+		$host_id = $this->getHostID(htmlentities($host_name, ENT_QUOTES));
+		$request = "SELECT COUNT(*) FROM on_demand_macro_host WHERE host_host_id = '".htmlentities($host_id, ENT_QUOTES)."' AND host_macro_name LIKE '".htmlentities($macro_name, ENT_QUOTES)."'";
+		$DBRESULT =& $this->DB->query($request); 
+		$data =& $DBRESULT->fetchRow();
+		if ($data["COUNT(*)"]) {
+			$request = "UPDATE on_demand_macro_host SET host_macro_value = '".htmlentities($macro_value, ENT_QUOTES)."' WHERE host_host_id = '".htmlentities($host_id, ENT_QUOTES)."' AND host_macro_name LIKE '".htmlentities($macro_name, ENT_QUOTES)."' LIMIT 1";
+			$DBRESULT =& $this->DB->query($request);
+			return 0;
+		} else {
+			$request = "INSERT INTO on_demand_macro_host (host_host_id, host_macro_value, host_macro_name) VALUES ('".htmlentities($host_id, ENT_QUOTES)."', '".htmlentities($macro_value, ENT_QUOTES)."', '".htmlentities($macro_name, ENT_QUOTES)."')";
+			$DBRESULT =& $this->DB->query($request);
+			return 0;
+		}
+	}
+	
+	/*
+	 * Delete host macro
+	 */
+	public function delMacro($host_name, $macro_name) {
+		if (!isset($host_name) || !isset($macro_name)) {
+			print "Bad parameters\n";
+			return 1;
+		}
+		
+		$macro_name = strtoupper($macro_name);
+
+		$host_id = $this->getHostID(htmlentities($host_name, ENT_QUOTES));
+		$request = "DELETE FROM on_demand_macro_host WHERE host_host_id = '".htmlentities($host_id, ENT_QUOTES)."' AND host_macro_name LIKE '".htmlentities($macro_name, ENT_QUOTES)."'";
+		$DBRESULT =& $this->DB->query($request); 
+		return 0;	
+	}
 	 
 }
  

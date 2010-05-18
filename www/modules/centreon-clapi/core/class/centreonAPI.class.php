@@ -164,6 +164,10 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOST \n";
 		print "       - DELHOST: Delete an host (name in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOST -v \"host\" \n";
+		print "       - SETHMACRO: Add an host macro (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHMACRO -v \"host;macroname;macrovalue\" \n";
+		print "       - DELHMACRO: Delete an host macro (need -v parameters)\n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHMACRO -v \"host;macroname\" \n";
 		print "       - ADDHG: Add an hostgroup (need -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOSTGROUP -v \"name;alias\" \n";
 		print "       - LISTHG: List all hostgroups in configuration\n";
@@ -381,6 +385,25 @@ class CentreonAPI {
 		$host = new CentreonHost($this->DB);
 		$host->listHost();
 	}	
+	
+	/*
+	 * Set host Macro
+	 */
+	public function SETHMACRO() {
+		require_once "./class/centreonHost.class.php";
+
+		$host = new CentreonHost($this->DB);
+		$info = split(";", $this->options["v"]);
+		$host->setMacro($info[0], $info[1], $info[2]);
+	}
+	
+	public function DELHMACRO() {
+		require_once "./class/centreonHost.class.php";
+
+		$host = new CentreonHost($this->DB);
+		$info = split(";", $this->options["v"]);
+		$host->delMacro($info[0], $info[1]);
+	}
 	
 	/* ***********************************************************
 	 * Host groups functions
