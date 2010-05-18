@@ -168,6 +168,20 @@ class CentreonHost {
 	}
 	
 	/*
+	 * Free Poller link
+	 */
+	public function unsetPoller($host_id) {
+		if (!isset($host_id)) {
+			print "Bad parameters\n";
+			exit(1);
+		} else {
+			$request = "DELETE FROM ns_host_relation WHERE host_host_id = '".$host_id."'";
+			$this->DB->query($request);
+			return 0;			
+		}
+	}
+	
+	/*
 	 * Get id of host
 	 */
 	public function getHostID($name) {
@@ -303,7 +317,7 @@ class CentreonHost {
 		 */
 		if ($parameter == "poller") {
 			$host_id = $this->getHostID(htmlentities($host_name, ENT_QUOTES));
-			
+			$this->unsetPoller($host_id);
 			$request = "SELECT id FROM nagios_server WHERE name LIKE '".htmlentities($value, ENT_QUOTES)."'";
 			$DBRESULT =& $this->DB->query($request);
 			$data = $DBRESULT->fetchRow();
