@@ -56,7 +56,8 @@ class CentreonAPI {
 	public $dateStart;
 	public $login;
 	public $password;
-	public $action; 
+	public $action;
+	public $object; 
 	public $options; 
 	public $args;
 	public $DB;
@@ -73,18 +74,25 @@ class CentreonAPI {
 		/*
 		 * Set variables
 		 */
-		$this->debug 	= 0;
+		$this->debug 	= 1;
 		$this->return_code = 0;
 		$this->login 	= htmlentities($user, ENT_QUOTES);
 		$this->password = htmlentities($password, ENT_QUOTES);
-		$this->action 	= htmlentities($action, ENT_QUOTES);
+		$this->action 	= htmlentities(strtoupper($action), ENT_QUOTES);
 		$this->options 	= $options;
 		$this->centreon_path = $centreon_path;
-		if (isset($options["v"]))
-			$this->variables= $options["v"];
-		else
-			$this->variables= "";
-				
+		
+		if (isset($options["v"])) {
+			$this->variables = $options["v"];
+		} else {
+			$this->variables = "";
+		}
+		if (isset($options["o"])) {
+			$this->object =  htmlentities(strtoupper($options["o"]), ENT_QUOTES);
+		} else {
+			$this->object = "";
+		}				
+		
 		/*
   		 * Centreon DB Connexion
 		 */ 
@@ -140,10 +148,11 @@ class CentreonAPI {
 		$this->printLegals();
 		print "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n";
 		print "and you are welcome to modify and redistribute it under the GPL license\n\n";
-		print "usage: ./centreon -u <LOGIN> -p <PASSWORD> -a <ACTION> [-v]\n";
+		print "usage: ./centreon -u <LOGIN> -p <PASSWORD> -o <OBJECT> -a <ACTION> [-v]\n";
 		print "  -v 	variables \n";
 		print "  -h 	Print help \n";
 		print "  -V 	Print version \n";
+		print "  -o 	Object type \n";
 		print "  -a 	Launch action on Centreon\n";
 		print "     Actions are the followings :\n";
 		print "       - POLLERGENERATE: Build nagios configuration for a poller (poller id in -v parameters)\n";
@@ -234,11 +243,25 @@ class CentreonAPI {
 		$this->xmlObj = new CentreonXML();
 	}
 
+	/*
+	 * Main function : Launch action 
+	 */
 	public function launchAction() {
 		$action = strtoupper($this->action);
+ 		/*
+ 		 * Debug
+ 		 */
  		if ($this->debug) {
  			print "DEBUG : $action\n";
  		}
+ 		
+ 		if ($this->object) {
+ 			$action = $this->action.$this->object;
+ 		}
+ 		
+ 		/* 
+ 		 * Check method availability before using it.
+ 		 */
  		if (method_exists($this, $action)) {
  			$this->$action();
  		} else {
@@ -393,18 +416,18 @@ class CentreonAPI {
 		require_once "./class/centreonHost.class.php";
 		
 		$host = new CentreonHost($this->DB);
-		$host->listHost();
+		$host->listHost($this->options["v"]);
 	}	
 	
 	/*
 	 * Set host Macro
 	 */
-	public function SETHMACRO() {
+	public function SETMACROHOST() {
 		require_once "./class/centreonHost.class.php";
 
 		$host = new CentreonHost($this->DB);
 		$info = split(";", $this->options["v"]);
-		$host->setMacro($info[0], $info[1], $info[2]);
+		$host->setMacroHost($info[0], $info[1], $info[2]);
 	}
 	
 	public function DELHMACRO() {
@@ -412,8 +435,45 @@ class CentreonAPI {
 
 		$host = new CentreonHost($this->DB);
 		$info = split(";", $this->options["v"]);
-		$host->delMacro($info[0], $info[1]);
+		$host->delMacroHost($info[0], $info[1]);
 	}
+
+	public function SETPARAMHOST() {
+		require_once "./class/centreonHost.class.php";
+		
+		$this->checkParameters("Cannot set parameter for host.");
+		
+		$host = new CentreonHost($this->DB);
+		$elem = split(";", $this->options["v"]);
+		$exitcode = $host->setParameterHost($elem[0], $elem[1], $elem[2]);
+		return $exitcode;
+	}
+	
+	/*
+	 * Set Parents
+	 */
+	public function SETPARENTHOST() {
+		require_once "./class/centreonHost.class.php";
+		
+		$this->checkParameters("Cannot set parents for host.");
+		
+		$host = new CentreonHost($this->DB);
+		
+		$elem = split(";", $this->options["v"]);
+		if (strstr($elem[1], ",")) {
+			$elem2 = split(",", $elem[1]);
+			foreach ($elem2 as $value) {
+				$exitcode = $host->setParent($elem[0], $value);
+				if ($exitcode != 0) {
+					return $exitcode;
+				}
+			}			
+		} else {
+			$exitcode = $host->setParentHost($elem[0], $elem[1]);		
+		}
+		return $exitcode;
+	}
+
 	
 	/*
 	 * Host Template function
@@ -475,7 +535,7 @@ class CentreonAPI {
 	/*
 	 * Set host Macro
 	 */
-	public function SETHTPLMACRO() {
+	public function SETMACROHTPL() {
 		require_once "./class/centreonHost.class.php";
 
 		$host = new CentreonHost($this->DB);
@@ -484,7 +544,7 @@ class CentreonAPI {
 		$host->setMacro($info[0], $info[1], $info[2]);
 	}
 	
-	public function DELHTPLMACRO() {
+	public function DELMACROHTPL() {
 		require_once "./class/centreonHost.class.php";
 
 		$host = new CentreonHost($this->DB);
@@ -758,42 +818,6 @@ class CentreonAPI {
 		
 		$command = new CentreonCommand($this->DB);
 		$exitcode = $command->delCommand($this->options["v"]);
-		return $exitcode;
-	}
-	
-	public function SETPARAMETER() {
-		require_once "./class/centreonHost.class.php";
-		
-		$this->checkParameters("Cannot set parameter for host.");
-		
-		$host = new CentreonHost($this->DB);
-		$elem = split(";", $this->options["v"]);
-		$exitcode = $host->setParameter($elem[0], $elem[1], $elem[2]);
-		return $exitcode;
-	}
-	
-	/*
-	 * Set Parents
-	 */
-	public function SETPARENT() {
-		require_once "./class/centreonHost.class.php";
-		
-		$this->checkParameters("Cannot set parents for host.");
-		
-		$host = new CentreonHost($this->DB);
-		
-		$elem = split(";", $this->options["v"]);
-		if (strstr($elem[1], ",")) {
-			$elem2 = split(",", $elem[1]);
-			foreach ($elem2 as $value) {
-				$exitcode = $host->setParent($elem[0], $value);
-				if ($exitcode != 0) {
-					return $exitcode;
-				}
-			}			
-		} else {
-			$exitcode = $host->setParent($elem[0], $elem[1]);		
-		}
 		return $exitcode;
 	}
 }
