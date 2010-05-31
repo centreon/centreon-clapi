@@ -108,5 +108,72 @@ class CentreonHostGroup {
 		$data =& $DBRESULT->fetchRow();
 		return $data["hg_id"];
 	}
+	
+	public function setParamHG($hg_name, $parameter, $value) {
+		
+		$value = htmlentities($value, ENT_QUOTES);
+		
+		$hg_id = $this->getHostGroupID($hg_name);
+		if ($hg_id) {
+			$request = "UPDATE hostgroup SET $parameter = '$value' WHERE hg_id = '$hg_id'";
+			$DBRESULT =& $this->DB->query($request);
+			if ($DBRESULT) {
+				return 0;
+			} else {
+				return 1;
+			}
+		} else {
+			print "Hostgroup doesn't exists. Please check your arguments\n";
+			return 1;	
+		}
+	}
+	
+	public function addChildHG($hg_name, $child) {
+		
+		/*
+		 * Get Child informations
+		 */
+		$host = new CentreonHost($this->DB);
+		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
+		
+		$hg_id = $this->getHostGroupID($hg_name);
+		if ($hg_id && $host_id) {
+			$request = "DELETE FROM hostgroup_relation WHERE host_host_id = '$host_id' AND hostgroup_hg_id = '$hg_id'";
+			$DBRESULT =& $this->DB->query($request);
+			$request = "INSERT INTO hostgroup_relation (host_host_id, hostgroup_hg_id) VALUES ('$host_id', '$hg_id')";
+			$DBRESULT =& $this->DB->query($request);
+			if ($DBRESULT) {
+				return 0;
+			} else {
+				return 1;
+			}
+		} else {
+			print "Hostgroup or host doesn't exists. Please check your arguments\n";
+			return 1;	
+		}
+	}
+	
+	public function delChildHG($hg_name, $child) {
+		
+		/*
+		 * Get Child informations
+		 */
+		$host = new CentreonHost($this->DB);
+		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
+		
+		$hg_id = $this->getHostGroupID($hg_name);
+		if ($hg_id && $host_id) {
+			$request = "DELETE FROM hostgroup_relation WHERE host_host_id = '$host_id' AND hostgroup_hg_id = '$hg_id'";
+			$DBRESULT =& $this->DB->query($request);
+			if ($DBRESULT) {
+				return 0;
+			} else {
+				return 1;
+			}
+		} else {
+			print "Hostgroup or host doesn't exists. Please check your arguments\n";
+			return 1;	
+		}
+	}
 }
 ?>

@@ -598,6 +598,41 @@ class CentreonAPI {
 		return $exitcode;
 	}
 	
+	public function setParamHG() {
+		require_once "./class/centreonHostGroup.class.php";
+		
+		$this->checkParameters("Cannot set parameters. You heed to use -v options");
+		
+		$hostgroup = new CentreonHostGroup($this->DB);
+		$elem = split(";", $this->options["v"]);
+		$this->return_code = $hostgroup->setParamHG($elem[0], $elem[1], $elem[2]);
+		return $this->return_code;
+	}
+	
+	public function addChildHG() {
+		require_once "./class/centreonHost.class.php";
+		require_once "./class/centreonHostGroup.class.php";
+		
+		$this->checkParameters("Cannot add child. You need to use -v options");
+		
+		$hostgroup = new CentreonHostGroup($this->DB);
+		$elem = split(";", $this->options["v"]);
+		$this->return_code = $hostgroup->addChildHG($elem[0], $elem[1]);
+		return $this->return_code;
+	}
+	
+	public function delChildHG() {
+		require_once "./class/centreonHost.class.php";
+		require_once "./class/centreonHostGroup.class.php";
+		
+		$this->checkParameters("Cannot add child. You need to use -v options");
+		
+		$hostgroup = new CentreonHostGroup($this->DB);
+		$elem = split(";", $this->options["v"]);
+		$this->return_code = $hostgroup->delChildHG($elem[0], $elem[1]);
+		return $this->return_code;
+	}
+	
 	/* ***********************************************************
 	 * Service group Launch Function
 	 * 
