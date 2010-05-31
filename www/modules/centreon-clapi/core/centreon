@@ -47,6 +47,7 @@
 	$shortopts .= "u:"; /* Users */
 	$shortopts .= "p:"; /* Password */
 	$shortopts .= "a:"; /* Action */
+	$shortopts .= "o:"; /* Object type */
 	$shortopts .= "v:"; /* Action */
 	$shortopts .= "h"; /* Help */
 	$shortopts .= "V"; /* Version */
