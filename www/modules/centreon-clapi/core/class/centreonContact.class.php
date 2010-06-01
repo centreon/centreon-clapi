@@ -63,14 +63,42 @@ class CentreonContact {
 		}
 	}
 	
-	public function delContact($name) {
-		$request = "DELETE FROM contact WHERE contact_name LIKE '$name'";
+	public function getContactID($contact_name = NULL) {
+		if (!isset($contact_name))
+			return;
+			
+		$request = "SELECT contact_id FROM contact WHERE contact_name LIKE '$contact_name'";
+		$DBRESULT =& $this->DB->query($request);
+		$data =& $DBRESULT->fetchRow();
+		return $data["contact_id"];
+	}
+	
+	private function checkParameters($options) {
+		if (!isset($options) || $options == "") {
+			print "No options defined. $str\n";
+			$this->return_code = 1;
+			return 1;
+		}
+	}
+	
+	/* **************************************
+	 * Delete action
+	 */
+	
+	public function del($name) {
+		$this->checkParameters($name);
+		
+		$request = "DELETE FROM contact WHERE contact_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return 0;
 	}
 	
-	public function listContact($search = NULL) {
+	/* **************************************
+	 * Display all contact
+	 */
+	
+	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE contact_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' OR contact_alias LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
@@ -82,6 +110,37 @@ class CentreonContact {
 		}
 		$DBRESULT->free();
 		return 0;
+	}
+	
+	/* **************************************
+	 * Add 
+	 */
+	
+	public function add($options) {
+		
+		$this->checkParameters($options);
+		
+		$info = split(";", $options);
+		
+		if (!$this->contactExists($info[0])) {
+			// contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_lang, contact_auth_type, contact_passwd
+			//test;test;jmathis@merethis.com;test;1;1;en_US;local
+			$convertionTable = array(
+				0 => "contact_name", 1 => "contact_alias", 
+				2 => "contact_email", 3 => "contact_passwd", 
+				4 => "contact_admin", 5 => "contact_oreon",
+				6 => "contact_lang", 7 => "contact_auth_type"
+			);
+			$informations = array();
+			foreach ($info as $key => $value) {
+				$informations[$convertionTable[$key]] = $value;
+			}
+			$this->addContact($informations);
+		} else {
+			print "Contact ".$info[0]." already exists.\n";
+			$this->return_code = 1;
+			return;
+		}
 	}
 	
 	public function addContact($information) {
@@ -105,16 +164,6 @@ class CentreonContact {
 			$contact_id = $this->getContactID($information["contact_name"]);
 			return $contact_id;
 		}
-	}
-	
-	public function getContactID($contact_name = NULL) {
-		if (!isset($contact_name))
-			return;
-			
-		$request = "SELECT contact_id FROM contact WHERE contact_name LIKE '$contact_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["contact_id"];
 	}
 }
 ?>
