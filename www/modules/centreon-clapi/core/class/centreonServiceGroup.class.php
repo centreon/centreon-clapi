@@ -63,6 +63,14 @@ class CentreonServiceGroup {
 		}
 	}
 	
+	private function checkParameters($options) {
+		if (!isset($options) || $options == "") {
+			print "No options defined. $str\n";
+			$this->return_code = 1;
+			return 1;
+		}
+	}
+	
 	public function getServiceGroupID($sg_name = NULL) {
 		if (!isset($sg_name))
 			return;

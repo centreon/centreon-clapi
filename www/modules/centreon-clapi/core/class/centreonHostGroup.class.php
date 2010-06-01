@@ -63,7 +63,28 @@ class CentreonHostGroup {
 		}
 	}
 	
+	private function checkParameters($options) {
+		if (!isset($options) || $options == "") {
+			print "No options defined. $str\n";
+			$this->return_code = 1;
+			return 1;
+		}
+	}
+	
+	public function getHostGroupID($hg_name = NULL) {
+		if (!isset($hg_name))
+			return;
+			
+		$request = "SELECT hg_id FROM hostgroup WHERE hg_name LIKE '$hg_name'";
+		$DBRESULT =& $this->DB->query($request);
+		$data =& $DBRESULT->fetchRow();
+		return $data["hg_id"];
+	}
+	
 	public function del($options) {
+		
+		$this->checkParameters($name);
+		
 		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '$name'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
@@ -119,16 +140,6 @@ class CentreonHostGroup {
 			$hg_id = $this->getHostGroupID($information["hg_name"]);
 			return $hg_id;
 		}
-	}
-	
-	public function getHostGroupID($hg_name = NULL) {
-		if (!isset($hg_name))
-			return;
-			
-		$request = "SELECT hg_id FROM hostgroup WHERE hg_name LIKE '$hg_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["hg_id"];
 	}
 	
 	/* ***************************************
