@@ -63,14 +63,31 @@ class CentreonServiceGroup {
 		}
 	}
 	
-	public function delServiceGroup($name) {
-		$request = "DELETE FROM servicegroup WHERE sg_name LIKE '$name'";
+	public function getServiceGroupID($sg_name = NULL) {
+		if (!isset($sg_name))
+			return;
+			
+		$request = "SELECT sg_id FROM servicegroup WHERE sg_name LIKE '$sg_name'";
+		$DBRESULT =& $this->DB->query($request);
+		$data =& $DBRESULT->fetchRow();
+		return $data["sg_id"];
+	}
+	
+	/* ****************************************
+	 *  Delete Action
+	 */
+	 
+	public function del($name) {
+		$request = "DELETE FROM servicegroup WHERE sg_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return;
 	}
 	
-	public function listServiceGroup($search = NULL) {
+	/* ****************************************
+	 * Dislay all SG
+	 */
+	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE sg_name LILE '%".htmlentities($search, ENT_QUOTES)."%'";
@@ -82,6 +99,28 @@ class CentreonServiceGroup {
 		}
 		$DBRESULT->free();
 		
+	}
+	
+	/* ****************************************
+	 * Add Action
+	 */
+	
+	public function add($options) {
+		
+		$info = split(";", $options);
+		
+		if (!$this->serviceGroupExists($info[0])) {
+			$convertionTable = array(0 => "sg_name", 1 => "sg_alias");
+			$informations = array();
+			foreach ($info as $key => $value) {
+				$informations[$convertionTable[$key]] = $value;
+			}
+			$this->addServiceGroup($informations);
+		} else {
+			print "Servicegroup ".$info[0]." already exists.\n";
+			$this->return_code = 1;
+			return;
+		}
 	}
 	
 	public function addServiceGroup($information) {
@@ -99,14 +138,107 @@ class CentreonServiceGroup {
 		}
 	}
 	
-	public function getServiceGroupID($sg_name = NULL) {
-		if (!isset($sg_name))
-			return;
-			
-		$request = "SELECT sg_id FROM servicegroup WHERE sg_name LIKE '$sg_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["sg_id"];
+	/* ****************************************
+	 * Add Action
+	 */
+	
+	public function setParam($options) {
+		$elem = split(";", $options);
+		return $this->setParamServiceGroup($elem[0], $elem[1], $elem[2]);
+	}
+	
+	public function setParamServiceGroup($sg_name, $parameter, $value) {
+		
+		$value = htmlentities($value, ENT_QUOTES);
+		
+		$sg_id = $this->getServiceGroupID($sg_name);
+		if ($sg_id) {
+			$request = "UPDATE servicegroup SET $parameter = '$value' WHERE sg_id = '$sg_id'";
+			$DBRESULT =& $this->DB->query($request);
+			if ($DBRESULT) {
+				return 0;
+			} else {
+				return 1;
+			}
+		} else {
+			print "Service group doesn't exists. Please check your arguments\n";
+			return 1;	
+		}
+	}
+	
+	/* **************************************
+	 * Add childs
+	 */
+	 
+	public function addChild($options) {
+		$elem = split(";", $options);
+		return $this->addChildServiceGroup($elem[0], $elem[1], $elem[2]);
+	}
+	 
+	public function addChildServiceGroup($sg_name, $child_host, $child_service) {
+		
+		/*
+		 * Get host Child informations
+		 */
+		$host = new CentreonHost($this->DB);
+		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
+		
+		/*
+		 * Get service Child information
+		 */
+		$service = new CentreonService($this->DB);
+		$service_id = $host->getServiceID(htmlentities($child_service, ENT_QUOTES), htmlentities($child_host, ENT_QUOTES));
+
+		/*
+		 * Add link.
+		 */				
+		$sg_id = $this->getServiceGroupID($sg_name);
+		if ($sg_id && $host_id) {
+			$request = "DELETE FROM hostgroup_relation WHERE host_host_id = '$host_id' AND hostgroup_hg_id = '$hg_id'";
+			$DBRESULT =& $this->DB->query($request);
+			$request = "INSERT INTO hostgroup_relation (host_host_id, hostgroup_hg_id) VALUES ('$host_id', '$hg_id')";
+			$DBRESULT =& $this->DB->query($request);
+			if ($DBRESULT) {
+				return 0;
+			} else {
+				return 1;
+			}
+		} else {
+			print "Hostgroup or host doesn't exists. Please check your arguments\n";
+			return 1;	
+		}
+	}
+	
+	/* **************************************
+	 * Add childs
+	 */
+	 
+	public function delChild($options) {
+		$elem = split(";", $options);
+		return $this->delChildServiceGroup($elem[0], $elem[1], $elem[2]);
+	}
+	
+	public function delChildServiceGroup($sg_name, $child_host, $child_service) {
+		
+		/*
+		 * Get Child informations
+		 */
+		$host = new CentreonHost($this->DB);
+		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
+		
+		$sg_id = $this->getServiceGroupID($sg_name);
+		if ($hg_id && $host_id) {
+			$request = "DELETE FROM hostgroup_relation WHERE host_host_id = '$host_id' AND hostgroup_hg_id = '$hg_id'";
+			$DBRESULT =& $this->DB->query($request);
+			if ($DBRESULT) {
+				return 0;
+			} else {
+				return 1;
+			}
+		} else {
+			print "Hostgroup or host doesn't exists. Please check your arguments\n";
+			return 1;	
+		}
 	}
 }
 ?>

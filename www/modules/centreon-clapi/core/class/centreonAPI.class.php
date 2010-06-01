@@ -88,7 +88,7 @@ class CentreonAPI {
 		/*
 		 * Set variables
 		 */
-		$this->debug 	= 1;
+		$this->debug 	= 0;
 		$this->return_code = 0;
 		$this->login 	= htmlentities($user, ENT_QUOTES);
 		$this->password = htmlentities($password, ENT_QUOTES);
@@ -587,44 +587,7 @@ class CentreonAPI {
 	 * Service group Launch Function
 	 * 
 	 */
-	 
-	public function ADDSG() {
-		require_once "./class/centreonServiceGroup.class.php";
-	
-		$servicegroup = new CentreonServiceGroup($this->DB);
-		
-		$info = split(";", $this->options["v"]);
-		
-		if (!$servicegroup->serviceGroupExists($info[0])) {
-			$convertionTable = array(0 => "sg_name", 1 => "sg_alias");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}
-			$servicegroup->addServiceGroup($informations);
-		} else {
-			print "Servicegroup ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return;
-		}
-	}
-	
-	public function LISTSG() {
-		require_once "./class/centreonServiceGroup.class.php";
-	
-		$servicegroup = new CentreonServiceGroup($this->DB);
-		$servicegroup->listServiceGroup();
-	}
-	
-	public function DELSG() {
-		require_once "./class/centreonServiceGroup.class.php";
-	
-		$this->checkParameters("Cannot create servicegroup.");
-		
-		$servicegroup = new CentreonServiceGroup($this->DB);
-		$exitcode = $servicegroup->delServiceGroup($this->options["v"]);
-		return $exitcode;
-	}
+
 	
 	
 	/* ***********************************************************
