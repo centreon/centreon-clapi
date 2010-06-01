@@ -219,7 +219,7 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELCMD -v \"command_name\" \n";
 		print "\n";
 		print "Notes:\n";
-		print "  - Actions can be writed in lowercase chars\n";
+		print "  - Actions can be written in lowercase chars\n";
 		print "  - LOGIN and PASSWORD is an admin account of Centreon\n";
 		print "\n";
 		$this->return_code = 0;
