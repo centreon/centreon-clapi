@@ -45,8 +45,21 @@ if (file_exists("../../../class/centreonSession.class.php"))
 	require_once "../../../class/centreonSession.class.php";
 else
 	require_once "../../../class/Session.class.php";
-
+/*
+ * General Centeon Management
+ */
 require_once "./class/centreon.Config.Poller.class.php";
+
+/*
+ * Centreon Object Management
+ */
+require_once "./class/centreonCommand.class.php";
+require_once "./class/centreonContact.class.php";
+require_once "./class/centreonContactGroup.class.php";
+require_once "./class/centreonHost.class.php";
+require_once "./class/centreonHostGroup.class.php";
+require_once "./class/centreonService.class.php";
+require_once "./class/centreonServiceGroup.class.php";
 
 /*
  * Declare Centreon API
@@ -69,6 +82,7 @@ class CentreonAPI {
 	public $variables;
 	public $centreon_path;
 	private $return_code;
+	private $relationObject;
 	
 	public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
 		/*
@@ -98,6 +112,15 @@ class CentreonAPI {
 		 */ 
 		$this->DB = new CentreonDB();
 		$this->dateStart = time();
+	
+		$this->relationObject = array();
+		$this->relationObject["CMD"] = "Command";
+		$this->relationObject["HOST"] = "Host";
+		$this->relationObject["SERVICE"] = "Service";
+		$this->relationObject["HG"] = "HostGroup";
+		$this->relationObject["SG"] = "ServiceGroup";
+		$this->relationObject["CONTACT"] = "Contact";
+		$this->relationObject["CG"] = "ContactGroup";
 	}
 
 	public function setLogin($login) {
@@ -254,19 +277,26 @@ class CentreonAPI {
  		if ($this->debug) {
  			print "DEBUG : $action\n";
  		}
- 		
- 		if ($this->object) {
- 			$action = $this->action.$this->object;
- 		}
- 		
+ 		 		
  		/* 
  		 * Check method availability before using it.
  		 */
- 		if (method_exists($this, $action)) {
- 			$this->$action();
- 		} else {
-			print "Unavailable fonction.\n";
- 		}
+ 		if ($this->object) {
+			$objName = "Centreon".$this->relationObject[$this->object];
+			$obj = new $objName($this->DB);
+			if (method_exists($obj, $action)) {
+				$obj->$action($this->options["v"]);			
+			} else {
+				print "Method not implemented into Centreon API.\n";
+				return 1;	
+			}
+		} else {
+			if (method_exists($this, $action)) {
+				$this->$action();			
+			} else {
+				print "Method not implemented into Centreon API.\n";
+			}
+		}
 		exit($this->return_code);
 	}
 
@@ -552,87 +582,7 @@ class CentreonAPI {
 		$info = split(";", $this->options["v"]);
 		$host->delMacro($info[0], $info[1]);
 	}
-	
-	/* ***********************************************************
-	 * Host groups functions
-	 */
-	 
-	/*
-	 * Add a hostgroup 
-	 */
-	public function ADDHG() {
-		require_once "./class/centreonHostGroup.class.php";
 		
-		$hostgroup = new CentreonHostGroup($this->DB);
-		
-		$info = split(";", $this->options["v"]);
-		
-		if (!$hostgroup->hostGroupExists($info[0])) {
-			$convertionTable = array(0 => "hg_name", 1 => "hg_alias");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}
-			$hostgroup->addHostGroup($informations);
-		} else {
-			print "Hostgroup ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return;
-		}
-	}
-	
-	public function LISTHG() {
-		require_once "./class/centreonHostGroup.class.php";
-		
-		$hostgroup = new CentreonHostGroup($this->DB);
-		$hostgroup->listHostGroup();
-	}
-	
-	public function DELHG() {
-		require_once "./class/centreonHostGroup.class.php";
-		
-		$this->checkParameters("Cannot create hostgroup.");
-		
-		$hostgroup = new CentreonHostGroup($this->DB);
-		$exitcode = $hostgroup->delHostGroup($this->options["v"]);
-		return $exitcode;
-	}
-	
-	public function setParamHG() {
-		require_once "./class/centreonHostGroup.class.php";
-		
-		$this->checkParameters("Cannot set parameters. You heed to use -v options");
-		
-		$hostgroup = new CentreonHostGroup($this->DB);
-		$elem = split(";", $this->options["v"]);
-		$this->return_code = $hostgroup->setParamHG($elem[0], $elem[1], $elem[2]);
-		return $this->return_code;
-	}
-	
-	public function addChildHG() {
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonHostGroup.class.php";
-		
-		$this->checkParameters("Cannot add child. You need to use -v options");
-		
-		$hostgroup = new CentreonHostGroup($this->DB);
-		$elem = split(";", $this->options["v"]);
-		$this->return_code = $hostgroup->addChildHG($elem[0], $elem[1]);
-		return $this->return_code;
-	}
-	
-	public function delChildHG() {
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonHostGroup.class.php";
-		
-		$this->checkParameters("Cannot add child. You need to use -v options");
-		
-		$hostgroup = new CentreonHostGroup($this->DB);
-		$elem = split(";", $this->options["v"]);
-		$this->return_code = $hostgroup->delChildHG($elem[0], $elem[1]);
-		return $this->return_code;
-	}
-	
 	/* ***********************************************************
 	 * Service group Launch Function
 	 * 

@@ -63,14 +63,14 @@ class CentreonHostGroup {
 		}
 	}
 	
-	public function delHostGroup($name) {
+	public function del($options) {
 		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '$name'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return;
 	}
 	
-	public function listHostGroup($search = NULL) {
+	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE hg_name LIKE '%".htmlentities($search, ENT_QUOTES)."%'";
@@ -83,9 +83,31 @@ class CentreonHostGroup {
 		$DBRESULT->free();
 		
 	}
-	
+
+	public function add($options) {
+		/*
+		 * Split options
+		 */
+		$info = split(";", $options);
+
+		if (!$this->hostGroupExists($info[0])) {
+			$convertionTable = array(0 => "hg_name", 1 => "hg_alias");
+			$informations = array();
+			foreach ($info as $key => $value) {
+				$informations[$convertionTable[$key]] = $value;
+			}
+			$this->addHostGroup($informations);
+			unset($informations);
+		} else {
+			print "Hostgroup ".$info[0]." already exists.\n";
+			$this->return_code = 1;
+			return;
+		}
+	}
+
 	public function addHostGroup($information) {
 		if (!isset($information["hg_name"])) {
+			print "No information received\n";
 			return 0;
 		} else {
 			if (!isset($information["hg_alias"]) || $information["hg_alias"] == "")
@@ -109,7 +131,16 @@ class CentreonHostGroup {
 		return $data["hg_id"];
 	}
 	
-	public function setParamHG($hg_name, $parameter, $value) {
+	/* ***************************************
+	 * Set params
+	 */
+	
+	public function setParam($options) {
+		$elem = split(";", $options);
+		return $this->setParamHostGroup($elem[0], $elem[1], $elem[2]);
+	}
+	
+	public function setParamHostGroup($hg_name, $parameter, $value) {
 		
 		$value = htmlentities($value, ENT_QUOTES);
 		
@@ -128,7 +159,16 @@ class CentreonHostGroup {
 		}
 	}
 	
-	public function addChildHG($hg_name, $child) {
+	/* ************************************
+	 * Add Child
+	 */
+	
+	public function addChild($options) {
+		$elem = split(";", $options);
+		return $this->return_code = $this->addChildHostGroup($elem[0], $elem[1]);
+	} 
+	
+	public function addChildHostGroup($hg_name, $child) {
 		
 		/*
 		 * Get Child informations
@@ -153,7 +193,16 @@ class CentreonHostGroup {
 		}
 	}
 	
-	public function delChildHG($hg_name, $child) {
+	/* ************************************
+	 * Add Child
+	 */
+	
+	public function delChild($options) {
+		$elem = split(";", $options);
+		return $this->return_code = $this->delChildHostGroup($elem[0], $elem[1]);
+	} 
+	
+	public function delChildHostGroup($hg_name, $child) {
 		
 		/*
 		 * Get Child informations
