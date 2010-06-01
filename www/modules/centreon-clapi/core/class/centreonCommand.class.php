@@ -63,14 +63,41 @@ class CentreonCommand {
 		}
 	}
 	
-	public function delCommand($name) {
-		$request = "DELETE FROM command WHERE command_name LIKE '$name'";
+	public function getCommandID($command_name = NULL) {
+		if (!isset($command_name))
+			return;
+			
+		$request = "SELECT command_id FROM command WHERE command_name LIKE '$command_name'";
+		$DBRESULT =& $this->DB->query($request);
+		$data =& $DBRESULT->fetchRow();
+		return $data["command_id"];
+	}
+	
+	private function checkParameters($options) {
+		if (!isset($options) || $options == "") {
+			print "No options defined. $str\n";
+			$this->return_code = 1;
+			return 1;
+		}
+	}
+	
+	/* ******************************
+	 * Delete
+	 */
+	
+	public function del($name) {
+		$this->checkParameters($name);
+		$request = "DELETE FROM command WHERE command_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return 0;
 	}
+
+	/* ******************************
+	 * display all commands
+	 */
 	
-	public function listCommand($search = NULL) {
+	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE command_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
@@ -87,6 +114,35 @@ class CentreonCommand {
 		$DBRESULT->free();
 		return 0;
 	}
+
+	/* ******************************
+	 * add a command
+	 */
+	
+	public function add($options) {
+		
+		$this->checkParameters($options);
+		
+		$info = split(";", $options);
+		
+		if (!$this->commandExists($info[0])) {
+			$type = array("notif" => 1, "check" => 2, "misc" => 3);
+			$convertionTable = array(0 => "command_name", 1 => "command_line", 2 => "command_type");
+			$informations = array();
+			foreach ($info as $key => $value) {
+				if ($key != 2) {
+					$informations[$convertionTable[$key]] = $value;
+				} else {
+					$informations[$convertionTable[$key]] = $type[$value];
+				}
+			}
+			$this->addCommand($informations);
+		} else {
+			print "Command ".$info[0]." already exists.\n";
+			$this->return_code = 1;
+			return;
+		}
+	}
 	
 	public function addCommand($information) {
 		if (!isset($information["command_name"])) {
@@ -102,15 +158,9 @@ class CentreonCommand {
 			return $command_id;
 		}
 	}
-	
-	public function getCommandID($command_name = NULL) {
-		if (!isset($command_name))
-			return;
-			
-		$request = "SELECT command_id FROM command WHERE command_name LIKE '$command_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["command_id"];
+
+	public function setParamCmd() {
+		
 	}
 }
 ?>
