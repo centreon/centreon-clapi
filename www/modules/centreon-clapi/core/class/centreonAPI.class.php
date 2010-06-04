@@ -41,10 +41,13 @@
  */
 require_once "../../../class/centreonDB.class.php";
 require_once "../../../class/centreonXML.class.php";
-if (file_exists("../../../class/centreonSession.class.php"))
+
+if (file_exists("../../../class/centreonSession.class.php")) {
 	require_once "../../../class/centreonSession.class.php";
-else
+} else {
 	require_once "../../../class/Session.class.php";
+}
+
 /*
  * General Centeon Management
  */
@@ -115,6 +118,7 @@ class CentreonAPI {
 	
 		$this->relationObject = array();
 		$this->relationObject["CMD"] = "Command";
+		$this->relationObject["COMMAND"] = "Command";
 		$this->relationObject["HOST"] = "Host";
 		$this->relationObject["SERVICE"] = "Service";
 		$this->relationObject["HG"] = "HostGroup";
@@ -399,44 +403,6 @@ class CentreonAPI {
 	 * Host Functions
 	 */
 
-	/*
-	 * Add Hosts
-	 */
-	public function ADDHOST() {
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-		
-		$this->checkParameters("Cannot create host.");
-		
-		$host = new CentreonHost($this->DB);
-		$svc = new CentreonService($this->DB);
-		$info = split(":", $this->options["v"]);
-		if (!$host->hostExists($info[0])) {
-			$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template", 4 => "host_poller", 5 => "hostgroup");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}
-			$host_id = $host->addHost($informations);
-			$host->deployServiceTemplates($host_id, $svc);
-		} else {
-			print "Host ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return;
-		}
-	}
-
-	/*
-	 * Delete Hosts
-	 */
-	public function DELHOST() {
-		require_once "./class/centreonHost.class.php";
-		
-		$this->checkParameters("Cannot delete host.");
-		
-		$host = new CentreonHost($this->DB);
-		$host->delHost($this->options["v"]);
-	}	
 
 	/*
 	 * Add Hosts

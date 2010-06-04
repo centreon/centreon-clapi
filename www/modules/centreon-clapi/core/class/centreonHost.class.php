@@ -70,16 +70,95 @@ class CentreonHost {
 			return 0;
 		}
 	}
+	
+	private function checkParameters($options) {
+		if (!isset($options) || $options == "") {
+			print "No options defined. $str\n";
+			return 1;
+		}
+	}
+	
+	private function checkNameformat($name) {
+		
+	}
+	
+	/* ***********************************
+	 * Add functions
+	 */
+	
+	public function add($options) {
+		
+		$this->checkParameters($options);
+		
+		$svc = new CentreonService($this->DB);
+		$info = split(";", $options);
+		if (!$this->hostExists($info[0])) {
+			$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template", 4 => "host_poller", 5 => "hostgroup");
+			$informations = array();
+			foreach ($info as $key => $value) {
+				$informations[$convertionTable[$key]] = $value;
+			}
+			$host_id = $this->addHost($informations);
+			$this->deployServiceTemplates($host_id, $svc);
+		} else {
+			print "Host ".$info[0]." already exists.\n";
+			$this->return_code = 1;
+			return;
+		}
+	}
 
 	/*
+	 * Add an host
+	 */
+	public function addHost($information) {
+		if (!isset($information["host_name"]) || !isset($information["host_address"]) || !isset($information["host_template"]) || !isset($information["host_poller"])) {
+			return 0;
+		} else {
+			if (!isset($information["host_alias"]) || $information["host_alias"] == "")
+				$information["host_alias"] = $information["host_name"];
+			/*
+			 * Insert Host
+			 */
+			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
+						"VALUES ('".htmlentities(trim($information["host_name"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_alias"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+			$this->DB->query($request);
+			$host_id = $this->getHostID(htmlentities($information["host_name"], ENT_QUOTES));
+			
+			/*
+			 * Insert Template Relation
+			 */
+			$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ('".$information["host_template"]."', '".$host_id."')";
+			$this->DB->query($request);
+			
+			/*
+			 * Insert Extended Info
+			 */
+			$request = "INSERT INTO extended_host_information (host_host_id) VALUES ('".$host_id."')";
+			$this->DB->query($request);
+			
+			/*
+			 * Insert Host Poller
+			 */
+			$this->setPoller($host_id, $information["host_poller"]);
+			return $host_id;
+		}
+	}
+	
+
+	/* *************************************
 	 * Delete Host
 	 */
-	public function delHost($host_name) {
-		$request = "DELETE FROM host WHERE host_name LIKE '$host_name'";
+	public function del($options) {
+		
+		$this->checkParameters($options);
+		
+		$request = "DELETE FROM host WHERE host_name LIKE '".htmlentities($options, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return;
 	}
+	
+	
 	
 	/*
 	 * Get Name of an host
@@ -121,43 +200,6 @@ class CentreonHost {
 				$this->deployServiceTemplates($host_id, $objService, $data["host_tpl_id"]);
 			}
 			$DBRESULT->free();
-		}
-	}
-
-	/*
-	 * Add an host
-	 */
-	public function addHost($information) {
-		if (!isset($information["host_name"]) || !isset($information["host_address"]) || !isset($information["host_template"]) || !isset($information["host_poller"])) {
-			return 0;
-		} else {
-			if (!isset($information["host_alias"]) || $information["host_alias"] == "")
-				$information["host_alias"] = $information["host_name"];
-			/*
-			 * Insert Host
-			 */
-			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
-						"VALUES ('".htmlentities(trim($information["host_name"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_alias"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
-			$this->DB->query($request);
-			$host_id = $this->getHostID(htmlentities($information["host_name"], ENT_QUOTES));
-			
-			/*
-			 * Insert Template Relation
-			 */
-			$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ('".$information["host_template"]."', '".$host_id."')";
-			$this->DB->query($request);
-			
-			/*
-			 * Insert Extended Info
-			 */
-			$request = "INSERT INTO extended_host_information (host_host_id) VALUES ('".$host_id."')";
-			$this->DB->query($request);
-			
-			/*
-			 * Insert Host Poller
-			 */
-			$this->setPoller($host_id, $information["host_poller"]);
-			return $host_id;
 		}
 	}
 	
@@ -215,10 +257,10 @@ class CentreonHost {
 	/*
 	 * List all hosts
 	 */
-	public function listHost($host_name = NULL) {
+	public function show($host_name = NULL) {
 		$search = "";
 		if (isset($host_name)) {
-			$search = " AND (host_name like '%$host_name%' OR host_alias LIKE '%$host_name%') ";
+			$search = " AND (host_name like '%".htmlentities($host_name, ENT_QUOTES)."%' OR host_alias LIKE '%".htmlentities($host_name, ENT_QUOTES)."%') ";
 		}
 		
 		$request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '".$this->register."' $search ORDER BY host_name";
@@ -287,7 +329,7 @@ class CentreonHost {
 	/*
 	 * Set Parameters
 	 */
-	public function setParameterHost($host_name, $parameter, $value) {
+	public function setParameter($host_name, $parameter, $value) {
 		/*
 		 * Parameters List
 		 */
@@ -370,7 +412,7 @@ class CentreonHost {
 	/*
 	 * Set host macro
 	 */
-	public function setMacroHost($host_name, $macro_name, $macro_value) {
+	public function setMacro($host_name, $macro_name, $macro_value) {
 		if (!isset($host_name) || !isset($macro_name)) {
 			print "Bad parameters\n";
 			return 1;
@@ -396,7 +438,7 @@ class CentreonHost {
 	/*
 	 * Delete host macro
 	 */
-	public function delMacroHost($host_name, $macro_name) {
+	public function delMacro($host_name, $macro_name) {
 		if (!isset($host_name) || !isset($macro_name)) {
 			print "Bad parameters\n";
 			return 1;
