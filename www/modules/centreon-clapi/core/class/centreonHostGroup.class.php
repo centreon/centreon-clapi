@@ -83,7 +83,7 @@ class CentreonHostGroup {
 	
 	public function del($options) {
 		
-		$this->checkParameters($name);
+		$this->checkParameters($options);
 		
 		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '$name'";
 		$DBRESULT =& $this->DB->query($request);
@@ -105,6 +105,9 @@ class CentreonHostGroup {
 		
 	}
 
+	/* *************************************
+	 * Add functions
+	 */
 	public function add($options) {
 		/*
 		 * Split options
@@ -145,7 +148,6 @@ class CentreonHostGroup {
 	/* ***************************************
 	 * Set params
 	 */
-	
 	public function setParam($options) {
 		$elem = split(";", $options);
 		return $this->setParamHostGroup($elem[0], $elem[1], $elem[2]);
@@ -205,7 +207,7 @@ class CentreonHostGroup {
 	}
 	
 	/* ************************************
-	 * Add Child
+	 * Del Child
 	 */
 	
 	public function delChild($options) {
