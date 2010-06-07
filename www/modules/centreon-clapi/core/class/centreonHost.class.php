@@ -42,9 +42,13 @@ class CentreonHost {
 	private $host_id;
 	private $register;
 		
-	public function __construct($DB) {
+	public function __construct($DB, $objName) {
 		$this->DB = $DB;
 		$this->register = 1;
+
+		if (strtoupper($objName) == "HTPL") {
+			$this->setTemplateFlag();
+		}
 	}
 	
 	public function setTemplateFlag() {
@@ -78,26 +82,73 @@ class CentreonHost {
 		}
 	}
 	
+	private function validateName($name) {
+		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches)) {
+			return $this->checkNameformat($name);
+		} else {
+			print "Name '$name' doesn't match with Centreon naming rules.\n";
+			exit (1);	
+		}
+	}
+	
 	private function checkNameformat($name) {
+		if (strlen($name) > 25) {
+			print "Warning: host name reduce to 25 caracters.\n";
+		}
+		return sprintf("%.25s", $name);
+	}
+	
+	/*
+	 * Get id of host
+	 */
+	public function getHostID($name) {
+		$request = "SELECT host_id FROM host WHERE host_name = '".trim($name)."' AND host_register = '".$this->register."'";
+		$DBRESULT =& $this->DB->query($request);
+		if ($DBRESULT->numRows()) {
+			$info =& $DBRESULT->fetchRow();
+			$DBRESULT->free();
+			$this->host_id = $info["host_id"];
+			return $info["host_id"];
+		} else {
+			return 0;
+		}
+	}
+	
+	/*
+	 * Get Name of an host
+	 */
+	public function getHostName($host_id) {
+		$request = "SELECT host_name FROM host WHERE host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+		$data =& $DBRESULT->fetchRow();
+		$DBRESULT->free();
 		
+		if (isset($data["host_name"]) && $data["host_name"])
+			return $data["host_name"];
+		else
+			return "";
 	}
 	
 	/* ***********************************
 	 * Add functions
 	 */
-	
 	public function add($options) {
 		
 		$this->checkParameters($options);
 		
 		$svc = new CentreonService($this->DB);
 		$info = split(";", $options);
+		/*
+		 * Check host_name / host_alias rules
+		 */
+		$info[0] = $this->validateName($info[0]);
+		
 		if (!$this->hostExists($info[0])) {
 			$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template", 4 => "host_poller", 5 => "hostgroup");
 			$informations = array();
 			foreach ($info as $key => $value) {
 				$informations[$convertionTable[$key]] = $value;
-			}
+			}			
 			$host_id = $this->addHost($informations);
 			$this->deployServiceTemplates($host_id, $svc);
 		} else {
@@ -143,7 +194,6 @@ class CentreonHost {
 			return $host_id;
 		}
 	}
-	
 
 	/* *************************************
 	 * Delete Host
@@ -158,29 +208,35 @@ class CentreonHost {
 		return;
 	}
 	
-	
-	
-	/*
-	 * Get Name of an host
+	/* *******************************************
+	 * Macro Management
 	 */
-	public function getHostName($host_id) {
-		$request = "SELECT host_name FROM host WHERE host_id = '$host_id'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		$DBRESULT->free();
+	public function setMacro($options) {
 		
-		if (isset($data["host_name"]) && $data["host_name"])
-			return $data["host_name"];
-		else
-			return "";
+		$this->checkParameters($options);
+		
+		$info = split(";", $options);
+		$return_code = $this->setMacroHost($info[0], $info[1], $info[2]);
+		return $return_code;
+	}
+	
+	public function delMacro($options) {
+
+		$this->checkParameters($options);
+		
+		$info = split(";", $options);
+		$return_code = $this->delMacroHost($info[0], $info[1]);
+		return $return_code;
 	}
 
-	/*
+	/* ******************************************
 	 * Deploy all services of an host
 	 */
 	public function deployServiceTemplates($host_id, $objService, $tpl_id = NULL) {
-		if (!isset($tpl_id))
+		if (!isset($tpl_id)) {
 			$tpl_id = $host_id;
+		}
+		 
 		if (isset($tpl_id) && $tpl_id) {
 			$request = "SELECT host_tpl_id FROM host_template_relation WHERE host_host_id = '$tpl_id'";
 			$DBRESULT =& $this->DB->query($request);
@@ -203,59 +259,8 @@ class CentreonHost {
 		}
 	}
 	
-	/*
-	 * Set Poller link for an host 
-	 */
-	public function setPoller($host_id, $poller_id) {
-		if ($this->register == 0) {
-			return ;
-		}
-		if (!isset($host_id) || !isset($poller_id)) {
-			print "Bad parameters\n";
-			exit(1);
-		} else {
-			$request = "INSERT INTO ns_host_relation (nagios_server_id, host_host_id) VALUES ('".$poller_id."', '".$host_id."')";
-			$this->DB->query($request);
-			return 0;			
-		}
-	}
-	
-	/*
-	 * Free Poller link
-	 */
-	public function unsetPoller($host_id) {
-		if ($this->register == 0) {
-			return ;
-		}
-		
-		if (!isset($host_id)) {
-			print "Bad parameters\n";
-			exit(1);
-		} else {
-			$request = "DELETE FROM ns_host_relation WHERE host_host_id = '".$host_id."'";
-			$this->DB->query($request);
-			return 0;			
-		}
-	}
-	
-	/*
-	 * Get id of host
-	 */
-	public function getHostID($name) {
-		$request = "SELECT host_id FROM host WHERE host_name = '".trim($name)."' AND host_register = '".$this->register."'";
-		$DBRESULT =& $this->DB->query($request);
-		if ($DBRESULT->numRows()) {
-			$info =& $DBRESULT->fetchRow();
-			$DBRESULT->free();
-			$this->host_id = $info["host_id"];
-			return $info["host_id"];
-		} else {
-			return 0;
-		}
-	}
-	
-	/*
-	 * List all hosts
+	/* ***********************************************
+	 * List all hosts or templates
 	 */
 	public function show($host_name = NULL) {
 		$search = "";
@@ -272,9 +277,28 @@ class CentreonHost {
 		unset($data);
 	}
 	
-	/*
+	/* *********************************************
 	 * Set parents
 	 */
+	public function setParent($options) {
+		
+		$this->checkParameters("Cannot set parents for host.");
+		
+		$elem = split(";", $options);
+		if (strstr($elem[1], ",")) {
+			$elem2 = split(",", $elem[1]);
+			foreach ($elem2 as $value) {
+				$exitcode = $this->setParentHost($elem[0], $value);
+				if ($exitcode != 0) {
+					return $exitcode;
+				}
+			}			
+		} else {
+			$exitcode = $this->setParentHost($elem[0], $elem[1]);		
+		}
+		return $exitcode;
+	} 
+	
 	public function setParentHost($child_name, $parent_name) {
 		if ($this->register == 0) {
 			return ;
@@ -326,10 +350,23 @@ class CentreonHost {
 		}
 	}
 	
+	/* ***********************************************
+	 * Parameters management
+	 */
+	public function setParam($options) {
+		
+		$this->checkParameters($options);
+		
+		$elem = split(";", $options);
+		$exitcode = $this->setParameterHost($elem[0], $elem[1], $elem[2]);
+		return $exitcode;
+	}
+	
+	
 	/*
 	 * Set Parameters
 	 */
-	public function setParameter($host_name, $parameter, $value) {
+	public function setParameterHost($host_name, $parameter, $value) {
 		/*
 		 * Parameters List
 		 */
@@ -363,9 +400,8 @@ class CentreonHost {
 		 * Host or host_extentended info
 		 */
 		$host_id_field = array("host" => "host_id", "extended_host_information" => "host_host_id");
-		
 		if (!isset($tabName[$parameter])) {
-			print "Unknown parameters for host.\n";
+			print "Unknown parameter for host.\n";
 			return 1;
 		}
 		
@@ -391,6 +427,10 @@ class CentreonHost {
 			return $this->setPoller($host_id, $data["id"]);
 		}
 
+		if ($parameter == "name") {
+			$value = $this->validateName($value);
+		}
+
 		$request = "SELECT host_id FROM host WHERE host_name IN ('$host_name') AND host_register = '".$this->register."'";				
 		$DBRESULT =& $this->DB->query($request);
 		if ($DBRESULT->numRows() == 1) {
@@ -412,7 +452,7 @@ class CentreonHost {
 	/*
 	 * Set host macro
 	 */
-	public function setMacro($host_name, $macro_name, $macro_value) {
+	public function setMacroHost($host_name, $macro_name, $macro_value) {
 		if (!isset($host_name) || !isset($macro_name)) {
 			print "Bad parameters\n";
 			return 1;
@@ -438,7 +478,7 @@ class CentreonHost {
 	/*
 	 * Delete host macro
 	 */
-	public function delMacro($host_name, $macro_name) {
+	public function delMacroHost($host_name, $macro_name) {
 		if (!isset($host_name) || !isset($macro_name)) {
 			print "Bad parameters\n";
 			return 1;
@@ -450,6 +490,41 @@ class CentreonHost {
 		$request = "DELETE FROM on_demand_macro_host WHERE host_host_id = '".htmlentities($host_id, ENT_QUOTES)."' AND host_macro_name LIKE '\$_HOST".htmlentities($macro_name, ENT_QUOTES)."\$'";
 		$DBRESULT =& $this->DB->query($request); 
 		return 0;	
+	}
+	 
+	/*
+	 * Set Poller link for an host 
+	 */
+	public function setPoller($host_id, $poller_id) {
+		if ($this->register == 0) {
+			return ;
+		}
+		if (!isset($host_id) || !isset($poller_id)) {
+			print "Bad parameters\n";
+			exit(1);
+		} else {
+			$request = "INSERT INTO ns_host_relation (nagios_server_id, host_host_id) VALUES ('".$poller_id."', '".$host_id."')";
+			$this->DB->query($request);
+			return 0;			
+		}
+	}
+	
+	/*
+	 * Free Poller link
+	 */
+	public function unsetPoller($host_id) {
+		if ($this->register == 0) {
+			return ;
+		}
+		
+		if (!isset($host_id)) {
+			print "Bad parameters\n";
+			exit(1);
+		} else {
+			$request = "DELETE FROM ns_host_relation WHERE host_host_id = '".$host_id."'";
+			$this->DB->query($request);
+			return 0;			
+		}
 	}
 	 
 }

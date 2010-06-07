@@ -125,6 +125,8 @@ class CentreonAPI {
 		$this->relationObject["SG"] = "ServiceGroup";
 		$this->relationObject["CONTACT"] = "Contact";
 		$this->relationObject["CG"] = "ContactGroup";
+		/* Templates */
+		$this->relationObject["HTPL"] = "Host";
 	}
 
 	public function setLogin($login) {
@@ -194,56 +196,9 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRELOAD -v 1 \n";
 		print "       - POLLERLIST: list all pollers\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRELOAD -v 1 \n";
-		print "       - ADDHOST: Add an host (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOST -v \"host;host;127.0.0.1;2;1\" \n";
-		print "       - LISTHOST: List all hosts in configuration\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOST \n";
-		print "       - DELHOST: Delete an host (name in -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOST -v \"host\" \n";
-		print "       - SETHMACRO: Add an host macro (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHMACRO -v \"host;macroname;macrovalue\" \n";
-		print "       - DELHMACRO: Delete an host macro (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHMACRO -v \"host;macroname\" \n";
-		print "       - ADDHTPL: Add an host template (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOST -v \"host;host;127.0.0.1;2;1\" \n";
-		print "       - LISTHTPL: List all host templates in configuration\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOST \n";
-		print "       - DELHTPL: Delete an host template (name in -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOST -v \"host\" \n";
-		print "       - SETHTPLMACRO: Add an host template macro (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHMACRO -v \"host;macroname;macrovalue\" \n";
-		print "       - DELHTPLMACRO: Delete an host template macro (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHMACRO -v \"host;macroname\" \n";
-		print "       - ADDHG: Add an hostgroup (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDHOSTGROUP -v \"name;alias\" \n";
-		print "       - LISTHG: List all hostgroups in configuration\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTHOSTGROUP \n";
-		print "       - DELHG: Delete an hostgroup (name in -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELHOSTGROUP -v \"hostgroup_name\" \n";
-		print "       - ADDSG: Add a servicegroup (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDSG -v \"name;alias\" \n";
-		print "       - LISTSG: List all servicegroups in configuration\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTSG \n";
-		print "       - DELSG: Delete a servicegroup (name in -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELSG -v \"servicegroup_name\" \n";
-		print "       - ADDCCT: Add a contact (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDCCT -v \"name;alias\" \n";
-		print "       - LISTCCT: List all contacts in configuration\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTCCT \n";
-		print "       - DELCCT: Delete a contact (name in -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELCCT -v \"contact_name\" \n";
-		print "       - ADDCG: Add a contactgroup (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDCG -v \"name;alias\" \n";
-		print "       - LISTCG: List all contactgroups in configuration\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTCG \n";
-		print "       - DELCG: Delete a contactgroup (name in -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELCG -v \"contactgroup_name\" \n";
-		print "       - ADDCMD: Add a command (need -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a ADDCMD -v \"name;alias\" \n";
-		print "       - LISTCMD: List all commands in configuration\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a LISTCMD \n";
-		print "       - DELCMD: Delete a command (name in -v parameters)\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a DELCMD -v \"command_name\" \n";
+		print "\n";
+		print "   For more information about configuration objects, please refer to CLAPI wiki:\n";
+		print "      - http://forge.centreon.com/wiki/centreon-clapi/Use \n";
 		print "\n";
 		print "Notes:\n";
 		print "  - Actions can be written in lowercase chars\n";
@@ -287,8 +242,9 @@ class CentreonAPI {
  		 */
  		if ($this->object) {
 			$objName = "Centreon".$this->relationObject[$this->object];
-			$obj = new $objName($this->DB);
+			$obj = new $objName($this->DB, $this->object);
 			if (method_exists($obj, $action)) {
+				print_r($this->options);
 				$obj->$action($this->options["v"]);			
 			} else {
 				print "Method not implemented into Centreon API.\n";
@@ -398,157 +354,6 @@ class CentreonAPI {
 			$this->return_code = $poller->pollerRestart($this->variables);
 		}	
 	}
-
-	/* ********************************************************************
-	 * Host Functions
-	 */
-
-
-	/*
-	 * Add Hosts
-	 */
-	public function LISTHOST() {
-		
-		require_once "./class/centreonHost.class.php";
-		
-		$host = new CentreonHost($this->DB);
-		$host->listHost($this->options["v"]);
-	}	
-	
-	/*
-	 * Set host Macro
-	 */
-	public function SETMACROHOST() {
-		require_once "./class/centreonHost.class.php";
-
-		$host = new CentreonHost($this->DB);
-		$info = split(";", $this->options["v"]);
-		$host->setMacroHost($info[0], $info[1], $info[2]);
-	}
-	
-	public function DELHMACRO() {
-		require_once "./class/centreonHost.class.php";
-
-		$host = new CentreonHost($this->DB);
-		$info = split(";", $this->options["v"]);
-		$host->delMacroHost($info[0], $info[1]);
-	}
-
-	public function SETPARAMHOST() {
-		require_once "./class/centreonHost.class.php";
-		
-		$this->checkParameters("Cannot set parameter for host.");
-		
-		$host = new CentreonHost($this->DB);
-		$elem = split(";", $this->options["v"]);
-		$exitcode = $host->setParameterHost($elem[0], $elem[1], $elem[2]);
-		return $exitcode;
-	}
-	
-	/*
-	 * Set Parents
-	 */
-	public function SETPARENTHOST() {
-		require_once "./class/centreonHost.class.php";
-		
-		$this->checkParameters("Cannot set parents for host.");
-		
-		$host = new CentreonHost($this->DB);
-		
-		$elem = split(";", $this->options["v"]);
-		if (strstr($elem[1], ",")) {
-			$elem2 = split(",", $elem[1]);
-			foreach ($elem2 as $value) {
-				$exitcode = $host->setParent($elem[0], $value);
-				if ($exitcode != 0) {
-					return $exitcode;
-				}
-			}			
-		} else {
-			$exitcode = $host->setParentHost($elem[0], $elem[1]);		
-		}
-		return $exitcode;
-	}
-
-	
-	/*
-	 * Host Template function
-	 */
-	/*
-	 * Add Host template
-	 */
-	public function ADDHTPL() {
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-		
-		$this->checkParameters("Cannot create host.");
-		
-		$host = new CentreonHost($this->DB);
-		$host->setTemplateFlag();
-		
-		$svc = new CentreonService($this->DB);
-		$info = split(":", $this->options["v"]);
-		if (!$host->hostExists($info[0])) {
-			$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template", 4 => "host_poller", 5 => "hostgroup");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}
-			$host_id = $host->addHost($informations);
-			$host->deployServiceTemplates($host_id, $svc);
-		} else {
-			print "Host ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return;
-		}
-	}
-
-	/*
-	 * Delete Hosts
-	 */
-	public function DELHTPL() {
-		require_once "./class/centreonHost.class.php";
-		
-		$this->checkParameters("Cannot delete host.");
-		
-		$host = new CentreonHost($this->DB);
-		$host->setTemplateFlag();
-		$host->delHost($this->options["v"]);
-	}	
-
-	/*
-	 * Add Hosts
-	 */
-	public function LISTHTPL() {
-		
-		require_once "./class/centreonHost.class.php";
-		
-		$host = new CentreonHost($this->DB);
-		$host->setTemplateFlag();
-		$host->listHost();
-	}	
-	
-	/*
-	 * Set host Macro
-	 */
-	public function SETMACROHTPL() {
-		require_once "./class/centreonHost.class.php";
-
-		$host = new CentreonHost($this->DB);
-		$host->setTemplateFlag();
-		$info = split(";", $this->options["v"]);
-		$host->setMacro($info[0], $info[1], $info[2]);
-	}
-	
-	public function DELMACROHTPL() {
-		require_once "./class/centreonHost.class.php";
-
-		$host = new CentreonHost($this->DB);
-		$host->setTemplateFlag();
-		$info = split(";", $this->options["v"]);
-		$host->delMacro($info[0], $info[1]);
-	}
-		
 	
 	/* ***********************************************************
 	 * Contact groups functions
