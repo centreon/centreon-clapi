@@ -99,6 +99,21 @@ class CentreonHost {
 	}
 	
 	/*
+	 * Get Poller id
+	 */
+	private function getPollerID($name) {
+		$request = "SELECT id FROM nagios_server WHERE name LIKE '".trim(htmlentities($name, ENT_QUOTES))."'";
+		$DBRESULT =& $this->DB->query($request);
+		if ($DBRESULT->numRows()) {
+			$info =& $DBRESULT->fetchRow();
+			$DBRESULT->free();
+			return $info["id"];
+		} else {
+			return 0;
+		}
+	}
+	
+	/*
 	 * Get id of host
 	 */
 	public function getHostID($name) {
@@ -165,8 +180,10 @@ class CentreonHost {
 		if (!isset($information["host_name"]) || !isset($information["host_address"]) || !isset($information["host_template"]) || !isset($information["host_poller"])) {
 			return 0;
 		} else {
-			if (!isset($information["host_alias"]) || $information["host_alias"] == "")
+			if (!isset($information["host_alias"]) || $information["host_alias"] == "") {
 				$information["host_alias"] = $information["host_name"];
+			}
+			
 			/*
 			 * Insert Host
 			 */
@@ -178,9 +195,17 @@ class CentreonHost {
 			/*
 			 * Insert Template Relation
 			 */
-			$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ('".$information["host_template"]."', '".$host_id."')";
+			$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$information["host_template"]."'), '".$host_id."')";
 			$this->DB->query($request);
 			
+			/*
+			 * Insert hostgroup relation
+			 */
+			if ($information["hostgroup"]) {
+				$request = "INSERT INTO hostgroup_relation (hostgroup_hg_id, host_host_id) values ((SELECT hg_id FROM hostgroup WHERE hg_name LIKE '".$information["hostgroup"]."'),".$host_id.")";
+				$this->DB->query($request);
+			}
+						
 			/*
 			 * Insert Extended Info
 			 */
@@ -190,7 +215,7 @@ class CentreonHost {
 			/*
 			 * Insert Host Poller
 			 */
-			$this->setPoller($host_id, $information["host_poller"]);
+			$this->setPoller($host_id, $this->getPollerID($information["host_poller"]));
 			return $host_id;
 		}
 	}
