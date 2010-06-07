@@ -355,61 +355,6 @@ class CentreonAPI {
 		}	
 	}
 	
-	/* ***********************************************************
-	 * Contact groups functions
-	 */
-	 
-	/*
-	 * Add a contactgroup 
-	 */
-	public function ADDCG() {
-		require_once "./class/centreonContactGroup.class.php";
-		
-		$contactgroup = new CentreonContactGroup($this->DB);
-		
-		$info = split(";", $this->options["v"]);
-		
-		if (!$contactgroup->contactGroupExists($info[0])) {
-			$convertionTable = array(0 => "cg_name", 1 => "cg_alias");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}
-			$contactgroup->addContactGroup($informations);
-		} else {
-			print "Contactgroup ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return;
-		}
-	}
-	
-	/*
-	 * List all contactgroup
-	 */
-	public function LISTCG() {
-		require_once "./class/centreonContactGroup.class.php";
-		
-		$search = "";
-		if (isset($this->options["v"]) && $this->options["v"] != "") {
-			$search = $this->options["v"];
-		}
-		
-		$contactgroup = new CentreonContactGroup($this->DB);
-		$contactgroup->listContactGroup($search);
-	}
-	
-	/*
-	 * Del a contactgroup
-	 */
-	public function DELCG() {
-		require_once "./class/centreonContactGroup.class.php";
-		
-		$this->checkParameters("Cannot create contactgroup.");
-		
-		$contactgroup = new CentreonContactGroup($this->DB);
-		$exitcode = $contactgroup->delContactGroup($this->options["v"]);
-		return $exitcode;
-	}
 	
 	/* ***********************************************************
 	 * Commands functions
