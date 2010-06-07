@@ -244,7 +244,6 @@ class CentreonAPI {
 			$objName = "Centreon".$this->relationObject[$this->object];
 			$obj = new $objName($this->DB, $this->object);
 			if (method_exists($obj, $action)) {
-				print_r($this->options);
 				$obj->$action($this->options["v"]);			
 			} else {
 				print "Method not implemented into Centreon API.\n";
