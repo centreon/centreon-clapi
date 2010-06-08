@@ -309,7 +309,7 @@ class CentreonContact {
     	    if (!$this->_checkNotifOptions($data)) {
                 return null;
             }
-            switch ($data[PARAM]) {
+            switch (strtolower($data[PARAM])) {
                 case "hostnotifcmd":
                     $this->_setHostNotificationCommand($options);
                     break;
