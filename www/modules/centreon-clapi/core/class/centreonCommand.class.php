@@ -38,13 +38,15 @@
  
 class CentreonCommand {
 	private $DB;
+	private $maxLen;
 	
 	public function __construct($DB) {
 		$this->DB = $DB;
+		$this->maxLen = 50;
 	}
 
 	/*
-	 * Check host existance
+	 * Check command existance
 	 */
 	public function commandExists($name) {
 		if (!isset($name))
@@ -65,7 +67,7 @@ class CentreonCommand {
 	
 	public function getCommandID($command_name = NULL) {
 		if (!isset($command_name))
-			return;
+			return 0;
 			
 		$request = "SELECT command_id FROM command WHERE command_name LIKE '$command_name'";
 		$DBRESULT =& $this->DB->query($request);
@@ -80,10 +82,32 @@ class CentreonCommand {
 		}
 	}
 	
-	/* ******************************
+	private function validateName($name) {
+		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches)) {
+			return $this->checkNameformat($name);
+		} else {
+			print "Name '$name' doesn't match with Centreon naming rules.\n";
+			exit (1);	
+		}
+	}
+	
+	private function checkNameformat($name) {
+		if (strlen($name) > $this->maxLen) {
+			print "Warning: host name reduce to ".$this->maxLen." caracters.\n";
+		}
+		return sprintf("%.".$this->maxLen."s", $name);
+	}
+	
+	private function setDefaultType($information) {
+		if (!isset($information["command_type"]) || $information["command_type"] == "") {
+			$information["command_type"] = 2;
+		}
+		return $information;
+	}
+	
+	/* *****************************************
 	 * Delete
 	 */
-	
 	public function del($name) {
 		$this->checkParameters($name);
 		$request = "DELETE FROM command WHERE command_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
@@ -92,10 +116,9 @@ class CentreonCommand {
 		return 0;
 	}
 
-	/* ******************************
+	/* *****************************************
 	 * display all commands
 	 */
-	
 	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
@@ -117,12 +140,12 @@ class CentreonCommand {
 	/* ******************************
 	 * add a command
 	 */
-	
 	public function add($options) {
 		
 		$this->checkParameters($options);
 		
 		$info = split(";", $options);
+		$info[0] = $this->validateName($info[0]);
 		
 		if (!$this->commandExists($info[0])) {
 			$type = array("notif" => 1, "check" => 2, "misc" => 3);
@@ -143,11 +166,11 @@ class CentreonCommand {
 		}
 	}
 	
-	public function addCommand($information) {
+	private function addCommand($information) {
 		if (!isset($information["command_name"])) {
 			return 0;
 		} else {
-			
+			$information = $this->setDefaultType($information);
 			$request = 	"INSERT INTO command " .
 						"(command_name, command_line, command_type) VALUES " .
 						"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".htmlentities($information["command_line"], ENT_QUOTES)."'" .

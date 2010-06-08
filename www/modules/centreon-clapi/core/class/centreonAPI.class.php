@@ -352,68 +352,6 @@ class CentreonAPI {
 		if ($this->return_code == 0) {
 			$this->return_code = $poller->pollerRestart($this->variables);
 		}	
-	}
-	
-	
-	/* ***********************************************************
-	 * Commands functions
-	 */
-	 
-	/*
-	 * Add a command
-	 */
-	public function ADDCMD() {
-		require_once "./class/centreonCommand.class.php";
-		
-		$command = new CentreonCommand($this->DB);
-		
-		$info = split(";", $this->options["v"]);
-		
-		if (!$command->commandExists($info[0])) {
-			$type = array("notif" => 1, "check" => 2, "misc" => 3);
-			$convertionTable = array(0 => "command_name", 1 => "command_line", 2 => "command_type");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				if ($key != 2) {
-					$informations[$convertionTable[$key]] = $value;
-				} else {
-					$informations[$convertionTable[$key]] = $type[$value];
-				}
-			}
-			$command->addCommand($informations);
-		} else {
-			print "Command ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return;
-		}
-	}
-	
-	/*
-	 * List all contactgroup
-	 */
-	public function LISTCMD() {
-		require_once "./class/centreonCommand.class.php";
-		
-		$search = "";
-		if (isset($this->options["v"]) && $this->options["v"] != "") {
-			$search = $this->options["v"];
-		}
-		
-		$command = new CentreonCommand($this->DB);
-		$command->listCommand($search);
-	}
-	
-	/*
-	 * Del a contactgroup
-	 */
-	public function DELCMD() {
-		require_once "./class/centreonCommand.class.php";
-		
-		$this->checkParameters("Cannot create command.");
-		
-		$command = new CentreonCommand($this->DB);
-		$exitcode = $command->delCommand($this->options["v"]);
-		return $exitcode;
-	}
+	}	
 }
 ?>
