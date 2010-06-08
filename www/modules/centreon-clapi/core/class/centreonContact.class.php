@@ -323,7 +323,7 @@ class CentreonContact {
                     $this->_setServiceNotificationPeriod($options);
                     break;
                 default:
-                    print "Unknown parameter type.\n"
+                    print "Unknown parameter type.\n";
                     break;
             }
 	    }
