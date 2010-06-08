@@ -35,12 +35,35 @@
  * SVN : $Id: centreonHost.class.php 25 2010-03-30 05:52:19Z jmathis $
  *
  */
- 
+
+define('PARAM', 0);
+define('PARAM_NOTIF_CONTACT', 1);
+define('PARAM_NOTIF_COMMAND', 2);
+define('PARAM_NOTIF_PERIOD', 2);
+
 class CentreonContact {
-	private $DB;
-	
-	public function __construct($DB) {
-		$this->DB = $DB;
+	/**
+	 *
+	 * @var CentreonDB
+	 */
+    protected $_db;
+
+    /**
+     *
+     * @var CentreonCommand
+     */
+	protected $_cmd;
+
+	/**
+	 *
+	 * @var CentreonTimePeriod
+	 */
+	protected $_timeperiod;
+
+	public function __construct($db) {
+		$this->_db = $db;
+		$this->_cmd = new CentreonCommand($this->_db);
+		$this->_timeperiod = new CentreonTimePeriod($this->_db);
 	}
 
 	/*
@@ -49,85 +72,85 @@ class CentreonContact {
 	public function contactExists($name) {
 		if (!isset($name))
 			return 0;
-		
+
 		/*
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT contact_name, contact_id FROM contact WHERE contact_name = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->_db->query("SELECT contact_name, contact_id FROM contact WHERE contact_name = '".htmlentities($name, ENT_QUOTES)."'");
 		if ($DBRESULT->numRows() >= 1) {
-			$sg =& $DBRESULT->fetchRow();
+			$sg = $DBRESULT->fetchRow();
 			$DBRESULT->free();
 			return $sg["contact_id"];
 		} else {
 			return 0;
 		}
 	}
-	
+
 	public function getContactID($contact_name = NULL) {
 		if (!isset($contact_name))
 			return;
-			
+
 		$request = "SELECT contact_id FROM contact WHERE contact_name LIKE '$contact_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
+		$DBRESULT = $this->_db->query($request);
+		$data = $DBRESULT->fetchRow();
 		return $data["contact_id"];
 	}
-	
-	private function checkParameters($options) {
+
+	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
 			print "No options defined. $str\n";
 			$this->return_code = 1;
 			return 1;
 		}
 	}
-	
+
 	/* **************************************
 	 * Delete action
 	 */
-	
+
 	public function del($name) {
 		$this->checkParameters($name);
-		
+
 		$request = "DELETE FROM contact WHERE contact_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
-		$DBRESULT =& $this->DB->query($request);
+		$DBRESULT =& $this->_db->query($request);
 		$this->return_code = 0;
 		return 0;
 	}
-	
+
 	/* **************************************
 	 * Display all contact
 	 */
-	
+
 	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE contact_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' OR contact_alias LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
 		}
 		$request = "SELECT contact_name, contact_alias, contact_email, contact_pager, contact_oreon, contact_admin, contact_activate FROM contact $searchStr ORDER BY contact_name";
-		$DBRESULT =& $this->DB->query($request);
+		$DBRESULT =& $this->_db->query($request);
 		while ($data =& $DBRESULT->fetchRow()) {
 			print html_entity_decode($data["contact_name"], ENT_QUOTES).";".html_entity_decode($data["contact_alias"], ENT_QUOTES).";".html_entity_decode($data["contact_email"], ENT_QUOTES).";".html_entity_decode($data["contact_pager"], ENT_QUOTES).";".html_entity_decode($data["contact_oreon"], ENT_QUOTES).";".html_entity_decode($data["contact_admin"], ENT_QUOTES).";".html_entity_decode($data["contact_activate"], ENT_QUOTES)."\n";
 		}
 		$DBRESULT->free();
 		return 0;
 	}
-	
+
 	/* **************************************
-	 * Add 
+	 * Add
 	 */
-	
+
 	public function add($options) {
-		
+
 		$this->checkParameters($options);
-		
+
 		$info = split(";", $options);
-		
+
 		if (!$this->contactExists($info[0])) {
 			// contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_lang, contact_auth_type, contact_passwd
 			//test;test;jmathis@merethis.com;test;1;1;en_US;local
 			$convertionTable = array(
-				0 => "contact_name", 1 => "contact_alias", 
-				2 => "contact_email", 3 => "contact_passwd", 
+				0 => "contact_name", 1 => "contact_alias",
+				2 => "contact_email", 3 => "contact_passwd",
 				4 => "contact_admin", 5 => "contact_oreon",
 				6 => "contact_lang", 7 => "contact_auth_type"
 			);
@@ -142,8 +165,8 @@ class CentreonContact {
 			return;
 		}
 	}
-	
-	public function addContact($information) {
+
+	protected function addContact($information) {
 		if (!isset($information["contact_name"])) {
 			return 0;
 		} else {
@@ -153,17 +176,157 @@ class CentreonContact {
 				$information["contact_activate"] = 1;
 			if (!isset($information["contact_auth_type"]) || $information["contact_auth_type"] == "")
 				$information["contact_auth_type"] = "local";
-			
+
 			$request = 	"INSERT INTO contact " .
 						"(contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_lang, contact_auth_type, contact_passwd, contact_activate) VALUES " .
 						"('".htmlentities($information["contact_name"], ENT_QUOTES)."', '".htmlentities($information["contact_alias"], ENT_QUOTES)."', '".htmlentities($information["contact_email"], ENT_QUOTES)."', " .
 						" '".htmlentities($information["contact_oreon"], ENT_QUOTES)."', '".htmlentities($information["contact_admin"], ENT_QUOTES)."', '".htmlentities($information["contact_lang"], ENT_QUOTES)."', " .
 						" '".htmlentities($information["contact_auth_type"], ENT_QUOTES)."', '".htmlentities(md5($information["contact_passwd"]), ENT_QUOTES)."', '1')";
-			$DBRESULT =& $this->DB->query($request);
-	
+			$DBRESULT = $this->_db->query($request);
+
 			$contact_id = $this->getContactID($information["contact_name"]);
 			return $contact_id;
 		}
+	}
+
+	/**
+	 * Checks if options are valid
+	 *
+	 * @param array $data
+	 * @return boolean
+	 */
+	protected function _checkNotifOptions($data = "")
+	{
+        if (count($data) < 3) {
+            print "Invalid options.\n";
+            return false;
+        }
+        return true;
+	}
+
+	/**
+	 * Set host notification command
+	 * options format : contactName;notificationCommandName
+	 *
+	 * @param string $options
+	 * @return null|void
+	 */
+	protected function _setHostNotificationCommand($options = "")
+	{
+        $data = split(';', $options);
+	    if (!($contactId = $this->contactExists($data[PARAM_NOTIF_CONTACT]))) {
+            print "Contact does not exist.\n";
+            return null;
+        }
+	    if (!($cmdId = $this->_cmd->commandExists($data[PARAM_NOTIF_COMMAND]))) {
+            print "Command does not exist.\n";
+            return null;
+        }
+        $query = "DELETE FROM contact_hostcommands_relation WHERE contact_contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $this->_db->query($query);
+        $query = "INSERT INTO contact_hostcommands_relation (contact_contact_id, command_command_id) " .
+        		"VALUES ('".htmlentities($contactId, ENT_QUOTES)."', '".htmlentities($cmdId, ENT_QUOTES)."')";
+        $this->_db->query($query);
+	}
+
+	/**
+	 * Set service notification command
+	 *
+	 * @param string $options
+	 * @return null|void
+	 */
+	protected function _setServiceNotificationCommand($options = "")
+	{
+	    $data = split(';', $options);
+	    if (!($contactId = $this->contactExists($data[PARAM_NOTIF_CONTACT]))) {
+            print "Contact does not exist.\n";
+            return null;
+        }
+        if (!($cmdId = $this->_cmd->commandExists($data[PARAM_NOTIF_COMMAND]))) {
+            print "Command does not exist.\n";
+            return null;
+        }
+        $query = "DELETE FROM contact_servicecommands_relation WHERE contact_contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $this->_db->query($query);
+        $query = "INSERT INTO contact_servicecommands_relation (contact_contact_id, command_command_id) " .
+        		"VALUES ('".htmlentities($contactId, ENT_QUOTES)."', '".htmlentities($cmdId, ENT_QUOTES)."')";
+        $this->_db->query($query);
+	}
+
+	/**
+	 * Set host notification period
+	 *
+	 * @param string $options
+	 * @return null|void
+	 */
+	protected function _setHostNotificationPeriod($options = "")
+	{
+	    $data = split(';', $options);
+	    if (!($contactId = $this->contactExists($data[PARAM_NOTIF_CONTACT]))) {
+            print "Contact does not exist.\n";
+            return null;
+        }
+        if (!($timeperiodId = $this->_timeperiod->getTimeperiodId($data[PARAM_NOTIF_PERIOD]))) {
+            print "Timeperiod does not exist.\n";
+            return null;
+        }
+        $query = "UPDATE contact SET timeperiod_tp_id = '".htmlentities($timeperiodId, ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $this->_db->query($query);
+	}
+
+	/**
+	 * Set service notification period
+	 *
+	 * @param string $options
+	 * @return null|void
+	 */
+	protected function _setServiceNotificationPeriod($options = "")
+	{
+	    $data = split(';', $options);
+	    if (!($contactId = $this->contactExists($data[PARAM_NOTIF_CONTACT]))) {
+            print "Contact does not exist.\n";
+            return null;
+        }
+        if (!($timeperiodId = $this->_timeperiod->getTimeperiodId($data[PARAM_NOTIF_PERIOD]))) {
+            print "Timeperiod does not exist.\n";
+            return null;
+        }
+        $query = "UPDATE contact SET timeperiod_tp_id2 = '".htmlentities($timeperiodId, ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $this->_db->query($query);
+	}
+
+	/**
+	 * Set parameter
+	 *
+	 * @param string $name
+	 * @param array $params
+	 * @return null|void
+	 */
+	public function setParam($options = null)
+	{
+	    $data = split(';', $options);
+	    if (isset($data[PARAM])) {
+    	    if (!$this->_checkNotifOptions($data)) {
+                return null;
+            }
+            switch ($data[PARAM]) {
+                case "hostnotifcmd":
+                    $this->_setHostNotificationCommand($options);
+                    break;
+                case "svcnotifcmd":
+                    $this->_setServiceNotificationCommand($options);
+                    break;
+                case "hostnotifperiod":
+                    $this->_setHostNotificationPeriod($options);
+                    break;
+                case "svcnotifperiod":
+                    $this->_setServiceNotificationPeriod($options);
+                    break;
+                default:
+                    print "Unknown parameter type.\n"
+                    break;
+            }
+	    }
 	}
 }
 ?>

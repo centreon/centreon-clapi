@@ -63,18 +63,19 @@ require_once "./class/centreonHost.class.php";
 require_once "./class/centreonHostGroup.class.php";
 require_once "./class/centreonService.class.php";
 require_once "./class/centreonServiceGroup.class.php";
+require_once "./class/centreonTimePeriod.class.php";
 
 /*
  * Declare Centreon API
- * 
+ *
  */
 class CentreonAPI {
 	public $dateStart;
 	public $login;
 	public $password;
 	public $action;
-	public $object; 
-	public $options; 
+	public $object;
+	public $options;
 	public $args;
 	public $DB;
 	public $DBC;
@@ -86,7 +87,7 @@ class CentreonAPI {
 	public $centreon_path;
 	private $return_code;
 	private $relationObject;
-	
+
 	public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
 		/*
 		 * Set variables
@@ -106,7 +107,7 @@ class CentreonAPI {
 		
 		$this->options 	= $options;
 		$this->centreon_path = $centreon_path;
-		
+
 		if (isset($options["v"])) {
 			$this->variables = $options["v"];
 		} else {
@@ -116,14 +117,14 @@ class CentreonAPI {
 			$this->object =  htmlentities(strtoupper($options["o"]), ENT_QUOTES);
 		} else {
 			$this->object = "";
-		}				
-		
+		}
+
 		/*
   		 * Centreon DB Connexion
-		 */ 
+		 */
 		$this->DB = new CentreonDB();
 		$this->dateStart = time();
-	
+
 		$this->relationObject = array();
 		$this->relationObject["CMD"] = "Command";
 		$this->relationObject["COMMAND"] = "Command";
@@ -144,7 +145,7 @@ class CentreonAPI {
 	public function setPassword($password) {
 		$this->password = $password;
 	}
-	
+
 	public function checkUser() {
 		if (!isset($this->login) || $this->login == "") {
 			print "ERROR: Can not connect to centreon without login.\n";
@@ -155,7 +156,7 @@ class CentreonAPI {
 			print "ERROR: Can not connect to centreon without password.";
 			$this->printHelp();
 		}
-		
+
 		/*
 		 * Check Login / Password
 		 */
@@ -167,11 +168,11 @@ class CentreonAPI {
 			exit(1);
 		}
 	}
-	
+
 	public function endOfLine() {
 		print "\n";
 	}
-	
+
 	public function close() {
 		print "\n";
 		exit ($this->exitcode);
@@ -234,7 +235,7 @@ class CentreonAPI {
 	}
 
 	/*
-	 * Main function : Launch action 
+	 * Main function : Launch action
 	 */
 	public function launchAction() {
 		$action = strtoupper($this->action);
@@ -244,22 +245,22 @@ class CentreonAPI {
  		if ($this->debug) {
  			print "DEBUG : $action\n";
  		}
- 		 		
- 		/* 
+
+ 		/*
  		 * Check method availability before using it.
  		 */
  		if ($this->object) {
 			$objName = "Centreon".$this->relationObject[$this->object];
 			$obj = new $objName($this->DB, $this->object);
 			if (method_exists($obj, $action)) {
-				$obj->$action($this->options["v"]);			
+				$obj->$action($this->options["v"]);
 			} else {
 				print "Method not implemented into Centreon API.\n";
-				return 1;	
+				return 1;
 			}
 		} else {
 			if (method_exists($this, $action)) {
-				$this->$action();			
+				$this->$action();
 			} else {
 				print "Method not implemented into Centreon API.\n";
 			}
@@ -301,7 +302,7 @@ class CentreonAPI {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
 		$this->return_code = $poller->pollerRestart($this->variables);
 	}
-	
+
 	/*
 	 * Launch poller reload
 	 */
@@ -320,29 +321,29 @@ class CentreonAPI {
 
 	/*
 	 * Launch poller configuration test
-	 */	
+	 */
 	public function POLLERTEST() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
 		$this->return_code = $poller->pollerTest($this->format, $this->variables);
 	}
-	
+
 	/*
 	 * move configuration files into final directory
-	 */	
+	 */
 	public function CFGMOVE() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
 		$this->return_code = $poller->cfgMove($this->variables);
 	}
 
 	/*
-	 * Apply configuration Generation + move + restart 
+	 * Apply configuration Generation + move + restart
 	 */
 	public function APPLYCFG() {
 		/*
 		 * Display time for logs
 		 */
 		print date("Y-m-d H:i:s") . " - APPLYCFG\n";
-		
+
 		/*
 		 * Launch Actions
 		 */
@@ -359,7 +360,7 @@ class CentreonAPI {
 		}
 		if ($this->return_code == 0) {
 			$this->return_code = $poller->pollerRestart($this->variables);
-		}	
-	}	
+		}
+	}
 }
 ?>
