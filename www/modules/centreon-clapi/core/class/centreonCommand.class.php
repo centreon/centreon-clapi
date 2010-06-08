@@ -171,17 +171,28 @@ class CentreonCommand {
 			return 0;
 		} else {
 			$information = $this->setDefaultType($information);
+			
+			/*
+			 * Replace special chars
+			 */
+			$information["command_line"] = str_replace("\$", "\\\$", $information["command_line"]);
+			$information["command_line"] = str_replace("/", "#S#", htmlentities($information["command_line"], ENT_QUOTES));
+			$information["command_line"] = str_replace("\\", "#BS#", $information["command_line"]);
+			$information["command_line"] = str_replace("\n", "#BR#", $information["command_line"]);
+			$information["command_line"] = str_replace("\t", "#R#", $information["command_line"]);			
+			
 			$request = 	"INSERT INTO command " .
 						"(command_name, command_line, command_type) VALUES " .
-						"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".htmlentities($information["command_line"], ENT_QUOTES)."'" .
+						"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".$information["command_line"]."'" .
 						", '".htmlentities($information["command_type"], ENT_QUOTES)."')";
+			
 			$DBRESULT =& $this->DB->query($request);	
 			$command_id = $this->getCommandID($information["command_name"]);
 			return $command_id;
 		}
 	}
 
-	public function setParamCmd() {
+	public function setParam() {
 		
 	}
 }
