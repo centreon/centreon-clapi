@@ -93,9 +93,17 @@ class CentreonAPI {
 		 */
 		$this->debug 	= 0;
 		$this->return_code = 0;
-		$this->login 	= htmlentities($user, ENT_QUOTES);
-		$this->password = htmlentities($password, ENT_QUOTES);
-		$this->action 	= htmlentities(strtoupper($action), ENT_QUOTES);
+		
+		if (isset($user)) {
+			$this->login 	= htmlentities($user, ENT_QUOTES);
+		}
+		if (isset($password)) {
+			$this->password = htmlentities($password, ENT_QUOTES);
+		}
+		if (isset($action)) {
+			$this->action 	= htmlentities(strtoupper($action), ENT_QUOTES);
+		}
+		
 		$this->options 	= $options;
 		$this->centreon_path = $centreon_path;
 		
