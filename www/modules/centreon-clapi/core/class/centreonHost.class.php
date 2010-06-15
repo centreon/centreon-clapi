@@ -241,6 +241,22 @@ class CentreonHost {
 			return $host_id;
 		}
 	}
+	
+	/*
+	 * Apply Template
+	 */
+	public function applyTPL($options) {
+		
+		$this->checkParameters($options);
+		
+		/*
+		 * Create service class
+		 */
+		$svc = new CentreonService($this->DB);
+		
+		$host_id = $this->getHostID($options);
+		$this->deployServiceTemplates($host_id, $svc);
+	}
 
 	/* *************************************
 	 * Delete Host
