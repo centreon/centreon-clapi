@@ -190,13 +190,27 @@ class CentreonHost {
 			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
 						"VALUES ('".htmlentities(trim($information["host_name"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_alias"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
+			
+			/*
+			 * Get host ID.
+			 */
 			$host_id = $this->getHostID(htmlentities($information["host_name"], ENT_QUOTES));
 			
 			/*
 			 * Insert Template Relation
 			 */
-			$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$information["host_template"]."'), '".$host_id."')";
-			$this->DB->query($request);
+			if ($information["hostgroup"]) {
+				if (strstr($information["host_template"], ",")) {
+					$tab = split(",", $information["hostgroup"]);
+					foreach ($tab as $hostTemplate) {
+						$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$hostTemplate."'), '".$host_id."')";
+						$this->DB->query($request);
+					}
+				} else {
+					$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$information["host_template"]."'), '".$host_id."')";
+					$this->DB->query($request);
+				}
+			}
 			
 			/*
 			 * Insert hostgroup relation
