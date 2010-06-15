@@ -54,18 +54,6 @@ if (file_exists("../../../class/centreonSession.class.php")) {
 require_once "./class/centreon.Config.Poller.class.php";
 
 /*
- * Centreon Object Management
- */
-require_once "./class/centreonCommand.class.php";
-require_once "./class/centreonContact.class.php";
-require_once "./class/centreonContactGroup.class.php";
-require_once "./class/centreonHost.class.php";
-require_once "./class/centreonHostGroup.class.php";
-require_once "./class/centreonService.class.php";
-require_once "./class/centreonServiceGroup.class.php";
-require_once "./class/centreonTimePeriod.class.php";
-
-/*
  * Declare Centreon API
  *
  */
@@ -136,6 +124,25 @@ class CentreonAPI {
 		$this->relationObject["CG"] = "ContactGroup";
 		/* Templates */
 		$this->relationObject["HTPL"] = "Host";
+	}
+
+	/*
+	 * Centreon Object Management
+	 */
+	protected function requireLibs($object) {
+		if ($object != "") {
+			if (isset($this->relationObject[$object]) && !class_exists("Centreon".$this->relationObject[$object])) {
+				require_once "./class/centreon".$this->relationObject[$object].".class.php";
+			}
+			if ($this->relationObject[$object] == "Host") {
+				require_once "./class/centreonService.class.php";				
+			}
+		}
+		
+		/*
+		 * Default class needed
+		 */
+		require_once "./class/centreonTimePeriod.class.php";
 	}
 
 	public function setLogin($login) {
@@ -250,6 +257,14 @@ class CentreonAPI {
  		 * Check method availability before using it.
  		 */
  		if ($this->object) {
+			/*
+			 * Require needed class 
+			 */
+			$this->requireLibs($this->object);
+			
+			/*
+			 * Check class declaration
+			 */
 			$objName = "Centreon".$this->relationObject[$this->object];
 			$obj = new $objName($this->DB, $this->object);
 			if (method_exists($obj, $action)) {
