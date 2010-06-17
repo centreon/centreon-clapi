@@ -333,8 +333,13 @@ class CentreonHost {
 		
 		$request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '".$this->register."' $search ORDER BY host_name";
 		$DBRESULT =& $this->DB->query($request);
+		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
+			if ($i == 0) {
+				print "id;name;alias;address\n";
+			}
 			print $data["host_id"].";".$data["host_name"].";".$data["host_alias"].";".$data["host_address"]."\n";
+			$i++;
 		}
 		$DBRESULT->free();
 		unset($data);
