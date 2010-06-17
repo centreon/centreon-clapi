@@ -48,7 +48,7 @@ class CentreonContactGroup {
 	/*
 	 * Check contact existance
 	 */
-	protected function contactGroupExists($name) {
+	private function contactGroupExists($name) {
 		if (!isset($name))
 			return 0;
 		
@@ -65,7 +65,7 @@ class CentreonContactGroup {
 		}
 	}
 	
-	public function getContactGroupID($cg_name = NULL) {
+	private function getContactGroupID($cg_name = NULL) {
 		if (!isset($cg_name))
 			return;
 			
@@ -110,7 +110,7 @@ class CentreonContactGroup {
 	 * delete contact group functions
 	 */
 	
-	public function delContactGroup($name) {
+	public function del($name) {
 		$request = "DELETE FROM contactgroup WHERE cg_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
@@ -173,7 +173,7 @@ class CentreonContactGroup {
 		}
 	} 
 	
-	public function addContactGroup($information) {
+	private function addContactGroup($information) {
 		if (!isset($information["cg_name"])) {
 			return 0;
 		} else {
