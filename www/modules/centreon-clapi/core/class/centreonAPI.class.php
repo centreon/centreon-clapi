@@ -138,6 +138,9 @@ class CentreonAPI {
 			if ($this->relationObject[$object] == "Host") {
 				require_once "./class/centreonService.class.php";				
 			}
+			if ($this->relationObject[$object] == "Contact") {
+				require_once "./class/centreonCommand.class.php";				
+			}
 		}
 		
 		/*
