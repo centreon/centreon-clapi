@@ -39,10 +39,12 @@
 class CentreonCommand {
 	private $DB;
 	private $maxLen;
+	private $type;
 	
 	public function __construct($DB) {
 		$this->DB = $DB;
 		$this->maxLen = 50;
+		$this->type = array("notif" => 1, "check" => 2, "misc" => 3, 1 => "notif", 2 => "check", 3 => "misc");
 	}
 
 	/*
@@ -124,14 +126,20 @@ class CentreonCommand {
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE command_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
 		}
-		$request = "SELECT command_id, command_name, command_line FROM command $searchStr ORDER BY command_name";
+		
+		$request = "SELECT command_id, command_name, command_type, command_line FROM command $searchStr ORDER BY command_name";
 		$DBRESULT =& $this->DB->query($request);
+		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
+			if ($i == 0) {
+				print "id;name;line\n";
+			}
 			$data["command_line"] = str_replace("#S#", "/", $data["command_line"]);
 			$data["command_line"] = str_replace("#BS#", "\\", $data["command_line"]);
 			$data["command_line"] = str_replace("#BR#", "\n", $data["command_line"]);
 			$data["command_line"] = str_replace("#R#", "\t", $data["command_line"]);
-			print html_entity_decode($data["command_id"], ENT_QUOTES).";".html_entity_decode($data["command_name"], ENT_QUOTES).";".html_entity_decode($data["command_line"], ENT_QUOTES)."\n";
+			print html_entity_decode($data["command_id"], ENT_QUOTES).";".html_entity_decode($data["command_name"], ENT_QUOTES).";".$this->type[html_entity_decode($data["command_type"], ENT_QUOTES)].";".html_entity_decode($data["command_line"], ENT_QUOTES)."\n";
+			$i++;
 		}
 		$DBRESULT->free();
 		return 0;
@@ -148,14 +156,14 @@ class CentreonCommand {
 		$info[0] = $this->validateName($info[0]);
 		
 		if (!$this->commandExists($info[0])) {
-			$type = array("notif" => 1, "check" => 2, "misc" => 3);
+			
 			$convertionTable = array(0 => "command_name", 1 => "command_line", 2 => "command_type");
 			$informations = array();
 			foreach ($info as $key => $value) {
 				if ($key != 2) {
 					$informations[$convertionTable[$key]] = $value;
 				} else {
-					$informations[$convertionTable[$key]] = $type[$value];
+					$informations[$convertionTable[$key]] = $this->type[$value];
 				}
 			}
 			$this->addCommand($informations);
