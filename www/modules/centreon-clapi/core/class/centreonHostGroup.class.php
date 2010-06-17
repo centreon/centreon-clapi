@@ -96,13 +96,30 @@ class CentreonHostGroup {
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE hg_name LIKE '%".htmlentities($search, ENT_QUOTES)."%'";
 		}
-		$request = "SELECT hg_name, hg_alias FROM hostgroup $searchStr ORDER BY hg_name";
+		$request = "SELECT hg_id, hg_name, hg_alias FROM hostgroup $searchStr ORDER BY hg_name";
 		$DBRESULT =& $this->DB->query($request);
+		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
-			print html_entity_decode($data["hg_name"], ENT_QUOTES).";".html_entity_decode($data["hg_alias"], ENT_QUOTES)."\n";
+			if ($i == 0) {
+				print "id;name;alias;members\n";
+			}
+			print $data["hg_id"].";".html_entity_decode($data["hg_name"], ENT_QUOTES).";".html_entity_decode($data["hg_alias"], ENT_QUOTES).";";
+			
+			$members = "";
+			$request = "SELECT host_name FROM host, hostgroup_relation WHERE hostgroup_hg_id = '".$data["hg_id"]."' AND host_host_id = host_id ORDER BY host_name";
+			$DBRESULT2 =& $this->DB->query($request);
+			while ($m =& $DBRESULT2->fetchRow()) {
+				if ($members != "") {
+					$members .= ",";
+				}
+				$members .= $m["host_name"];				
+			}
+			$DBRESULT2->free();
+			print $members."\n";
+			
+			$i++;
 		}
 		$DBRESULT->free();
-		
 	}
 
 	/* *************************************
