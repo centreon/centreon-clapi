@@ -312,7 +312,7 @@ class CentreonHost {
 				while ($svc =& $DBRESULT2->fetchRow()) {
 					$name = $objService->getServiceAlias($svc["service_service_id"]);
 					if (!$objService->testServiceExistence($name, $host_id)) {
-						$objService->addService(array("service_description" => $name, "template" => $svc["service_service_id"], "host" => $host_id, "macro" => array()));
+						$objService->add(array("service_description" => $name, "template" => $svc["service_service_id"], "host" => $host_id, "macro" => array()));
 					}
 				}
 				$DBRESULT2->free();

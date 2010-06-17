@@ -39,17 +39,27 @@
 class CentreonService {
 	
 	var $DB;
+	var $register;
+	var $flag;
 	
-	public function __construct($DB) {
+	public function __construct($DB, $objName) {
 		$this->DB = $DB;
+		$this->register = 1;
+
+		if (strtoupper($objName) == "STPL") {
+			$this->setTemplateFlag();
+		}
+		
+		$this->flag = array(0 => "No", 1 => "Yes", 2 => "Default");
+	}
+	
+	protected function setTemplateFlag() {
+		$this->register = 0;
 	}
 	
 	public function testServiceExistence ($name = NULL, $host_id = NULL) {
 		
-		$name = str_replace('/', "#S#", $name);
-		$name = str_replace('\\', "#BS#", $name);
-		
-		$DBRESULT =& $this->DB->query("SELECT service_id FROM service, host_service_relation hsr WHERE hsr.host_host_id = '".$host_id."' AND hsr.service_service_id = service_id AND service.service_description = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT service_id FROM service, host_service_relation hsr WHERE hsr.host_host_id = '".$host_id."' AND hsr.service_service_id = service_id AND service.service_description LIKE '".htmlentities($this->encode($name), ENT_QUOTES)."'");
 		$service =& $DBRESULT->fetchRow();
 		if ($DBRESULT->numRows()) {
 			$DBRESULT->free();
@@ -59,7 +69,7 @@ class CentreonService {
 		}
 	}
 	
-	public function getServiceName($service_id) {
+	private function getServiceName($service_id) {
 		$request = "SELECT service_description FROM service WHERE service_id = '$service_id'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
@@ -70,7 +80,7 @@ class CentreonService {
 			return "";
 	}
 	
-	public function getServiceAlias($service_id) {
+	private function getServiceAlias($service_id) {
 		$request = "SELECT service_alias FROM service WHERE service_id = '$service_id'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
@@ -81,13 +91,23 @@ class CentreonService {
 			return "";
 	}
 	
-	public function addService($information) {
+	private function encode($str) {
+		$str = str_replace("/", "#S#", $str);
+		$str = str_replace("\\", "#BS#", $str);
+		return $str;			
+	}
+	
+	private function decode($str) {
+		$str = str_replace("#S#", "/", $str);
+		$str = str_replace("#BS#", "\\", $str);
+		return $str;			
+	}
+	
+	public function add($information) {
 		if (!isset($information["service_description"]) || !isset($information["host"]) || !isset($information["template"])) {
 			return 0;
 		} else {
-			$information["service_description"] = str_replace("/", "#S#", $information["service_description"]);
-			$information["service_description"] = str_replace("\\", "#BS#", $information["service_description"]);
-			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".$information["service_description"]."', '".$information["template"]."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".$this->encode($information["service_description"])."', '".$information["template"]."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 			
 			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".$information["service_description"]."' AND service_activate = '1' AND service_register = '1'";
@@ -102,7 +122,7 @@ class CentreonService {
 				$request = "INSERT INTO extended_service_information (service_service_id) VALUE ('$service_id')";
 				$this->DB->query($request);
 				
-				if (isset($information["macro"]))
+				if (isset($information["macro"])) {
 					foreach ($information["macro"] as $value) {
 						print $value . '\n';
 						if (strstr($value, ":")) {
@@ -113,8 +133,23 @@ class CentreonService {
 							}
 						}
 					}
+				}
 			}
 			return $service_id;
+		}
+	}
+	
+	public function show($service_description = NULL) {
+		
+		$request = "SELECT service_id, service_description, service_alias, s.command_command_id, command_name, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg, host_id, host_name FROM service s, host h, host_service_relation hr, command cmd WHERE cmd.command_id = s.command_command_id AND s.service_id = hr.service_service_id AND hr.host_host_id = h.host_id AND service_register = '".$this->register."' AND host_register = '1' ORDER BY host_name, service_description";
+		$DBRESULT = $this->DB->query($request);
+		$i = 0;
+		while ($data = $DBRESULT->fetchRow()) {
+			if ($i == 0) {
+				print "hostid;svcid;host;description;command;args;checkPeriod;maxAttempts;checkInterval;retryInterval;active;passive;";
+			}
+			$i++;
+			print $data["host_id"].";".$data["service_id"].";".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
 		}
 	}
 }
