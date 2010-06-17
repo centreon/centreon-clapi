@@ -132,7 +132,7 @@ class CentreonCommand {
 		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
 			if ($i == 0) {
-				print "id;name;line\n";
+				print "id;name;type;line\n";
 			}
 			$data["command_line"] = str_replace("#S#", "/", $data["command_line"]);
 			$data["command_line"] = str_replace("#BS#", "\\", $data["command_line"]);
