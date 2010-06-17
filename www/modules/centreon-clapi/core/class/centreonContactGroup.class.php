@@ -125,10 +125,27 @@ class CentreonContactGroup {
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE cg_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' OR cg_alias LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
 		}
-		$request = "SELECT cg_name, cg_alias FROM contactgroup $searchStr ORDER BY cg_name";
+		$request = "SELECT cg_id, cg_name, cg_alias FROM contactgroup $searchStr ORDER BY cg_name";
 		$DBRESULT =& $this->DB->query($request);
+		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
-			print html_entity_decode($data["cg_name"], ENT_QUOTES).";".html_entity_decode($data["cg_alias"], ENT_QUOTES)."\n";
+			if ($i == 0) {
+				print "id;name;alias;members\n";
+			}
+			print html_entity_decode($data["cg_name"], ENT_QUOTES).";".html_entity_decode($data["cg_alias"], ENT_QUOTES).";";
+			
+			$request = "SELECT contact_name FROM contact, contactgroup_contact_relation WHERE contactgroup_cg_id = '".$data["cg_id"]."' AND contact.contact_id = contactgroup_contact_relation.contact_contact_id";
+			$DBRESULT2 =& $this->DB->query($request);
+			$members = "";
+			while ($dataC =& $DBRESULT2->fetchRow()) {
+				if ($members != "") {
+					$members .= ",";
+				}
+				$members .= $dataC["contact_name"];
+			}
+			$DBRESULT2->free();
+			print html_entity_decode($members, ENT_QUOTES)."\n";
+			$i++;
 		}
 		$DBRESULT->free();
 		
