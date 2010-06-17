@@ -67,6 +67,14 @@ class CentreonCommand {
 		}
 	}
 	
+	protected function decode($str) {
+		$str = str_replace("#S#", "/", $str);
+		$str = str_replace("#BS#", "\\", $str);
+		$str = str_replace("#BR#", "\n", $str);
+		$str = str_replace("#R#", "\t", $str);
+		return $str;	
+	}
+	
 	public function getCommandID($command_name = NULL) {
 		if (!isset($command_name))
 			return 0;
@@ -134,11 +142,7 @@ class CentreonCommand {
 			if ($i == 0) {
 				print "id;name;type;line\n";
 			}
-			$data["command_line"] = str_replace("#S#", "/", $data["command_line"]);
-			$data["command_line"] = str_replace("#BS#", "\\", $data["command_line"]);
-			$data["command_line"] = str_replace("#BR#", "\n", $data["command_line"]);
-			$data["command_line"] = str_replace("#R#", "\t", $data["command_line"]);
-			print html_entity_decode($data["command_id"], ENT_QUOTES).";".html_entity_decode($data["command_name"], ENT_QUOTES).";".$this->type[html_entity_decode($data["command_type"], ENT_QUOTES)].";".html_entity_decode($data["command_line"], ENT_QUOTES)."\n";
+			print html_entity_decode($data["command_id"], ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".$this->type[html_entity_decode($data["command_type"], ENT_QUOTES)].";".html_entity_decode($this->decode($data["command_line"]), ENT_QUOTES)."\n";
 			$i++;
 		}
 		$DBRESULT->free();
