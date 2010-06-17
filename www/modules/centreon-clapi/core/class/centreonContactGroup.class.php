@@ -48,7 +48,7 @@ class CentreonContactGroup {
 	/*
 	 * Check contact existance
 	 */
-	public function contactGroupExists($name) {
+	protected function contactGroupExists($name) {
 		if (!isset($name))
 			return 0;
 		
