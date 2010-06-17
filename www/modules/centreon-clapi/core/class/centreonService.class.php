@@ -104,6 +104,10 @@ class CentreonService {
 	}
 	
 	public function add($information) {
+		
+	}
+	
+	public function addServices($information) {
 		if (!isset($information["service_description"]) || !isset($information["host"]) || !isset($information["template"])) {
 			return 0;
 		} else {
@@ -139,7 +143,7 @@ class CentreonService {
 		}
 	}
 	
-	public function show($service_description = NULL) {
+	public function show($search_string = NULL) {
 		
 		$request = "SELECT service_id, service_description, service_alias, s.command_command_id, command_name, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg, host_id, host_name FROM service s, host h, host_service_relation hr, command cmd WHERE cmd.command_id = s.command_command_id AND s.service_id = hr.service_service_id AND hr.host_host_id = h.host_id AND service_register = '".$this->register."' AND host_register = '1' ORDER BY host_name, service_description";
 		$DBRESULT = $this->DB->query($request);
