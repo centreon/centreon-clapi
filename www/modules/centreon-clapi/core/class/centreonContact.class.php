@@ -126,10 +126,15 @@ class CentreonContact {
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE contact_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' OR contact_alias LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
 		}
-		$request = "SELECT contact_name, contact_alias, contact_email, contact_pager, contact_oreon, contact_admin, contact_activate FROM contact $searchStr ORDER BY contact_name";
+		$request = "SELECT contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_activate FROM contact $searchStr ORDER BY contact_name";
 		$DBRESULT =& $this->_db->query($request);
+		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
-			print html_entity_decode($data["contact_name"], ENT_QUOTES).";".html_entity_decode($data["contact_alias"], ENT_QUOTES).";".html_entity_decode($data["contact_email"], ENT_QUOTES).";".html_entity_decode($data["contact_pager"], ENT_QUOTES).";".html_entity_decode($data["contact_oreon"], ENT_QUOTES).";".html_entity_decode($data["contact_admin"], ENT_QUOTES).";".html_entity_decode($data["contact_activate"], ENT_QUOTES)."\n";
+			if ($i == 0) {
+				print "name;alias;email;reachInterface;isAdmin;enable\n";
+			}
+			$i++;
+			print html_entity_decode($data["contact_name"], ENT_QUOTES).";".html_entity_decode($data["contact_alias"], ENT_QUOTES).";".html_entity_decode($data["contact_email"], ENT_QUOTES).";".html_entity_decode($data["contact_oreon"], ENT_QUOTES).";".html_entity_decode($data["contact_admin"], ENT_QUOTES).";".html_entity_decode($data["contact_activate"], ENT_QUOTES)."\n";
 		}
 		$DBRESULT->free();
 		return 0;
@@ -294,6 +299,37 @@ class CentreonContact {
         $query = "UPDATE contact SET timeperiod_tp_id2 = '".htmlentities($timeperiodId, ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
         $this->_db->query($query);
 	}
+	
+	/**
+	 * Set standart parameter for contact
+	 *
+	 * @param string $options
+	 * @return null|void
+	 */
+	protected function _setParamCommand($options = "") {
+	    $data = split(';', $options);
+	    if (!($contactId = $this->contactExists($data[PARAM_NOTIF_CONTACT]))) {
+            print "Contact does not exist.\n";
+            return 1;
+        }
+        
+        $conversionTable = array();
+        $conversionTable["name"] = "contact_name";
+        $conversionTable["alias"] = "contact_alias";
+        $conversionTable["email"] = "contact_email";
+        $conversionTable["password"] = "contact_passwd";
+        $conversionTable["access"] = "contact_oreon";
+        $conversionTable["language"] = "contact_language";
+        $conversionTable["admin"] = "contact_admin";
+        $conversionTable["authtype"] = "contact_auth_type";
+        
+        /*
+         * Update
+         */
+        $query = "UPDATE contact SET ".htmlentities($conversionTable[$data[1]], ENT_QUOTES)." = '".htmlentities($conversionTable[$data[2]], ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $this->_db->query($query);
+        return 0;
+	}
 
 	/**
 	 * Set parameter
@@ -302,31 +338,135 @@ class CentreonContact {
 	 * @param array $params
 	 * @return null|void
 	 */
-	public function setParam($options = null)
-	{
+	public function setParam($options = null) {
+	    $this->checkParameters($options);
+	    
 	    $data = split(';', $options);
 	    if (isset($data[PARAM])) {
     	    if (!$this->_checkNotifOptions($data)) {
                 return null;
             }
             switch (strtolower($data[PARAM])) {
+                case "name":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "alias":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "email":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "password":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "access":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "language":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "admin":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "authtype":
+                    return $this->_setParamCommand($options);
+                    break;
                 case "hostnotifcmd":
-                    $this->_setHostNotificationCommand($options);
+                     return $this->_setHostNotificationCommand($options);
                     break;
                 case "svcnotifcmd":
-                    $this->_setServiceNotificationCommand($options);
+                     return $this->_setServiceNotificationCommand($options);
                     break;
                 case "hostnotifperiod":
-                    $this->_setHostNotificationPeriod($options);
+                    return $this->_setHostNotificationPeriod($options);
                     break;
                 case "svcnotifperiod":
-                    $this->_setServiceNotificationPeriod($options);
+                    return  $this->_setServiceNotificationPeriod($options);
                     break;
                 default:
                     print "Unknown parameter type.\n";
                     break;
             }
 	    }
+	}
+
+	/**
+	 * Enable contact
+	 *
+	 * @param string $name
+	 * @return null|void
+	 */
+	public function enable($options = null) {
+	    $this->checkParameters($options);
+	    if (!($contactId = $this->contactExists($options))) {
+            print "Contact does not exist.\n";
+            return 1;
+        }
+        
+        /*
+         * enable user
+         */
+        $query = "UPDATE contact SET contact_activate = '1' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $this->_db->query($query);
+	}
+	
+	/**
+	 * Disable contact
+	 *
+	 * @param string $name
+	 * @return null|void
+	 */
+	public function disable($options = null) {
+	    $this->checkParameters($options);
+	    if (!($contactId = $this->contactExists($options))) {
+            print "Contact does not exist.\n";
+            return 1;
+        }
+        
+        /*
+         * enable user
+         */
+        $query = "UPDATE contact SET contact_activate = '0' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $this->_db->query($query);
+	}
+	
+	/**
+	 * set contactgroup
+	 *
+	 * @param string $name
+	 * @param string Cg name
+	 * @return null|void
+	 */
+	public function setCG($options) {
+		
+		$this->checkParameters($options);
+		
+		/*
+		 * Split parameters
+		 */
+		$data = split(';', $options);
+		
+		if (!($contactId = $this->contactExists($data[0]))) {
+            print "Contact does not exist.\n";
+            return 1;
+        }
+        
+        if (strstr($data[1], ",")) {
+        	;
+        } else {
+        	
+        }
+	}
+
+	/**
+	 * remove contactgroup
+	 *
+	 * @param string $name
+	 * @param string Cg name
+	 * @return null|void
+	 */	
+	public function removeCG($options) {
+		
 	}
 }
 ?>
