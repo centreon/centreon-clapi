@@ -69,7 +69,7 @@ class CentreonService {
 		}
 	}
 	
-	private function getServiceName($service_id) {
+	public function getServiceName($service_id) {
 		$request = "SELECT service_description FROM service WHERE service_id = '$service_id'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
@@ -80,7 +80,7 @@ class CentreonService {
 			return "";
 	}
 	
-	private function getServiceAlias($service_id) {
+	public function getServiceAlias($service_id) {
 		$request = "SELECT service_alias FROM service WHERE service_id = '$service_id'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
@@ -103,24 +103,63 @@ class CentreonService {
 		return $str;			
 	}
 	
-	public function add($information) {
-		
+	protected function checkParameters($options) {
+		if (!isset($options) || $options == "") {
+			print "No options defined. $str\n";
+			$this->return_code = 1;
+			return 1;
+		}
 	}
 	
-	public function addServices($information) {
+	/* **************************************
+	 * Add services
+	 */
+	public function add($information) {
+
+		$this->checkParameters($information);
+		
+		$tabInfo = split(";", $information);
+		if (count($tabInfo) == 3) {
+			$data = array("service_description" => $tabInfo[0], "host" => $tabInfo[1], "template" => $tabInfo[2]);
+			return $this->addService($data);
+		} else {
+			print "No enought data for creating services.\n";
+			return 1;
+		}
+	}
+	
+	public function addService($information) {
 		if (!isset($information["service_description"]) || !isset($information["host"]) || !isset($information["template"])) {
 			return 0;
 		} else {
-			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".$this->encode($information["service_description"])."', '".$information["template"]."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+			if (preg_match("/^[0-9]*$/", $information["template"], $matches)) {
+				$template = $information["template"];
+			} else {
+				$request = "SELECT service_id FROM service WHERE service_description LIKE '".$information["template"]."' LIMIT 1";
+				$DBRESULT = $this->DB->query($request);
+				$data = $DBRESULT->fetchRow();
+				$template = $data["service_id"];
+			}
+			
+			if (preg_match("/^[0-9]*$/", $information["host"], $matches)) {
+				$host = $information["host"];
+			} else {
+				$request = "SELECT host_id FROM host WHERE host_name LIKE '".$information["host"]."' LIMIT 1";
+				$DBRESULT = $this->DB->query($request);
+				$data = $DBRESULT->fetchRow();
+				$host = $data["host_id"];
+			}
+			
+			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."', '".$template."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 			
-			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".$information["service_description"]."' AND service_activate = '1' AND service_register = '1'";
+			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."' AND service_activate = '1' AND service_register = '1'";
 			$DBRESULT =& $this->DB->query($request);
 			$service = $DBRESULT->fetchRow();
 			$service_id = $service["MAX(service_id)"];
 			
-			if ($service_id != 0 && $information["host"] != 0) {
-				$request = "INSERT INTO host_service_relation (service_service_id, host_host_id) VALUES ('$service_id', '".$information["host"]."')";
+			if ($service_id != 0 && $host != 0) {
+				$request = "INSERT INTO host_service_relation (service_service_id, host_host_id) VALUES ('$service_id', '".$host."')";
 				$this->DB->query($request);
 				
 				$request = "INSERT INTO extended_service_information (service_service_id) VALUE ('$service_id')";
@@ -143,6 +182,9 @@ class CentreonService {
 		}
 	}
 	
+	/* ***************************************
+	 * Show all services
+	 */
 	public function show($search_string = NULL) {
 		
 		$request = "SELECT service_id, service_description, service_alias, s.command_command_id, command_name, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg, host_id, host_name FROM service s, host h, host_service_relation hr, command cmd WHERE cmd.command_id = s.command_command_id AND s.service_id = hr.service_service_id AND hr.host_host_id = h.host_id AND service_register = '".$this->register."' AND host_register = '1' ORDER BY host_name, service_description";
@@ -156,6 +198,21 @@ class CentreonService {
 			print $data["host_id"].";".$data["service_id"].";".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
 		}
 	}
+	
+	/* ***************************************
+	 * Delete a service
+	 */
+	public function del($information) {
+		
+		$this->checkParameters($information);
+		
+		$tabInfo = split(";", $information);
+		
+		if (count($tabInfo)) {
+			$request = "DELETE FROM servcice WHERE service_description LIKE '".$tabInfo[1]."' AND service_id = (SELECT host_id FROM host WHERE host_name LIKE '".$tabInfo[0]."' AND host_register = '".$this->register."') AND service_register = '".$this->register."'";
+		} 
+	}
+	
 }
  
 ?>

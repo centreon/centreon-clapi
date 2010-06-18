@@ -151,7 +151,7 @@ class CentreonHost {
 		
 		$this->checkParameters($options);
 		
-		$svc = new CentreonService($this->DB);
+		$svc = new CentreonService($this->DB, "Service");
 		$info = split(";", $options);
 		/*
 		 * Check host_name / host_alias rules
@@ -252,7 +252,7 @@ class CentreonHost {
 		/*
 		 * Create service class
 		 */
-		$svc = new CentreonService($this->DB);
+		$svc = new CentreonService($this->DB, "Service");
 		
 		$host_id = $this->getHostID($options);
 		$this->deployServiceTemplates($host_id, $svc);
