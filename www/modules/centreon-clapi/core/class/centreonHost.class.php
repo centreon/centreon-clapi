@@ -595,7 +595,39 @@ class CentreonHost {
 		}
 	}
 	
+	/* *************************************
+	 * Enable Disable Host
+	 */
+	public function enable($options) {
+		
+		$this->checkParameters($options);
 	
+		$host_id = $this->getHostID(htmlentities($options, ENT_QUOTES));
+		if ($this->hostExists($options)) {
+			$request = "UPDATE host SET host_activate = '1' WHERE host_id = '".$host_id."' AND host_register = '".$this->register."'";
+			$this->DB->query($request);
+			return 0;
+		} else {
+			print "Host '$options' doesn't exists.\n";
+			return 1;
+		}
+	}
+	
+	public function disable($options) {
+		
+		$this->checkParameters($options);
+	
+		$host_id = $this->getHostID(htmlentities($options, ENT_QUOTES));
+		if ($this->hostExists($options)) {
+			$request = "UPDATE host SET host_activate = '0' WHERE host_id = '".$host_id."' AND host_register = '".$this->register."'";
+			$this->DB->query($request);
+			return 0;
+		} else {
+			print "Host '$options' doesn't exists.\n";
+			return 1;
+		}
+	}	
+
 	 
 }
  
