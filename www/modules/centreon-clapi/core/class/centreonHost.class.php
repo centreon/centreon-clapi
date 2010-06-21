@@ -517,6 +517,48 @@ class CentreonHost {
 		}
 	} 
 	
+	/* **************************************
+	 * Add host template 
+	 */
+	public function addTemplate($information) {
+		$this->checkParameters($information);
+		
+		$elem = split(";", $information);
+		$exitcode = $this->addTemplateHost($elem[0], $elem[1]);
+		return $exitcode;
+	}
+	
+	protected function addTemplateHost($host_name, $template) {
+		if (isset($host_name) && $host_name != "" && isset($template) && $template != "") {
+			
+			$svc = new CentreonService($this->DB, "Service");
+		
+			$request = "SELECT * FROM host_template_relation " .
+						"WHERE host_host_id = (SELECT host_id FROM host WHERE host_name LIKE '".$host_name."') " .
+								"AND host_tpl_id = (SELECT host_id FROM host WHERE host_name LIKE '".$template."')";
+			$DBRESULT = $this->DB->query($request);
+			if ($DBRESULT->numRows() == 0) {
+				
+				/*
+				 * Get Host ID
+				 */
+				$host_id = $this->getHostID($host_name);
+				
+				$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$template."'), '".$host_id."')";
+				$this->DB->query($request);
+				if ($this->register) {
+					$this->deployServiceTemplates($host_id, $svc);
+				}
+			} else {
+				print "Template already added.\n";
+				return 1;
+			}
+		} else {
+			print "Check parameters.\n";
+			return 1;
+		}
+	}
+	
 	/*
 	 * Set host macro
 	 */
