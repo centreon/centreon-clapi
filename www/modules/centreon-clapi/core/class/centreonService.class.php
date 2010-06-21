@@ -42,6 +42,7 @@ class CentreonService {
 	var $register;
 	var $flag;
 	var $object;
+	var $host;
 	
 	public function __construct($DB, $objName) {
 		$this->DB = $DB;
@@ -50,8 +51,11 @@ class CentreonService {
 
 		if (strtoupper($objName) == "STPL") {
 			$this->setTemplateFlag();
+			$this->host = new CentreonHost($this->DB, "HTPL");
+		} else {
+			$this->host = new CentreonHost($this->DB, "HOST");
 		}
-		
+
 		$this->flag = array(0 => "No", 1 => "Yes", 2 => "Default");
 	}
 	
@@ -157,9 +161,7 @@ class CentreonService {
 		
 		$tabInfo = split(";", $information);
 		
-		$host = new CentreonHost($this->DB, "HOST");
-		
-		if (!$host->hostExists($tabInfo[0])) {
+		if (!$this->host->hostExists($tabInfo[0])) {
 			print "Host doesn't exists.\n";
 			return 1;
 		}
@@ -280,9 +282,7 @@ class CentreonService {
 		
 		$tabInfo = split(";", $information);
 		
-		$host = new CentreonHost($this->DB, $this->object);
-		
-		if (!$host->hostExists($tabInfo[0])) {
+		if (!$this->host->hostExists($tabInfo[0])) {
 			print "Host doesn't exists.\n";
 			return 1;
 		}
@@ -335,9 +335,7 @@ class CentreonService {
 		
 		$macro_name = strtoupper($macro_name);
 		
-		$host = new CentreonHost($this->DB, "HOST");
-		
-		$host_id = $host->getHostID(htmlentities($host_name, ENT_QUOTES));
+		$host_id = $this->host->getHostID(htmlentities($host_name, ENT_QUOTES));
 		$service_id = $this->getServiceID($host_id, $service_description);
 		
 		if ($service_id != 0) {
@@ -388,6 +386,22 @@ class CentreonService {
 		return 0;	
 	}
 
+	/* ******************************************
+	 * Set parameters
+	 */
+	public function setParam($informations) {
+		
+		$this->checkParameters($informations);
+		
+		$info = split(";", $informations);
+		$return_code = $this->setParamServices($info[0], $info[1], $info[2]);
+		return $return_code;
+	}
+
+	protected function setParamServices($host_name, $service_description, $param, $value) {
+		
+		return 0;
+	}
+
 }
- 
 ?>
