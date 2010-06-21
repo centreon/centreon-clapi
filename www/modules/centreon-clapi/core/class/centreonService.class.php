@@ -171,12 +171,64 @@ class CentreonService {
 			return 1;
 		}
 		
-		if (count($tabInfo) == 3) {
-			$data = array("host" => $tabInfo[0], "service_description" => $tabInfo[1], "template" => $tabInfo[2]);
-			return $this->addService($data);
+		if ($this->register) {
+			if (count($tabInfo) == 3) {
+				$data = array("host" => $tabInfo[0], "service_description" => $tabInfo[1], "template" => $tabInfo[2]);
+				return $this->addService($data);
+			} else {
+				print "No enought data for creating services.\n";
+				return 1;
+			}
 		} else {
-			print "No enought data for creating services.\n";
-			return 1;
+			if (count($tabInfo) == 2) {
+				$data = array("service_description" => $tabInfo[0], "service_alias" => $tabInfo[1], "template" => $tabInfo[2]);
+				return $this->addServiceTemplate($data);
+			} else {
+				print "No enought data for creating services template.\n";
+				return 1;
+			}
+		}
+	}
+	
+	protected function addServiceTemplate($information) {
+		if (!isset($information["service_description"]) || !isset($information["template"])) {
+			return 0;
+		} else {
+			if (preg_match("/^[0-9]*$/", $information["template"], $matches)) {
+				$template = $information["template"];
+			} else {
+				$request = "SELECT service_id FROM service WHERE service_description LIKE '".$information["template"]."' LIMIT 1";
+				$DBRESULT = $this->DB->query($request);
+				$data = $DBRESULT->fetchRow();
+				$template = $data["service_id"];
+			}
+			
+			$request = "INSERT INTO service (service_description, service_alias, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."', '".htmlentities($this->encode($information["service_alias"]), ENT_QUOTES)."', '".$template."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+			$this->DB->query($request);
+			
+			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."' AND service_activate = '1' AND service_register = '1'";
+			$DBRESULT =& $this->DB->query($request);
+			$service = $DBRESULT->fetchRow();
+			$service_id = $service["MAX(service_id)"];
+			
+			if ($service_id != 0) {
+				
+				$request = "INSERT INTO extended_service_information (service_service_id) VALUE ('$service_id')";
+				$this->DB->query($request);
+				
+				if (isset($information["macro"])) {
+					foreach ($information["macro"] as $value) {
+						if (strstr($value, ":")) {
+							$tab = split(":", $value);
+							if (isset($tab[1]) && $tab[1] != "") {
+								$request = "INSERT INTO on_demand_macro_service (svc_macro_name, svc_macro_value, svc_svc_id) VALUE ('\$_SERVICE".$tab[0]."\$', '".$tab[1]."', '$service_id')";
+								$this->DB->query($request);
+							}
+						}
+					}
+				}
+			}
+			return $service_id;	
 		}
 	}
 	
@@ -219,7 +271,6 @@ class CentreonService {
 				
 				if (isset($information["macro"])) {
 					foreach ($information["macro"] as $value) {
-						print $value . '\n';
 						if (strstr($value, ":")) {
 							$tab = split(":", $value);
 							if (isset($tab[1]) && $tab[1] != "") {
@@ -394,11 +445,11 @@ class CentreonService {
 		$this->checkParameters($informations);
 		
 		$info = split(";", $informations);
-		$return_code = $this->setParamServices($info[0], $info[1], $info[2]);
+		$return_code = $this->setParamService($info[0], $info[1], $info[2]);
 		return $return_code;
 	}
 
-	protected function setParamServices($host_name, $service_description, $param, $value) {
+	protected function setParamService($host_name, $service_description, $param, $value) {
 		
 		return 0;
 	}
