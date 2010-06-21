@@ -41,10 +41,12 @@ class CentreonService {
 	var $DB;
 	var $register;
 	var $flag;
+	var $object;
 	
 	public function __construct($DB, $objName) {
 		$this->DB = $DB;
 		$this->register = 1;
+		$this->object = $objName;
 
 		if (strtoupper($objName) == "STPL") {
 			$this->setTemplateFlag();
@@ -111,6 +113,41 @@ class CentreonService {
 		}
 	}
 	
+	/* ************************************
+	 * Get service ID
+	 */
+	public function getServiceID($host_id, $service_description) {
+		$DBRESULT =& $this->DB->query(	"SELECT service_id FROM service, host_service_relation hsr " .
+										"WHERE hsr.host_host_id = '".$host_id."' AND hsr.service_service_id = service_id " .
+										"AND service_description = '".$service_description."' LIMIT 1");
+		$row =& $DBRESULT->fetchRow();
+		if ($row["service_id"]) {
+			return $row["service_id"];
+		} else {
+			return 0;
+		}
+	}
+	
+	/* **********************************
+	 *  Check if service is defind
+	 */
+	public function serviceExists($name = NULL, $host = NULL)	{
+
+		$DBRESULT =& $this->DB->query(	"SELECT service_id " .
+										"FROM service, host_service_relation hsr, host h " .
+										"WHERE hsr.host_host_id = h.host_id " .
+											"AND h.host_name LIKE '".$this->encode($host)."' " .
+											"AND hsr.service_service_id = service_id " .
+											"AND service.service_description = '".htmlentities($this->encode($name), ENT_QUOTES)."'");
+		$service =& $DBRESULT->fetchRow();
+		if ($DBRESULT->numRows() >= 1) {
+			$DBRESULT->free();
+			return true;
+		}
+		$DBRESULT->free();		
+		return false;
+	}
+	
 	/* **************************************
 	 * Add services
 	 */
@@ -119,8 +156,21 @@ class CentreonService {
 		$this->checkParameters($information);
 		
 		$tabInfo = split(";", $information);
+		
+		$host = new CentreonHost($this->DB, "HOST");
+		
+		if (!$host->hostExists($tabInfo[1])) {
+			print "Host doesn't exists.\n";
+			return 1;
+		}
+		
+		if ($this->serviceExists($tabInfo[0], $tabInfo[1])) {
+			print "Service already exists.\n";
+			return 1;
+		}
+		
 		if (count($tabInfo) == 3) {
-			$data = array("service_description" => $tabInfo[0], "host" => $tabInfo[1], "template" => $tabInfo[2]);
+			$data = array("host" => $tabInfo[0], "service_description" => $tabInfo[1], "template" => $tabInfo[2]);
 			return $this->addService($data);
 		} else {
 			print "No enought data for creating services.\n";
@@ -187,16 +237,38 @@ class CentreonService {
 	 */
 	public function show($search_string = NULL) {
 		
-		$request = "SELECT service_id, service_description, service_alias, s.command_command_id, command_name, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg, host_id, host_name FROM service s, host h, host_service_relation hr, command cmd WHERE cmd.command_id = s.command_command_id AND s.service_id = hr.service_service_id AND hr.host_host_id = h.host_id AND service_register = '".$this->register."' AND host_register = '1' ORDER BY host_name, service_description";
-		$DBRESULT = $this->DB->query($request);
-		$i = 0;
-		while ($data = $DBRESULT->fetchRow()) {
-			if ($i == 0) {
-				print "hostid;svcid;host;description;command;args;checkPeriod;maxAttempts;checkInterval;retryInterval;active;passive;";
+		if ($this->register) {
+			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, command_name, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg, host_id, host_name FROM service s, host h, host_service_relation hr, command cmd WHERE cmd.command_id = s.command_command_id AND s.service_id = hr.service_service_id AND hr.host_host_id = h.host_id AND service_register = '".$this->register."' AND host_register = '1' ORDER BY host_name, service_description";
+			$DBRESULT = $this->DB->query($request);
+			$i = 0;
+			while ($data = $DBRESULT->fetchRow()) {
+				if ($i == 0) {
+					print "hostid;svcid;host;description;command;args;checkPeriod;maxAttempts;checkInterval;retryInterval;active;passive;";
+				}
+				$i++;
+				print $data["host_id"].";".$data["service_id"].";".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
 			}
-			$i++;
-			print $data["host_id"].";".$data["service_id"].";".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
+			$DBRESULT->free();
+		} else {
+			
+			$search = "";
+			if ($search_string != "") {
+				$search = " AND (service_description LIKE '%$search_string%' OR service_alias LIKE '%$search_string%') ";
+			}
+			
+			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, command_name, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg FROM service s, command cmd WHERE cmd.command_id = s.command_command_id AND service_register = '".$this->register."' $search ORDER BY service_description, service_alias";
+			$DBRESULT = $this->DB->query($request);
+			$i = 0;
+			while ($data = $DBRESULT->fetchRow()) {
+				if ($i == 0) {
+					print "svcid;name;service_name;command;args;checkPeriod;maxAttempts;checkInterval;retryInterval;active;passive;";
+				}
+				$i++;
+				print $data["service_id"].";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["service_alias"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
+			}
+			$DBRESULT->free();
 		}
+		
 	}
 	
 	/* ***************************************
@@ -208,11 +280,114 @@ class CentreonService {
 		
 		$tabInfo = split(";", $information);
 		
-		if (count($tabInfo)) {
-			$request = "DELETE FROM servcice WHERE service_description LIKE '".$tabInfo[1]."' AND service_id = (SELECT host_id FROM host WHERE host_name LIKE '".$tabInfo[0]."' AND host_register = '".$this->register."') AND service_register = '".$this->register."'";
+		$host = new CentreonHost($this->DB, $this->object);
+		
+		if (!$host->hostExists($tabInfo[0])) {
+			print "Host doesn't exists.\n";
+			return 1;
+		}
+		
+		if (!$this->serviceExists($tabInfo[1], $tabInfo[0])) {
+			print "Service doesn't exists.\n";
+			return 1;
+		} else {
+			
+			/*
+			 * Looking for service id 
+			 */
+			$request = "SELECT service_service_id as service_id FROM host_service_relation hr, host h, service s WHERE s.service_description LIKE '".$tabInfo[1]."' AND hr.service_service_id = s.service_id AND h.host_id = hr.host_host_id AND h.host_name LIKE '".$tabInfo[0]."' AND h.host_register = '".$this->register."'";
+			$DBRESULT = $this->DB->query($request);
+			$data =& $DBRESULT->fetchRow();
+			$service_id = $data["service_id"];
+			$DBRESULT->free();
+			
+			/*
+			 * Delete service
+			 */
+			$request = "DELETE FROM service WHERE service_id = '".$service_id."' ";
+			$this->DB->query($request);
+			return 0;
 		} 
 	}
 	
+	/* *******************************************
+	 * Set Macro 
+	 */
+	public function setMacro($informations) {
+		
+		$this->checkParameters($informations);
+		
+		$info = split(";", $informations);
+		if (count($info) == 4) {
+			$return_code = $this->setMacroService($info[0], $info[1], $info[2], $info[3]);
+		} else {
+			print "Not enought arguments.\n";
+			$return_code = 1;
+		}
+		return $return_code;
+	}
+
+	protected function setMacroService($host_name, $service_description, $macro_name, $macro_value) {
+		if ((!isset($host_name) || !isset($macro_name)) && (!isset($service_description) || !isset($service_description))) {
+			print "Bad parameters\n";
+			return 1;
+		}
+		
+		$macro_name = strtoupper($macro_name);
+		
+		$host = new CentreonHost($this->DB, "HOST");
+		
+		$host_id = $host->getHostID(htmlentities($host_name, ENT_QUOTES));
+		$service_id = $this->getServiceID($host_id, $service_description);
+		
+		if ($service_id != 0) {
+			$request = "SELECT COUNT(*) FROM on_demand_macro_service WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$'";
+			$DBRESULT =& $this->DB->query($request); 
+			$data =& $DBRESULT->fetchRow();
+			if ($data["COUNT(*)"]) {
+				$request = "UPDATE on_demand_macro_service SET svc_macro_value = '".htmlentities($macro_value, ENT_QUOTES)."' WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$' LIMIT 1";
+				$DBRESULT =& $this->DB->query($request);
+				return 0;
+			} else {
+				$request = "INSERT INTO on_demand_macro_service (svc_svc_id, svc_macro_value, svc_macro_name) VALUES ('".htmlentities($service_id, ENT_QUOTES)."', '".htmlentities($macro_value, ENT_QUOTES)."', '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$')";
+				$DBRESULT =& $this->DB->query($request);
+				return 0;
+			}			
+		} else {
+			print "Cannot find service ID.\n";
+			return 1;
+		}
+	}
+
+	/* *******************************************
+	 * Un-Set Macro 
+	 */
+	public function delMacro($informations) {
+		
+		$this->checkParameters($informations);
+		
+		$info = split(";", $informations);
+		$return_code = $this->delMacroService($info[0], $info[1], $info[2]);
+		return $return_code;
+	}
+	
+	protected function delMacroService($host_name, $service_description, $macro_name) {
+		if ((!isset($host_name) || !isset($macro_name)) && (!isset($service_description) || !isset($service_description))) {
+			print "Bad parameters\n";
+			return 1;
+		}
+		
+		$macro_name = strtoupper($macro_name);
+
+		$host = new CentreonHost($this->DB, "HOST");
+		$host_id = $host->getHostID(htmlentities($host_name, ENT_QUOTES));
+		$service_id = $this->getServiceID($host_id, $service_description);
+		
+		$request = "DELETE FROM on_demand_macro_service WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$'";
+		$DBRESULT =& $this->DB->query($request); 
+		return 0;	
+	}
+
 }
  
 ?>

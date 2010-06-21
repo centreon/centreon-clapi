@@ -58,7 +58,7 @@ class CentreonHost {
 	/*
 	 * Check host existance
 	 */
-	protected function hostExists($name) {
+	public function hostExists($name) {
 		if (!isset($name))
 			return 0;
 		
@@ -116,7 +116,7 @@ class CentreonHost {
 	/*
 	 * Get id of host
 	 */
-	protected function getHostID($name) {
+	public function getHostID($name) {
 		$request = "SELECT host_id FROM host WHERE host_name = '".trim($name)."' AND host_register = '".$this->register."'";
 		$DBRESULT =& $this->DB->query($request);
 		if ($DBRESULT->numRows()) {

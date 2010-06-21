@@ -74,6 +74,15 @@ class CentreonCommand {
 		$str = str_replace("#R#", "\t", $str);
 		return $str;	
 	}
+
+	protected function encode($name) {
+		$name = str_replace("\$", "\\\$", $name);
+		$name = str_replace("/", "#S#", htmlentities($name, ENT_QUOTES));
+		$name = str_replace("\\", "#BS#", $name);
+		$name = str_replace("\n", "#BR#", $name);
+		$name = str_replace("\t", "#R#", $name);
+		return $name;
+	}
 	
 	public function getCommandID($command_name = NULL) {
 		if (!isset($command_name))
@@ -184,15 +193,9 @@ class CentreonCommand {
 		} else {
 			$information = $this->setDefaultType($information);
 			
-			/*
-			 * Replace special chars
-			 */
-			$information["command_line"] = str_replace("\$", "\\\$", $information["command_line"]);
-			$information["command_line"] = str_replace("/", "#S#", htmlentities($information["command_line"], ENT_QUOTES));
-			$information["command_line"] = str_replace("\\", "#BS#", $information["command_line"]);
-			$information["command_line"] = str_replace("\n", "#BR#", $information["command_line"]);
-			$information["command_line"] = str_replace("\t", "#R#", $information["command_line"]);			
-			
+			$information["command_name"] = $this->encode($information["command_name"]);
+			$information["command_line"] = $this->encode($information["command_line"]);
+
 			$request = 	"INSERT INTO command " .
 						"(command_name, command_line, command_type) VALUES " .
 						"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".$information["command_line"]."'" .
