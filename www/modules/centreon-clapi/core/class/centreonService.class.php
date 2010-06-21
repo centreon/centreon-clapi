@@ -159,12 +159,12 @@ class CentreonService {
 		
 		$host = new CentreonHost($this->DB, "HOST");
 		
-		if (!$host->hostExists($tabInfo[1])) {
+		if (!$host->hostExists($tabInfo[0])) {
 			print "Host doesn't exists.\n";
 			return 1;
 		}
 		
-		if ($this->serviceExists($tabInfo[0], $tabInfo[1])) {
+		if ($this->serviceExists($tabInfo[1], $tabInfo[0])) {
 			print "Service already exists.\n";
 			return 1;
 		}
