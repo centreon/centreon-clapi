@@ -235,7 +235,7 @@ class CentreonServiceGroup {
 		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
 		
 		$sg_id = $this->getServiceGroupID($sg_name);
-		if ($hg_id && $host_id) {
+		if ($sg_id && $host_id) {
 			$request = "DELETE FROM hostgroup_relation WHERE host_host_id = '$host_id' AND hostgroup_hg_id = '$hg_id'";
 			$DBRESULT =& $this->DB->query($request);
 			if ($DBRESULT) {
