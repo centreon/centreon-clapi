@@ -42,7 +42,10 @@ class CentreonService {
 	var $register;
 	var $flag;
 	var $object;
+	
 	var $host;
+	var $contact;
+	var $cg;
 	
 	var $parameters;
 	var $paramTable;
@@ -58,16 +61,80 @@ class CentreonService {
 		} else {
 			$this->host = new CentreonHost($this->DB, "HOST");
 		}
-
-		$this->flag = array(0 => "No", 1 => "Yes", 2 => "Default");
+		
+		/*
+		 * Create contact object
+		 */
+		require_once "./class/centreonCommand.class.php";
+		require_once "./class/centreonContact.class.php";
+		$this->contact = new CentreonContact($this->DB, "CONTACT");
+		
+		/*
+		 * Create ContactGroup object
+		 */
+		require_once "./class/centreonContactGroup.class.php";
+		$this->cg = new CentreonContactGroup($this->DB, "CG");
 		
 		/*
 		 * Change buffers
 		 */
 		$this->setParametersList();
 		$this->setParametersTable();
+		$this->setFlags();
 	}
 
+	protected function setFlags() {
+		$this->flag = array(0 => "No", 1 => "Yes", 2 => "Default");
+	}
+
+	protected function setParametersList() {
+		$this->parameters = array();
+		$this->parameters["description"] = "service_description";
+		$this->parameters["alias"] = "service_alias";
+		$this->parameters["template"] = "service_template_model_stm_id";
+		
+		$this->parameters["command"] = "command_command_id";
+		$this->parameters["args"] = "command_command_id_arg";
+		
+		$this->parameters["max_check_attempts"] = "service_max_check_attempts";
+		$this->parameters["normal_check_interval"] = "service_normal_check_interval";
+		$this->parameters["retry_check_interval"] = "service_retry_check_interval";
+		
+		$this->parameters["active_checks_enabled"] = "service_active_checks_enabled";
+		$this->parameters["passive_checks_enabled"] = "service_passive_checks_enabled";
+		
+		$this->parameters["notif_options"] = "service_notification_options";
+		
+		$this->parameters["check_period"] = "timeperiod_tp_id";
+		$this->parameters["notif_period"] = "timeperiod_tp_id2";
+		
+		$this->parameters["url"] = "esi_notes_url";
+	}
+	
+	protected function setParametersTable() {
+		$this->paramTable = array();
+		
+		$this->paramTable["description"] = "service";
+		$this->paramTable["alias"] = "service";
+		$this->paramTable["template"] = "service";
+		
+		$this->paramTable["command"] = "service";
+		$this->paramTable["args"] = "service";
+		
+		$this->paramTable["max_check_attempts"] = "service";
+		$this->paramTable["normal_check_interval"] = "service";
+		$this->paramTable["retry_check_interval"] = "service";
+		
+		$this->paramTable["active_checks_enabled"] = "service";
+		$this->paramTable["passive_checks_enabled"] = "service";
+		
+		$this->paramTable["notif_options"] = "service";
+		
+		$this->paramTable["check_period"] = "service";
+		$this->paramTable["notif_period"] = "service";
+		
+		$this->paramTable["url"] = "extended_service_information";
+	}
 	
 	
 	/* ************************
@@ -126,13 +193,13 @@ class CentreonService {
 			return "";
 	}
 	
-	private function encode($str) {
+	protected function encode($str) {
 		$str = str_replace("/", "#S#", $str);
 		$str = str_replace("\\", "#BS#", $str);
 		return $str;			
 	}
 	
-	private function decode($str) {
+	protected function decode($str) {
 		$str = str_replace("#S#", "/", $str);
 		$str = str_replace("#BS#", "\\", $str);
 		return $str;			
@@ -153,6 +220,20 @@ class CentreonService {
 		$DBRESULT =& $this->DB->query(	"SELECT service_id FROM service, host_service_relation hsr " .
 										"WHERE hsr.host_host_id = '".$host_id."' AND hsr.service_service_id = service_id " .
 										"AND service_description = '".$service_description."' LIMIT 1");
+		$row =& $DBRESULT->fetchRow();
+		if ($row["service_id"]) {
+			return $row["service_id"];
+		} else {
+			return 0;
+		}
+	}
+	
+	/* ************************************
+	 * Get service ID
+	 */
+	public function getServiceTplID($service_description) {
+		$DBRESULT =& $this->DB->query(	"SELECT service_id FROM service " .
+										"WHERE service_description = '".$service_description."' LIMIT 1");
 		$row =& $DBRESULT->fetchRow();
 		if ($row["service_id"]) {
 			return $row["service_id"];
@@ -463,8 +544,7 @@ class CentreonService {
 		
 		$macro_name = strtoupper($macro_name);
 
-		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID(htmlentities($host_name, ENT_QUOTES));
+		$host_id = $this->host->getHostID(htmlentities($host_name, ENT_QUOTES));
 		$service_id = $this->getServiceID($host_id, $service_description);
 		
 		$request = "DELETE FROM on_demand_macro_service WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$'";
@@ -487,12 +567,15 @@ class CentreonService {
 	protected function setParamService($host_name, $service_description, $param, $value) {
 		if (isset($this->parameters[$param]) && isset($this->paramTable[$param])) {
 			if ($this->register) {
-				$host = new CentreonHost($this->DB, "HOST");
-				$host_id = $host->getHostID(htmlentities($host_name, ENT_QUOTES));
+				$host_id = $this->host->getHostID(htmlentities($host_name, ENT_QUOTES));
 				
-				if (!$this->testServiceExistence($service_description, $host_id)) {
+				if (!$this->serviceExists($service_description, $host_id)) {
 					print "Unknown service.\n";
 					return 1; 
+				}
+				
+				if ($param == "template") {
+					$value = $cmd->getServiceTplID($value);
 				}
 				
 				if ($param == "command") {
@@ -513,9 +596,29 @@ class CentreonService {
 				return 0;
 			} else {
 				if (!$this->testServiceTplExistence($service_description)) {
-					print "Unknown service.\n";
+					print "Unknown service template.\n";
 					return 1; 
 				}
+				
+				if ($param == "template") {
+					$value = $cmd->getServiceTplID($value);
+				}
+				
+				if ($param == "command") {
+					require_once "./class/centreonCommand.class.php";
+					$cmd = new CentreonCommand($this->DB);
+					$value = $cmd->getCommandID($value);
+				}
+				
+				if ($param == "check_period" || $param == "notif_period") {
+					require_once "./class/centreonTimePeriod.class.php";
+					$tp = new CentreonTimePeriod($this->DB);
+					$value = $tp->getTimeperiodId($value);
+				}
+				
+				$service_id = $this->getServiceTplID($service_description);
+				$request = "UPDATE ".$this->paramTable[$param]." SET ".$this->parameters[$param]." = '".$value."' WHERE ".($this->paramTable[$param] == "service" ? "" : "service_")."service_id = '$service_id'";
+				$this->DB->query($request);
 			}
 		} else {
 			print "Unknown parameters for a service.\n";
@@ -523,55 +626,234 @@ class CentreonService {
 		}
 		return 0;
 	}
+	
+	/* ***************************************
+	 * Set Contact lionk for notification
+	 */
+	public function setContact($options) {
+		$this->checkParameters($options);
+		$info = split(";", $options);
+		if ($this->register) {
+			$contact_id = $this->contact->getContactID($info[2]);
+		} else {
+			$contact_id = $this->contact->getContactID($info[1]);
+		}
+	
+		/*
+		 * Check contact IS
+		 */	
+		if ($contact_id != 0) {
+			if ($this->register) {
+				$host_id = $this->host->getHostID($info[0]);		
+				$service_id = $this->getServiceID($host_id, $info[1]);
+			} else {
+				$service_id = $this->getServiceTplID($info[0]);
+			}
+			
+			/*
+			 * Clean all data 
+			 */
+			$request = "DELETE FROM contact_service_relation WHERE contact_id = '$contact_id'  AND service_service_id = '$service_id'";
+			$this->DB->query($request);
+			
+			/*
+			 * Insert new entry
+			 */
+			$request = "INSERT INTO contact_service_relation (contact_id, service_service_id) VALUES ('$contact_id', '$service_id')";
+			$this->DB->query($request);
+			return 0;			
+		} else {
+			print "Cannot find user : '".$info[2]."'.\n";
+			return 1;
+		}
+	} 
 
-	protected function setParametersList() {
-		$this->parameters = array();
-		$this->parameters["description"] = "service_description";
-		$this->parameters["alias"] = "service_alias";
-		$this->parameters["template"] = "service_template_model_stm_id";
+	/* ***************************************
+	 * UN-Set Contact lionk for notification
+	 */
+	public function unsetContact($options) {
+		$this->checkParameters($options);
+		$info = split(";", $options);
 		
-		$this->parameters["command"] = "command_command_id";
-		$this->parameters["args"] = "command_command_id_arg";
+		require_once "./class/centreonContact.class.php";
+		$contact = new CentreonContact($this->DB, "CONTACT");
 		
-		$this->parameters["max_check_attempts"] = "service_max_check_attempts";
-		$this->parameters["normal_check_interval"] = "service_normal_check_interval";
-		$this->parameters["retry_check_interval"] = "service_retry_check_interval";
+		$contact_id = $contact->getContactID($info[2]);
+		$host_id = $this->host->getHostID($info[0]);		
+		$service_id = $this->getServiceID($host_id, $info[1]);
 		
-		$this->parameters["active_checks_enabled"] = "service_active_checks_enabled";
-		$this->parameters["passive_checks_enabled"] = "service_passive_checks_enabled";
+		/*
+		 * Clean all data 
+		 */
+		$request = "DELETE FROM contact_service_relation WHERE contact_id = '$contact_id'  AND service_service_id = '$service_id'";
+		$this->DB->query($request);
 		
-		$this->parameters["notif_options"] = "service_notification_options";
+		return 0;
+	} 
+
+	/* ***************************************
+	 * Set ContactGroup lionk for notification
+	 */
+	public function setCG($options) {
+		$this->checkParameters($options);
+		$info = split(";", $options);
+		if ($this->register) {
+			$cg_id = $this->cg->getContactGroupID($info[2]);	
+		} else {
+			$cg_id = $this->cg->getContactGroupID($info[1]);		
+		}
 		
-		$this->parameters["check_period"] = "timeperiod_tp_id";
-		$this->parameters["notif_period"] = "timeperiod_tp_id2";
+		/*
+		 * Check contact ID
+		 */
+		if ($cg_id != 0) {
+			if ($this->register) {
+				$host_id = $this->host->getHostID($info[0]);		
+				$service_id = $this->getServiceID($host_id, $info[1]);				
+			} else {
+				$service_id = $this->getServiceTplID($info[0]);	
+			}
+			
+			/*
+			 * Clean all data 
+			 */
+			$request = "DELETE FROM contactgroup_service_relation WHERE contactgroup_cg_id = '$cg_id'  AND service_service_id = '$service_id'";
+			$this->DB->query($request);
+			
+			/*
+			 * Insert new entry
+			 */
+			$request = "INSERT INTO contactgroup_service_relation (contactgroup_cg_id, service_service_id) VALUES ('$cg_id', '$service_id')";
+			$this->DB->query($request);
+			return 0;			
+		} else {
+			print "Cannot find contact group : '".$info[2]."'.\n";
+			return 1;
+		}
+	} 
+
+	/* ***************************************
+	 * UN-Set ContactGroup lionk for notification
+	 */
+	public function unsetCG($options) {
+		$this->checkParameters($options);
+		$info = split(";", $options);
+		if ($this->register) {
+			$cg_id = $this->cg->getContactGroupID($info[2]);	
+		} else {
+			$cg_id = $this->cg->getContactGroupID($info[1]);		
+		}
 		
-		$this->parameters["url"] = "esi_notes_url";
+		/*
+		 * Check contact ID
+		 */
+		if ($cg_id != 0) {
+			if ($this->register) {
+				$host_id = $this->host->getHostID($info[0]);		
+				$service_id = $this->getServiceID($host_id, $info[1]);				
+			} else {
+				$service_id = $this->getServiceTplID($info[0]);	
+			}
+			
+			/*
+			 * Clean all data 
+			 */
+			$request = "DELETE FROM contactgroup_service_relation WHERE contactgroup_cg_id = '$cg_id'  AND service_service_id = '$service_id'";
+			$this->DB->query($request);
+			return 0;			
+		} else {
+			print "Cannot find contact group : '".$info[2]."'.\n";
+			return 1;
+		}
+	} 
+	
+	/* *********************************************
+	 * Set Hopst Link
+	 */
+	public function setHost($options) {
+		$this->checkParameters($options);
+		$info = split(";", $options);
+		
+		if ($this->register) {
+			$host_id = $this->host->getHostID($info[0]);
+			$service_id = $this->getServiceID($host_id, $info[1]);	
+			
+			/*
+			 * Get host link
+			 */
+			$host_link_id = $this->host->getHostID($info[2]);
+			
+			/*
+			 * Delete all data
+			 */
+			$request = "DELETE FROM host_service_relation WHERE service_service_id = '".$service_id."' AND host_host_id = '".$host_link_id."'";
+			$this->DB->query($request);
+
+			/*
+			 * Insert new entry
+			 */
+			$request = "INSERT INTO host_service_relation (host_host_id, service_service_id) VALUES ('".$host_link_id."', '".$service_id."')";
+			$this->DB->query($request);
+		} else {
+			$service_id = $this->getServiceTplID($info[0]);	
+			
+			/*
+			 * Get host link
+			 */
+			$host_link_id = $this->host->getHostID($info[1]);
+			
+			/*
+			 * Delete all data
+			 */
+			$request = "DELETE FROM host_service_relation WHERE service_service_id = '".$service_id."' AND host_host_id = '".$host_link_id."'";
+			$this->DB->query($request);
+
+			/*
+			 * Insert new entry
+			 */
+			$request = "INSERT INTO host_service_relation (host_host_id, service_service_id) VALUES ('".$host_link_id."', '".$service_id."')";
+			$this->DB->query($request);
+		}
+		return 0;
 	}
 	
-	protected function setParametersTable() {
-		$this->paramTable = array();
+	/* *********************************************
+	 * Set Hopst Link
+	 */
+	public function unsetHost($options) {
+		$this->checkParameters($options);
+		$info = split(";", $options);
 		
-		$this->paramTable["description"] = "service";
-		$this->paramTable["alias"] = "service";
-		$this->paramTable["template"] = "service";
-		
-		$this->paramTable["command"] = "service";
-		$this->paramTable["args"] = "service";
-		
-		$this->paramTable["max_check_attempts"] = "service";
-		$this->paramTable["normal_check_interval"] = "service";
-		$this->paramTable["retry_check_interval"] = "service";
-		
-		$this->paramTable["active_checks_enabled"] = "service";
-		$this->paramTable["passive_checks_enabled"] = "service";
-		
-		$this->paramTable["notif_options"] = "service";
-		
-		$this->paramTable["check_period"] = "service";
-		$this->paramTable["notif_period"] = "service";
-		
-		$this->paramTable["url"] = "extended_service_information";
+		if ($this->register) {
+			$host_id = $this->host->getHostID($info[0]);
+			$service_id = $this->getServiceID($host_id, $info[1]);	
+			
+			/*
+			 * Get host link
+			 */
+			$host_link_id = $this->host->getHostID($info[2]);
+			
+			/*
+			 * Delete all data
+			 */
+			$request = "DELETE FROM host_service_relation WHERE service_service_id = '".$service_id."' AND host_host_id = '".$host_link_id."'";
+			$this->DB->query($request);
+		} else {
+			$service_id = $this->getServiceTplID($info[0]);	
+			
+			/*
+			 * Get host link
+			 */
+			$host_link_id = $this->host->getHostID($info[1]);
+			
+			/*
+			 * Delete all data
+			 */
+			$request = "DELETE FROM host_service_relation WHERE service_service_id = '".$service_id."' AND host_host_id = '".$host_link_id."'";
+			$this->DB->query($request);
+		}
+		return 0;
 	}
-
+	
 }
 ?>

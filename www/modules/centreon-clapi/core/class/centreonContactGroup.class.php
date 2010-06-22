@@ -48,7 +48,7 @@ class CentreonContactGroup {
 	/*
 	 * Check contact existance
 	 */
-	private function contactGroupExists($name) {
+	protected function contactGroupExists($name) {
 		if (!isset($name))
 			return 0;
 		
@@ -65,7 +65,7 @@ class CentreonContactGroup {
 		}
 	}
 	
-	private function getContactGroupID($cg_name = NULL) {
+	public function getContactGroupID($cg_name = NULL) {
 		if (!isset($cg_name))
 			return;
 			
@@ -75,14 +75,14 @@ class CentreonContactGroup {
 		return $data["cg_id"];
 	}
 	
-	private function checkParameters($options) {
+	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
 			print "No options defined. $str\n";
 			return 1;
 		}
 	}
 	
-	private function validateName($name) {
+	protected function validateName($name) {
 		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches)) {
 			return $this->checkNameformat($name);
 		} else {
@@ -91,14 +91,14 @@ class CentreonContactGroup {
 		}
 	}
 	
-	private function checkNameformat($name) {
+	protected function checkNameformat($name) {
 		if (strlen($name) > $this->nameLen) {
 			print "Warning: contact group name reduce to 40 caracters.\n";
 		}
 		return sprintf("%.".$this->nameLen."s", $name);
 	}
 	
-	private function checkRequestStatus() {
+	protected function checkRequestStatus() {
 		if (PEAR::isError($this->privatePearDB)) {
 			return 1;
 		} else {
@@ -173,7 +173,7 @@ class CentreonContactGroup {
 		}
 	} 
 	
-	private function addContactGroup($information) {
+	protected function addContactGroup($information) {
 		if (!isset($information["cg_name"])) {
 			return 0;
 		} else {
