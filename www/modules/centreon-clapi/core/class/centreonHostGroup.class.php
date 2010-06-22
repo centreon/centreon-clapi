@@ -46,7 +46,7 @@ class CentreonHostGroup {
 	/*
 	 * Check host existance
 	 */
-	public function hostGroupExists($name) {
+	protected function hostGroupExists($name) {
 		if (!isset($name))
 			return 0;
 		
@@ -63,7 +63,7 @@ class CentreonHostGroup {
 		}
 	}
 	
-	private function checkParameters($options) {
+	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
 			print "No options defined. $str\n";
 			$this->return_code = 1;
@@ -71,7 +71,7 @@ class CentreonHostGroup {
 		}
 	}
 	
-	public function getHostGroupID($hg_name = NULL) {
+	protected function getHostGroupID($hg_name = NULL) {
 		if (!isset($hg_name))
 			return;
 			
@@ -85,7 +85,7 @@ class CentreonHostGroup {
 		
 		$this->checkParameters($options);
 		
-		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '$name'";
+		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '".htmlentities($options, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return;
@@ -146,7 +146,7 @@ class CentreonHostGroup {
 		}
 	}
 
-	public function addHostGroup($information) {
+	protected function addHostGroup($information) {
 		if (!isset($information["hg_name"])) {
 			print "No information received\n";
 			return 0;
@@ -170,7 +170,7 @@ class CentreonHostGroup {
 		return $this->setParamHostGroup($elem[0], $elem[1], $elem[2]);
 	}
 	
-	public function setParamHostGroup($hg_name, $parameter, $value) {
+	protected function setParamHostGroup($hg_name, $parameter, $value) {
 		
 		$value = htmlentities($value, ENT_QUOTES);
 		
@@ -198,12 +198,14 @@ class CentreonHostGroup {
 		return $this->return_code = $this->addChildHostGroup($elem[0], $elem[1]);
 	} 
 	
-	public function addChildHostGroup($hg_name, $child) {
+	protected function addChildHostGroup($hg_name, $child) {
+		
+		require_once "./class/centreonHost.class.php";
 		
 		/*
 		 * Get Child informations
 		 */
-		$host = new CentreonHost($this->DB);
+		$host = new CentreonHost($this->DB, "HOST");
 		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
 		
 		$hg_id = $this->getHostGroupID($hg_name);
@@ -232,12 +234,14 @@ class CentreonHostGroup {
 		return $this->return_code = $this->delChildHostGroup($elem[0], $elem[1]);
 	} 
 	
-	public function delChildHostGroup($hg_name, $child) {
+	protected function delChildHostGroup($hg_name, $child) {
+		
+		require_once "./class/centreonHost.class.php";
 		
 		/*
 		 * Get Child informations
 		 */
-		$host = new CentreonHost($this->DB);
+		$host = new CentreonHost($this->DB, "HOST");
 		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
 		
 		$hg_id = $this->getHostGroupID($hg_name);
