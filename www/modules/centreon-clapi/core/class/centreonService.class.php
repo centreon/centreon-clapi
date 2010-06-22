@@ -44,6 +44,9 @@ class CentreonService {
 	var $object;
 	var $host;
 	
+	var $parameters;
+	var $paramTable;
+	
 	public function __construct($DB, $objName) {
 		$this->DB = $DB;
 		$this->register = 1;
@@ -57,15 +60,41 @@ class CentreonService {
 		}
 
 		$this->flag = array(0 => "No", 1 => "Yes", 2 => "Default");
+		
+		/*
+		 * Change buffers
+		 */
+		$this->setParametersList();
+		$this->setParametersTable();
 	}
+
 	
+	
+	/* ************************
+	 * Set object type : service or template
+	 */
 	protected function setTemplateFlag() {
 		$this->register = 0;
 	}
 	
+	/* ************************************
+	 * Check if service already exists.
+	 */
 	public function testServiceExistence ($name = NULL, $host_id = NULL) {
 		
 		$DBRESULT =& $this->DB->query("SELECT service_id FROM service, host_service_relation hsr WHERE hsr.host_host_id = '".$host_id."' AND hsr.service_service_id = service_id AND service.service_description LIKE '".htmlentities($this->encode($name), ENT_QUOTES)."'");
+		$service =& $DBRESULT->fetchRow();
+		if ($DBRESULT->numRows()) {
+			$DBRESULT->free();
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public function testServiceTplExistence ($name = NULL) {
+		
+		$DBRESULT =& $this->DB->query("SELECT service_id FROM service WHERE service.service_description LIKE '".htmlentities($this->encode($name), ENT_QUOTES)."'");
 		$service =& $DBRESULT->fetchRow();
 		if ($DBRESULT->numRows()) {
 			$DBRESULT->free();
@@ -161,7 +190,7 @@ class CentreonService {
 		
 		$tabInfo = split(";", $information);
 		
-		if (!$this->host->hostExists($tabInfo[0])) {
+		if ($this->register && !$this->host->hostExists($tabInfo[0])) {
 			print "Host doesn't exists.\n";
 			return 1;
 		}
@@ -180,7 +209,7 @@ class CentreonService {
 				return 1;
 			}
 		} else {
-			if (count($tabInfo) == 2) {
+			if (count($tabInfo) == 3) {
 				$data = array("service_description" => $tabInfo[0], "service_alias" => $tabInfo[1], "template" => $tabInfo[2]);
 				return $this->addServiceTemplate($data);
 			} else {
@@ -203,10 +232,10 @@ class CentreonService {
 				$template = $data["service_id"];
 			}
 			
-			$request = "INSERT INTO service (service_description, service_alias, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."', '".htmlentities($this->encode($information["service_alias"]), ENT_QUOTES)."', '".$template."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+			$request = "INSERT INTO service (service_description, service_alias, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."', '".htmlentities($this->encode($information["service_alias"]), ENT_QUOTES)."', '".$template."', '1', '".$this->register."', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 			
-			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."' AND service_activate = '1' AND service_register = '1'";
+			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."' AND service_activate = '1' AND service_register = '".$this->register."'";
 			$DBRESULT =& $this->DB->query($request);
 			$service = $DBRESULT->fetchRow();
 			$service_id = $service["MAX(service_id)"];
@@ -254,10 +283,10 @@ class CentreonService {
 				$host = $data["host_id"];
 			}
 			
-			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."', '".$template."', '1', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."', '".$template."', '1', '".$this->register."', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 			
-			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."' AND service_activate = '1' AND service_register = '1'";
+			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."' AND service_activate = '1' AND service_register = '".$this->register."'";
 			$DBRESULT =& $this->DB->query($request);
 			$service = $DBRESULT->fetchRow();
 			$service_id = $service["MAX(service_id)"];
@@ -291,7 +320,13 @@ class CentreonService {
 	public function show($search_string = NULL) {
 		
 		if ($this->register) {
-			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, command_name, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg, host_id, host_name FROM service s, host h, host_service_relation hr, command cmd WHERE cmd.command_id = s.command_command_id AND s.service_id = hr.service_service_id AND hr.host_host_id = h.host_id AND service_register = '".$this->register."' AND host_register = '1' ORDER BY host_name, service_description";
+			
+			$search = "";
+			if ($search_string != "") {
+				$search = " AND (service_description LIKE '%$search_string%' OR service_alias LIKE '%$search_string%') ";
+			}
+			
+			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg, host_id, host_name FROM service s, host h, host_service_relation hr WHERE s.service_id = hr.service_service_id AND hr.host_host_id = h.host_id AND service_register = '".$this->register."' AND host_register = '1' $search ORDER BY host_name, service_description";
 			$DBRESULT = $this->DB->query($request);
 			$i = 0;
 			while ($data = $DBRESULT->fetchRow()) {
@@ -309,7 +344,7 @@ class CentreonService {
 				$search = " AND (service_description LIKE '%$search_string%' OR service_alias LIKE '%$search_string%') ";
 			}
 			
-			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, command_name, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg FROM service s, command cmd WHERE cmd.command_id = s.command_command_id AND service_register = '".$this->register."' $search ORDER BY service_description, service_alias";
+			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg FROM service s WHERE service_register = '".$this->register."' $search ORDER BY service_description, service_alias";
 			$DBRESULT = $this->DB->query($request);
 			$i = 0;
 			while ($data = $DBRESULT->fetchRow()) {
@@ -445,13 +480,97 @@ class CentreonService {
 		$this->checkParameters($informations);
 		
 		$info = split(";", $informations);
-		$return_code = $this->setParamService($info[0], $info[1], $info[2]);
+		$return_code = $this->setParamService($info[0], $info[1], $info[2], $info[3]);
 		return $return_code;
 	}
 
 	protected function setParamService($host_name, $service_description, $param, $value) {
-		
+		if (isset($this->parameters[$param]) && isset($this->paramTable[$param])) {
+			if ($this->register) {
+				$host = new CentreonHost($this->DB, "HOST");
+				$host_id = $host->getHostID(htmlentities($host_name, ENT_QUOTES));
+				
+				if (!$this->testServiceExistence($service_description, $host_id)) {
+					print "Unknown service.\n";
+					return 1; 
+				}
+				
+				if ($param == "command") {
+					require_once "./class/centreonCommand.class.php";
+					$cmd = new CentreonCommand($this->DB);
+					$value = $cmd->getCommandID($value);
+				}
+				
+				if ($param == "check_period" || $param == "notif_period") {
+					require_once "./class/centreonTimePeriod.class.php";
+					$tp = new CentreonTimePeriod($this->DB);
+					$value = $tp->getTimeperiodId($value);
+				}
+				
+				$service_id = $this->getServiceID($host_id, $service_description);
+				$request = "UPDATE ".$this->paramTable[$param]." SET ".$this->parameters[$param]." = '".$value."' WHERE ".($this->paramTable[$param] == "service" ? "" : "service_")."service_id = '$service_id'";
+				$this->DB->query($request);
+				return 0;
+			} else {
+				if (!$this->testServiceTplExistence($service_description)) {
+					print "Unknown service.\n";
+					return 1; 
+				}
+			}
+		} else {
+			print "Unknown parameters for a service.\n";
+			return 1;
+		}
 		return 0;
+	}
+
+	protected function setParametersList() {
+		$this->parameters = array();
+		$this->parameters["description"] = "service_description";
+		$this->parameters["alias"] = "service_alias";
+		$this->parameters["template"] = "service_template_model_stm_id";
+		
+		$this->parameters["command"] = "command_command_id";
+		$this->parameters["args"] = "command_command_id_arg";
+		
+		$this->parameters["max_check_attempts"] = "service_max_check_attempts";
+		$this->parameters["normal_check_interval"] = "service_normal_check_interval";
+		$this->parameters["retry_check_interval"] = "service_retry_check_interval";
+		
+		$this->parameters["active_checks_enabled"] = "service_active_checks_enabled";
+		$this->parameters["passive_checks_enabled"] = "service_passive_checks_enabled";
+		
+		$this->parameters["notif_options"] = "service_notification_options";
+		
+		$this->parameters["check_period"] = "timeperiod_tp_id";
+		$this->parameters["notif_period"] = "timeperiod_tp_id2";
+		
+		$this->parameters["url"] = "esi_notes_url";
+	}
+	
+	protected function setParametersTable() {
+		$this->paramTable = array();
+		
+		$this->paramTable["description"] = "service";
+		$this->paramTable["alias"] = "service";
+		$this->paramTable["template"] = "service";
+		
+		$this->paramTable["command"] = "service";
+		$this->paramTable["args"] = "service";
+		
+		$this->paramTable["max_check_attempts"] = "service";
+		$this->paramTable["normal_check_interval"] = "service";
+		$this->paramTable["retry_check_interval"] = "service";
+		
+		$this->paramTable["active_checks_enabled"] = "service";
+		$this->paramTable["passive_checks_enabled"] = "service";
+		
+		$this->paramTable["notif_options"] = "service";
+		
+		$this->paramTable["check_period"] = "service";
+		$this->paramTable["notif_period"] = "service";
+		
+		$this->paramTable["url"] = "extended_service_information";
 	}
 
 }
