@@ -185,17 +185,20 @@ class CentreonServiceGroup {
 	 
 	protected function addChildServiceGroup($sg_name, $child_host, $child_service) {
 		
+		require_once "./class/centreonHost.class.php";
+		require_once "./class/centreonService.class.php";
+
 		/*
 		 * Get host Child informations
 		 */
-		$host = new CentreonHost($this->DB);
+		$host = new CentreonHost($this->DB, "HOST");
 		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
 		
 		/*
 		 * Get service Child information
 		 */
-		$service = new CentreonService($this->DB);
-		$service_id = $host->getServiceID($host_id, htmlentities($child_service, ENT_QUOTES));
+		$service = new CentreonService($this->DB, "SERVICE");
+		$service_id = $service->getServiceID($host_id, htmlentities($child_service, ENT_QUOTES));
 
 		/*
 		 * Add link.
@@ -204,7 +207,7 @@ class CentreonServiceGroup {
 		if ($sg_id && $host_id && $service_id) {
 			$request = "DELETE FROM servicegroup_relation WHERE host_host_id = '$host_id' AND service_service_id = '$service_id' AND servicegroup_sg_id = '$sg_id'";
 			$DBRESULT =& $this->DB->query($request);
-			$request = "INSERT INTO hostgroup_relation (host_host_id, service_service_id, servicegroup_sg_id) VALUES ('$host_id', '$service_id', '$hg_id')";
+			$request = "INSERT INTO servicegroup_relation (host_host_id, service_service_id, servicegroup_sg_id) VALUES ('$host_id', '$service_id', '$sg_id')";
 			$DBRESULT =& $this->DB->query($request);
 			if ($DBRESULT) {
 				return 0;
@@ -228,17 +231,20 @@ class CentreonServiceGroup {
 	
 	protected function delChildServiceGroup($sg_name, $child_host, $child_service) {
 		
+		require_once "./class/centreonHost.class.php";
+		require_once "./class/centreonService.class.php";
+		
 		/*
 		 * Get host Child informations
 		 */
-		$host = new CentreonHost($this->DB);
+		$host = new CentreonHost($this->DB, "HOST");
 		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
 		
 		/*
 		 * Get service Child information
 		 */
-		$service = new CentreonService($this->DB);
-		$service_id = $host->getServiceID($host_id, htmlentities($child_service, ENT_QUOTES));
+		$service = new CentreonService($this->DB, "SERVICE");
+		$service_id = $service->getServiceID($host_id, htmlentities($child_service, ENT_QUOTES));
 
 		/*
 		 * Add link.
