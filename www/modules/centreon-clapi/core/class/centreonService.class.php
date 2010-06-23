@@ -144,6 +144,30 @@ class CentreonService {
 		$this->register = 0;
 	}
 	
+	protected function checkHostNumber($service_id) {
+		$request = "SELECT host_host_id FROM host_service_relation WHERE service_service_id = '$service_id'";
+		$DBRESULT =& $this->DB->query($request);
+		if (isset($DBRESULT)) {
+			$num = $DBRESULT->numRows();
+			if (isset($num)) {
+				return $num;
+			}	
+		}
+		return -1;
+	}
+	
+	protected function checkHostServiceRelation($host_id, $service_id) {
+		$request = "SELECT host_host_id FROM host_service_relation WHERE service_service_id = '$service_id' AND host_host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+		if (isset($DBRESULT)) {
+			$num = $DBRESULT->numRows();
+			if (isset($num)) {
+				return $num;
+			}
+		}
+		return -1;
+	}
+	
 	/* ************************************
 	 * Check if service already exists.
 	 */
@@ -828,6 +852,20 @@ class CentreonService {
 			$host_id = $this->host->getHostID($info[0]);
 			$service_id = $this->getServiceID($host_id, $info[1]);	
 			
+			if ($service_id == 0) {
+				print "Couple host/service not Found.\n";
+				return 1;
+			}
+			
+			$hostNumber = $this->checkHostNumber($service_id);
+			if ($hostNumber == 1) {
+				print "Cannot remove this host link for service '".$info[1]."' because only this host is actually attached to this service.\n";
+				return 1;
+			} else if ($hostNumber == -1) {
+				print "Unknown error.\n";
+				return 1;
+			} 
+
 			/*
 			 * Get host link
 			 */
