@@ -46,7 +46,7 @@ class CentreonServiceGroup {
 	/*
 	 * Check host existance
 	 */
-	public function serviceGroupExists($name) {
+	protected function serviceGroupExists($name) {
 		if (!isset($name))
 			return 0;
 		
@@ -63,7 +63,7 @@ class CentreonServiceGroup {
 		}
 	}
 	
-	private function checkParameters($options) {
+	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
 			print "No options defined. $str\n";
 			$this->return_code = 1;
@@ -131,7 +131,7 @@ class CentreonServiceGroup {
 		}
 	}
 	
-	public function addServiceGroup($information) {
+	protected function addServiceGroup($information) {
 		if (!isset($information["sg_name"])) {
 			return 0;
 		} else {
@@ -155,7 +155,7 @@ class CentreonServiceGroup {
 		return $this->setParamServiceGroup($elem[0], $elem[1], $elem[2]);
 	}
 	
-	public function setParamServiceGroup($sg_name, $parameter, $value) {
+	protected function setParamServiceGroup($sg_name, $parameter, $value) {
 		
 		$value = htmlentities($value, ENT_QUOTES);
 		
@@ -183,7 +183,7 @@ class CentreonServiceGroup {
 		return $this->addChildServiceGroup($elem[0], $elem[1], $elem[2]);
 	}
 	 
-	public function addChildServiceGroup($sg_name, $child_host, $child_service) {
+	protected function addChildServiceGroup($sg_name, $child_host, $child_service) {
 		
 		/*
 		 * Get host Child informations
@@ -195,16 +195,16 @@ class CentreonServiceGroup {
 		 * Get service Child information
 		 */
 		$service = new CentreonService($this->DB);
-		$service_id = $host->getServiceID(htmlentities($child_service, ENT_QUOTES), htmlentities($child_host, ENT_QUOTES));
+		$service_id = $host->getServiceID($host_id, htmlentities($child_service, ENT_QUOTES));
 
 		/*
 		 * Add link.
 		 */				
 		$sg_id = $this->getServiceGroupID($sg_name);
-		if ($sg_id && $host_id) {
-			$request = "DELETE FROM hostgroup_relation WHERE host_host_id = '$host_id' AND hostgroup_hg_id = '$hg_id'";
+		if ($sg_id && $host_id && $service_id) {
+			$request = "DELETE FROM servicegroup_relation WHERE host_host_id = '$host_id' AND service_service_id = '$service_id' AND servicegroup_sg_id = '$sg_id'";
 			$DBRESULT =& $this->DB->query($request);
-			$request = "INSERT INTO hostgroup_relation (host_host_id, hostgroup_hg_id) VALUES ('$host_id', '$hg_id')";
+			$request = "INSERT INTO hostgroup_relation (host_host_id, service_service_id, servicegroup_sg_id) VALUES ('$host_id', '$service_id', '$hg_id')";
 			$DBRESULT =& $this->DB->query($request);
 			if ($DBRESULT) {
 				return 0;
@@ -212,7 +212,7 @@ class CentreonServiceGroup {
 				return 1;
 			}
 		} else {
-			print "Hostgroup or host doesn't exists. Please check your arguments\n";
+			print "Servicegroup or host doesn't exists. Please check your arguments\n";
 			return 1;	
 		}
 	}
@@ -226,17 +226,26 @@ class CentreonServiceGroup {
 		return $this->delChildServiceGroup($elem[0], $elem[1], $elem[2]);
 	}
 	
-	public function delChildServiceGroup($sg_name, $child_host, $child_service) {
+	protected function delChildServiceGroup($sg_name, $child_host, $child_service) {
 		
 		/*
-		 * Get Child informations
+		 * Get host Child informations
 		 */
 		$host = new CentreonHost($this->DB);
-		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
+		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
 		
+		/*
+		 * Get service Child information
+		 */
+		$service = new CentreonService($this->DB);
+		$service_id = $host->getServiceID($host_id, htmlentities($child_service, ENT_QUOTES));
+
+		/*
+		 * Add link.
+		 */				
 		$sg_id = $this->getServiceGroupID($sg_name);
-		if ($sg_id && $host_id) {
-			$request = "DELETE FROM hostgroup_relation WHERE host_host_id = '$host_id' AND hostgroup_hg_id = '$hg_id'";
+		if ($sg_id && $host_id && $service_id) {
+			$request = "DELETE FROM servicegroup_relation WHERE host_host_id = '$host_id' AND service_service_id = '$service_id' AND servicegroup_sg_id = '$sg_id'";
 			$DBRESULT =& $this->DB->query($request);
 			if ($DBRESULT) {
 				return 0;
@@ -244,7 +253,7 @@ class CentreonServiceGroup {
 				return 1;
 			}
 		} else {
-			print "Hostgroup or host doesn't exists. Please check your arguments\n";
+			print "Servicegroup or host doesn't exists. Please check your arguments\n";
 			return 1;	
 		}
 	}
