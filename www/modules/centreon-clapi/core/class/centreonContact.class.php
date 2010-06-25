@@ -36,8 +36,8 @@
  *
  */
 
-define('PARAM', 0);
-define('PARAM_NOTIF_CONTACT', 1);
+define('PARAM', 1);
+define('PARAM_NOTIF_CONTACT', 0);
 define('PARAM_NOTIF_COMMAND', 2);
 define('PARAM_NOTIF_PERIOD', 2);
 
@@ -46,7 +46,7 @@ class CentreonContact {
 	 *
 	 * @var CentreonDB
 	 */
-    protected $_db;
+    protected $DB;
 
     /**
      *
@@ -61,9 +61,9 @@ class CentreonContact {
 	protected $_timeperiod;
 
 	public function __construct($db) {
-		$this->_db = $db;
-		$this->_cmd = new CentreonCommand($this->_db);
-		$this->_timeperiod = new CentreonTimePeriod($this->_db);
+		$this->DB = $db;
+		$this->_cmd = new CentreonCommand($this->DB);
+		$this->_timeperiod = new CentreonTimePeriod($this->DB);
 	}
 
 	/*
@@ -76,7 +76,7 @@ class CentreonContact {
 		/*
 		 * Get informations
 		 */
-		$DBRESULT =& $this->_db->query("SELECT contact_name, contact_id FROM contact WHERE contact_name = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT contact_name, contact_id FROM contact WHERE contact_name = '".htmlentities($name, ENT_QUOTES)."'");
 		if ($DBRESULT->numRows() >= 1) {
 			$sg = $DBRESULT->fetchRow();
 			$DBRESULT->free();
@@ -91,7 +91,7 @@ class CentreonContact {
 			return;
 
 		$request = "SELECT contact_id FROM contact WHERE contact_name LIKE '$contact_name'";
-		$DBRESULT = $this->_db->query($request);
+		$DBRESULT = $this->DB->query($request);
 		$data = $DBRESULT->fetchRow();
 		return $data["contact_id"];
 	}
@@ -112,7 +112,7 @@ class CentreonContact {
 		$this->checkParameters($name);
 
 		$request = "DELETE FROM contact WHERE contact_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
-		$DBRESULT =& $this->_db->query($request);
+		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return 0;
 	}
@@ -127,7 +127,7 @@ class CentreonContact {
 			$searchStr = " WHERE contact_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' OR contact_alias LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
 		}
 		$request = "SELECT contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_activate FROM contact $searchStr ORDER BY contact_name";
-		$DBRESULT =& $this->_db->query($request);
+		$DBRESULT =& $this->DB->query($request);
 		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
 			if ($i == 0) {
@@ -187,7 +187,7 @@ class CentreonContact {
 						"('".htmlentities($information["contact_name"], ENT_QUOTES)."', '".htmlentities($information["contact_alias"], ENT_QUOTES)."', '".htmlentities($information["contact_email"], ENT_QUOTES)."', " .
 						" '".htmlentities($information["contact_oreon"], ENT_QUOTES)."', '".htmlentities($information["contact_admin"], ENT_QUOTES)."', '".htmlentities($information["contact_lang"], ENT_QUOTES)."', " .
 						" '".htmlentities($information["contact_auth_type"], ENT_QUOTES)."', '".htmlentities(md5($information["contact_passwd"]), ENT_QUOTES)."', '1')";
-			$DBRESULT = $this->_db->query($request);
+			$DBRESULT = $this->DB->query($request);
 
 			$contact_id = $this->getContactID($information["contact_name"]);
 			return $contact_id;
@@ -228,10 +228,10 @@ class CentreonContact {
             return null;
         }
         $query = "DELETE FROM contact_hostcommands_relation WHERE contact_contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
-        $this->_db->query($query);
+        $this->DB->query($query);
         $query = "INSERT INTO contact_hostcommands_relation (contact_contact_id, command_command_id) " .
         		"VALUES ('".htmlentities($contactId, ENT_QUOTES)."', '".htmlentities($cmdId, ENT_QUOTES)."')";
-        $this->_db->query($query);
+        $this->DB->query($query);
 	}
 
 	/**
@@ -252,10 +252,10 @@ class CentreonContact {
             return null;
         }
         $query = "DELETE FROM contact_servicecommands_relation WHERE contact_contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
-        $this->_db->query($query);
+        $this->DB->query($query);
         $query = "INSERT INTO contact_servicecommands_relation (contact_contact_id, command_command_id) " .
         		"VALUES ('".htmlentities($contactId, ENT_QUOTES)."', '".htmlentities($cmdId, ENT_QUOTES)."')";
-        $this->_db->query($query);
+        $this->DB->query($query);
 	}
 
 	/**
@@ -276,7 +276,7 @@ class CentreonContact {
             return null;
         }
         $query = "UPDATE contact SET timeperiod_tp_id = '".htmlentities($timeperiodId, ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
-        $this->_db->query($query);
+        $this->DB->query($query);
 	}
 
 	/**
@@ -297,7 +297,7 @@ class CentreonContact {
             return null;
         }
         $query = "UPDATE contact SET timeperiod_tp_id2 = '".htmlentities($timeperiodId, ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
-        $this->_db->query($query);
+        $this->DB->query($query);
 	}
 	
 	/**
@@ -323,11 +323,15 @@ class CentreonContact {
         $conversionTable["admin"] = "contact_admin";
         $conversionTable["authtype"] = "contact_auth_type";
         
+        if ($data[1] == "password") {
+        	$data[2] = md5($data[2]);
+        }
+        
         /*
          * Update
          */
         $query = "UPDATE contact SET ".htmlentities($conversionTable[$data[1]], ENT_QUOTES)." = '".htmlentities($conversionTable[$data[2]], ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
-        $this->_db->query($query);
+        $this->DB->query($query);
         return 0;
 	}
 
@@ -407,7 +411,7 @@ class CentreonContact {
          * enable user
          */
         $query = "UPDATE contact SET contact_activate = '1' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
-        $this->_db->query($query);
+        $this->DB->query($query);
 	}
 	
 	/**
@@ -427,7 +431,7 @@ class CentreonContact {
          * enable user
          */
         $query = "UPDATE contact SET contact_activate = '0' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
-        $this->_db->query($query);
+        $this->DB->query($query);
 	}
 	
 	/**
