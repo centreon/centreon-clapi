@@ -40,11 +40,13 @@ class CentreonCommand {
 	private $DB;
 	private $maxLen;
 	private $type;
+	private $params;
 	
 	public function __construct($DB) {
 		$this->DB = $DB;
 		$this->maxLen = 50;
 		$this->type = array("notif" => 1, "check" => 2, "misc" => 3, 1 => "notif", 2 => "check", 3 => "misc");
+		$this->params = array("name" => 1, "line" => 1, "example" => 1, "type" => 1, "template" => 1);
 	}
 
 	/*
@@ -207,8 +209,31 @@ class CentreonCommand {
 		}
 	}
 
-	public function setParam() {
-		
+	/* ****************************************
+	 * Set parameters
+	 */
+	public function setParam($options) {
+		$this->checkParameters($options);
+
+		$info = split(";", $options);
+		if ($this->commandExists($info[0])) {
+			if ($info[1] != "template" && $info[1] != "type") {
+				$request = "UPDATE command SET command_".$info[1]." = '".$info[2]."' WHERE command_name LIKE '".$info[0]."'";
+				$DBRESULT =& $this->DB->query($request);	
+				return 0;
+			} else if ($info[1] == "type") {
+				$request = "UPDATE command SET command_".$info[1]." = '".$this->type[$info[2]]."' WHERE command_name LIKE '".$info[0]."'";
+				$DBRESULT =& $this->DB->query($request);	
+				return 0;
+			} else {
+				$request = "UPDATE command SET graph_id = (SELECT graph_id FROM giv_graphs_template WHERE name LIKE '".htmlentities($info[2], ENT_QUOTES)."') WHERE command_name = '".htmlentities($info[0], ENT_QUOTES)."'";
+				$DBRESULT =& $this->DB->query($request);	
+				return 0;
+			}
+		} else {
+			print "Command '".$info[0]."' doesn't exists.\n";
+			return 1;
+		}
 	}
 }
 ?>
