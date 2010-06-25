@@ -292,7 +292,6 @@ class CentreonHost {
 					}
 				} else {
 					$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$information["host_template"]."'), '".$host_id."')";
-					print $request;
 					$this->DB->query($request);
 				}
 			}
