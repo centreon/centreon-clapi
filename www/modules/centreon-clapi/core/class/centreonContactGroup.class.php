@@ -268,5 +268,34 @@ class CentreonContactGroup {
 			return 1;
 		}
 	}
+	
+	public function setParam($options) {
+		$this->checkParameters($options);
+		
+		if ($this->contactGroupExists($options)) {
+			$info = split(";", $options);	
+						
+			if (count($info[1]) == 3) {
+				$cg_id = $this->getContactGroupID($info[0]);
+				
+				if ($cg_id == 0) {
+					print "Unknown contact group.\n";
+					return 1;
+				}
+				
+				if ($info[1] == "name" || $info[1] == "alias") {
+					$request = "UPDATE coontactgroup SET cg_".$info[1] . " = '".$info[2]."' WHERE cg_id = '".$cg_id."'";
+					$DBRESULT =& $this->DB->query($request);
+					return $this->checkRequestStatus();
+				}
+			} else {
+				print "No enought parameters for modifiing contactgroup.\n";
+				return 1;
+			}
+		} else {
+			print "Contact group '$options' doesn't exists.\n";
+			return 1;
+		}
+	}
 }
 ?>
