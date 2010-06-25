@@ -191,36 +191,82 @@ class CentreonContactGroup {
 	/* ***************************************
 	 * Set contact child 
 	 */
-	public function setChild($options) {
-		
+	public function setChild($options) {		
 		$info = split(";", $options);
-
-		$contact = new CentreonContact($this->DB);
 		
-		$contact_id = $contact->getContactID($info[1]);
-		$cg_id = $this->getContactGroupID($info[0]);
-		
-		$request = "SELECT * FROM contactgroup_contact_relation WHERE contact_contact_id = '".$contact_id."' AND contactgroup_cg_id = '".$cg_id."'";
-		print $request;
-		$DBRESULT =& $this->DB->query($request);
-		if ($DBRESULT->numRows() == 0) {
-			$request = "INSERT INTO contactgroup_contact_relation (contactgroup_cg_id, contact_contact_id) VALUES ('".$cg_id."', '".$contact_id."')";		
-			$DBRESULT2 =& $this->DB->query($request);
-			return $this->checkRequestStatus();
+		if ($this->contactGroupExists($info[0])) {
+			$contact = new CentreonContact($this->DB);
+			
+			$contact_id = $contact->getContactID($info[1]);
+			$cg_id = $this->getContactGroupID($info[0]);
+			
+			$request = "SELECT * FROM contactgroup_contact_relation WHERE contact_contact_id = '".$contact_id."' AND contactgroup_cg_id = '".$cg_id."'";
+			print $request;
+			$DBRESULT =& $this->DB->query($request);
+			if ($DBRESULT->numRows() == 0) {
+				$request = "INSERT INTO contactgroup_contact_relation (contactgroup_cg_id, contact_contact_id) VALUES ('".$cg_id."', '".$contact_id."')";		
+				$DBRESULT2 =& $this->DB->query($request);
+				return $this->checkRequestStatus();
+			}
+		} else {
+			print "Contact group 'options' doesn't exists.\n";
+			return 1;
 		}
 	}
 	
+	/* ***************************************
+	 * UnSet contact child 
+	 */
 	public function unsetChild($options) {
 		$info = split(";", $options);
 		
-		$contact = new CentreonContact($this->DB);
+		if ($this->contactGroupExists($info[0])) {
+			$contact = new CentreonContact($this->DB);
 		
-		$contact_id = $contact->getContactID($info[1]);
-		$cg_id = $this->getContactGroupID($info[0]);
+			$contact_id = $contact->getContactID($info[1]);
+			$cg_id = $this->getContactGroupID($info[0]);
+			
+			$request = "DELETE FROM contactgroup_contact_relation WHERE contact_contact_id = '".$contact_id."' AND contactgroup_cg_id = '".$cg_id."'";
+			$DBRESULT =& $this->DB->query($request);
+			return $this->checkRequestStatus();	
+		} else {
+			print "Contact group 'options' doesn't exists.\n";
+			return 1;
+		}	
+	}
+	
+	/*
+	 * Enable contactgroup
+	 */
+	public function enable($options) {
 		
-		$request = "DELETE FROM contactgroup_contact_relation WHERE contact_contact_id = '".$contact_id."' AND contactgroup_cg_id = '".$cg_id."'";
-		$DBRESULT =& $this->DB->query($request);
-		return $this->checkRequestStatus();	
+		if ($this->contactGroupExists($options)) {
+			$cg_id = $this->getContactGroupID($options);
+			
+			$request = "UPDATE contactgroup SET cg_activate = '1' WHERE cg_id = '".$cg_id."'";
+			$DBRESULT =& $this->DB->query($request);
+			return $this->checkRequestStatus();
+		} else {
+			print "Contact group 'options' doesn't exists.\n";
+			return 1;
+		}
+	}
+	
+	/*
+	 * Enable contactgroup
+	 */
+	public function disable($options) {
+		
+		if ($this->contactGroupExists($options)) {
+			$cg_id = $this->getContactGroupID($options);
+			
+			$request = "UPDATE contactgroup SET cg_activate = '0' WHERE cg_id = '".$cg_id."'";
+			$DBRESULT =& $this->DB->query($request);
+			return $this->checkRequestStatus();
+		} else {
+			print "Contact group 'options' doesn't exists.\n";
+			return 1;
+		}
 	}
 }
 ?>
