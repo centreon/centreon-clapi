@@ -159,15 +159,30 @@ class CentreonHost {
 		$info[0] = $this->validateName($info[0]);
 		
 		if (!$this->hostExists($info[0])) {
-			$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template", 4 => "host_poller", 5 => "hostgroup");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}			
-			$host_id = $this->addHost($informations);
-			$this->deployServiceTemplates($host_id, $svc);
+			if ($this->register) {
+				$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template", 4 => "host_poller", 5 => "hostgroup");
+				$informations = array();
+				foreach ($info as $key => $value) {
+					$informations[$convertionTable[$key]] = $value;
+				}			
+				$host_id = $this->addHost($informations);
+				$this->deployServiceTemplates($host_id, $svc);				
+			} else {
+				$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template");
+				$informations = array();
+				foreach ($info as $key => $value) {
+					$informations[$convertionTable[$key]] = $value;
+				}			
+				$host_id = $this->addHostTemplate($informations);
+			}
 		} else {
-			print "Host ".$info[0]." already exists.\n";
+			if ($this->register) {
+				$type = "";
+			} else {
+				$type = " template";
+			}
+			
+			print "Host$type ".$info[0]." already exists.\n";
 			$this->return_code = 1;
 			return;
 		}
@@ -199,9 +214,9 @@ class CentreonHost {
 			/*
 			 * Insert Template Relation
 			 */
-			if ($information["hostgroup"]) {
+			if ($information["host_template"]) {
 				if (strstr($information["host_template"], ",")) {
-					$tab = split(",", $information["hostgroup"]);
+					$tab = split(",", $information["host_template"]);
 					foreach ($tab as $hostTemplate) {
 						$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$hostTemplate."'), '".$host_id."')";
 						$this->DB->query($request);
@@ -238,6 +253,56 @@ class CentreonHost {
 			 * Insert Host Poller
 			 */
 			$this->setPoller($host_id, $this->getPollerID($information["host_poller"]));
+			return $host_id;
+		}
+	}
+	
+	/*
+	 * Add an host template
+	 */
+	protected function addHostTemplate($information) {
+		if (!isset($information["host_name"]) || !isset($information["host_address"]) || !isset($information["host_template"])) {
+			return 0;
+		} else {
+			if (!isset($information["host_alias"]) || $information["host_alias"] == "") {
+				$information["host_alias"] = $information["host_name"];
+			}
+			
+			/*
+			 * Insert Host
+			 */
+			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
+						"VALUES ('".htmlentities(trim($information["host_name"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_alias"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+			$this->DB->query($request);
+			
+			/*
+			 * Get host ID.
+			 */
+			$host_id = $this->getHostID(htmlentities($information["host_name"], ENT_QUOTES));
+			
+			/*
+			 * Insert Template Relation
+			 */
+			if ($information["host_template"]) {
+				if (strstr($information["host_template"], ",")) {
+					$tab = split(",", $information["host_template"]);
+					foreach ($tab as $hostTemplate) {
+						$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$hostTemplate."'), '".$host_id."')";
+						$this->DB->query($request);
+					}
+				} else {
+					$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$information["host_template"]."'), '".$host_id."')";
+					print $request;
+					$this->DB->query($request);
+				}
+			}
+									
+			/*
+			 * Insert Extended Info
+			 */
+			$request = "INSERT INTO extended_host_information (host_host_id) VALUES ('".$host_id."')";
+			$this->DB->query($request);
+			
 			return $host_id;
 		}
 	}
