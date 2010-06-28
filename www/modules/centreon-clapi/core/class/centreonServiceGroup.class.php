@@ -96,14 +96,48 @@ class CentreonServiceGroup {
 	 * Dislay all SG
 	 */
 	public function show($search = NULL) {
+		/*
+		 * Set Search
+		 */
 		$searchStr = "";
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE sg_name LILE '%".htmlentities($search, ENT_QUOTES)."%'";
 		}
-		$request = "SELECT sg_name, sg_alias FROM servicegroup $searchStr ORDER BY sg_name";
+		
+		
+		/*
+		 * Get Child informations
+		 */
+		require_once "./class/centreonHost.class.php";
+		require_once "./class/centreonService.class.php";
+		$host = new CentreonHost($this->DB, "HOST");
+		$svc = new CentreonService($this->DB, "SERVICE");
+
+		$request = "SELECT sg_id, sg_name, sg_alias FROM servicegroup $searchStr ORDER BY sg_name";
 		$DBRESULT =& $this->DB->query($request);
+		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
-			print html_entity_decode($data["sg_name"], ENT_QUOTES).";".html_entity_decode($data["sg_alias"], ENT_QUOTES)."\n";
+			if ($i == 0) {
+				print "Name;Alias;Members\n";
+			}
+			print html_entity_decode($data["sg_name"], ENT_QUOTES).";".html_entity_decode($data["sg_alias"], ENT_QUOTES).";";
+			
+			/*
+			 * Get Childs informations
+			 */
+			$request = "SELECT host_host_id, service_service_id FROM servicegroup_relation WHERE servicegroup_sg_id = '".$data["sg_id"]."'";
+			$DBRESULT2 =& $this->DB->query($request);
+			$i2 = 0;
+			while ($m =& $DBRESULT2->fetchRow()) {
+				if ($i2) {
+					print ",";
+				}
+				print $host->getHostName($m["host_host_id"]).",".$svc->getServiceName($m["service_service_id"], 1);
+				$i2++;
+			}
+			$DBRESULT2->free();
+			print "\n";
+			$i++;
 		}
 		$DBRESULT->free();
 		

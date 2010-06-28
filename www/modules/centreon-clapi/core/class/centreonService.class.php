@@ -195,15 +195,19 @@ class CentreonService {
 		}
 	}
 	
-	public function getServiceName($service_id) {
+	public function getServiceName($service_id, $readable = NULL) {
 		$request = "SELECT service_description FROM service WHERE service_id = '$service_id'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
 		$DBRESULT->free();
-		if (isset($data["service_description"]) && $data["service_description"])
+		if (isset($data["service_description"]) && $data["service_description"]) {
+			if (isset($readable) && $readable) {
+				$data["service_description"] = $this->decode($data["service_description"]);
+			}
 			return $data["service_description"];
-		else
+		} else {
 			return "";
+		}
 	}
 	
 	public function getServiceAlias($service_id) {
