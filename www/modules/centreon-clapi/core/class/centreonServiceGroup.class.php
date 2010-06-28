@@ -158,10 +158,15 @@ class CentreonServiceGroup {
 	protected function setParamServiceGroup($sg_name, $parameter, $value) {
 		
 		$value = htmlentities($value, ENT_QUOTES);
+
+		if ($parameter != "name" && $parameter != "alias") {
+			print "Unknown parameters.\n";
+			return 1;
+		}
 		
 		$sg_id = $this->getServiceGroupID($sg_name);
 		if ($sg_id) {
-			$request = "UPDATE servicegroup SET $parameter = '$value' WHERE sg_id = '$sg_id'";
+			$request = "UPDATE servicegroup SET sg_$parameter = '$value' WHERE sg_id = '$sg_id'";
 			$DBRESULT =& $this->DB->query($request);
 			if ($DBRESULT) {
 				return 0;
