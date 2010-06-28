@@ -117,7 +117,7 @@ class CentreonHost {
 	 * Get id of host
 	 */
 	public function getHostID($name) {
-		$request = "SELECT host_id FROM host WHERE host_name = '".trim($name)."' AND host_register = '".$this->register."'";
+		$request = "SELECT host_id FROM host WHERE host_name = '".trim($this->encode($name))."' AND host_register = '".$this->register."'";
 		$DBRESULT =& $this->DB->query($request);
 		if ($DBRESULT->numRows()) {
 			$info =& $DBRESULT->fetchRow();
@@ -132,17 +132,34 @@ class CentreonHost {
 	/*
 	 * Get Name of an host
 	 */
-	protected function getHostName($host_id) {
+	public function getHostName($host_id, $readable = NULL) {
 		$request = "SELECT host_name FROM host WHERE host_id = '$host_id'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
 		$DBRESULT->free();
 		
-		if (isset($data["host_name"]) && $data["host_name"])
+		if (isset($data["host_name"]) && $data["host_name"]) {
+			if (isset($readable) && $readable) {
+				$data["host_name"] = $this->decode($data["host_name"]);
+			}
 			return $data["host_name"];
-		else
+		} else {
 			return "";
+		}
 	}
+	
+	protected function encode($str) {
+		$str = str_replace("/", "#S#", $str);
+		$str = str_replace("\\", "#BS#", $str);
+		return $str;			
+	}
+	
+	protected function decode($str) {
+		$str = str_replace("#S#", "/", $str);
+		$str = str_replace("#BS#", "\\", $str);
+		return $str;			
+	}
+	
 	
 	/* ***********************************
 	 * Add functions
@@ -203,7 +220,7 @@ class CentreonHost {
 			 * Insert Host
 			 */
 			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
-						"VALUES ('".htmlentities(trim($information["host_name"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_alias"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+						"VALUES ('".htmlentities(trim($this->encode($information["host_name"])), ENT_QUOTES)."', '".htmlentities(trim($this->encode($information["host_alias"])), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 			
 			/*
@@ -272,7 +289,7 @@ class CentreonHost {
 			 * Insert Host
 			 */
 			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
-						"VALUES ('".htmlentities(trim($information["host_name"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_alias"]), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+						"VALUES ('".htmlentities(trim($this->encode($information["host_name"])), ENT_QUOTES)."', '".htmlentities(trim($this->encode($information["host_alias"])), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 			
 			/*
@@ -329,7 +346,7 @@ class CentreonHost {
 		
 		$this->checkParameters($options);
 		
-		$request = "DELETE FROM host WHERE host_name LIKE '".htmlentities($options, ENT_QUOTES)."'";
+		$request = "DELETE FROM host WHERE host_name LIKE '".htmlentities($this->decode($options), ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return;
@@ -402,7 +419,7 @@ class CentreonHost {
 			if ($i == 0) {
 				print "id;name;alias;address\n";
 			}
-			print $data["host_id"].";".$data["host_name"].";".$data["host_alias"].";".$data["host_address"]."\n";
+			print $this->decode($data["host_id"]).";".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"]."\n";
 			$i++;
 		}
 		$DBRESULT->free();
