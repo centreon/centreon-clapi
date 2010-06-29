@@ -451,7 +451,7 @@ class CentreonContact {
 	 * @param string options
 	 * @return int
 	 */
-	public function setACL($options) {
+	public function setACLGroup($options) {
 		
 		$this->checkParameters($options);
 		
@@ -476,12 +476,12 @@ class CentreonContact {
 	}
 
 	/**
-	 * set ACL Resource
+	 * unset ACL Resource
 	 * 
 	 * @param string options
 	 * @return int
 	 */
-	public function unsetACL($options) {
+	public function unsetACLGroup($options) {
 		
 		$this->checkParameters($options);
 		
