@@ -120,6 +120,7 @@ class CentreonAPI {
 		$this->relationObject["SERVICE"] = "Service";
 		$this->relationObject["HG"] = "HostGroup";
 		$this->relationObject["SG"] = "ServiceGroup";
+		$this->relationObject["SC"] = "ServiceCategory";
 		$this->relationObject["CONTACT"] = "Contact";
 		$this->relationObject["CG"] = "ContactGroup";
 		/* Templates */
