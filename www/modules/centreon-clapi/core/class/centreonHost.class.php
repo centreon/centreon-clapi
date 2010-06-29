@@ -794,7 +794,7 @@ class CentreonHost {
 	} 
 
 	/* ***************************************
-	 * UN-Set ContactGroup lionk for notification
+	 * UN-Set ContactGroup link for notification
 	 */
 	public function unsetCG($options) {
 		$this->checkParameters($options);
