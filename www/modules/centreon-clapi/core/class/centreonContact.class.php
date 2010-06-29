@@ -41,6 +41,8 @@ define('PARAM_NOTIF_CONTACT', 0);
 define('PARAM_NOTIF_COMMAND', 2);
 define('PARAM_NOTIF_PERIOD', 2);
 
+require_once "./class/centreonACLResources.class.php";
+
 class CentreonContact {
 	/**
 	 *
@@ -444,13 +446,12 @@ class CentreonContact {
 	}
 	
 	/**
-	 * set contactgroup
-	 *
-	 * @param string $name
-	 * @param string Cg name
-	 * @return null|void
+	 * set ACL Resource
+	 * 
+	 * @param string options
+	 * @return int
 	 */
-	public function setCG($options) {
+	public function setACL($options) {
 		
 		$this->checkParameters($options);
 		
@@ -464,22 +465,44 @@ class CentreonContact {
             return 1;
         }
         
-        if (strstr($data[1], ",")) {
-        	;
+        $acl = new CentreonACLResources($this->DB);
+        $aclid = $acl->getACLResourceID($data[1]);
+        if ($aclid) {
+        	return $acl->addContact($contactId, $aclid);
         } else {
-        	
+        	print "ACL Group doesn't exists.\n";
+        	return 1;
         }
 	}
 
 	/**
-	 * remove contactgroup
-	 *
-	 * @param string $name
-	 * @param string Cg name
-	 * @return null|void
-	 */	
-	public function removeCG($options) {
+	 * set ACL Resource
+	 * 
+	 * @param string options
+	 * @return int
+	 */
+	public function unsetACL($options) {
 		
+		$this->checkParameters($options);
+		
+		/*
+		 * Split parameters
+		 */
+		$data = split(';', $options);
+		
+		if (!($contactId = $this->contactExists($data[0]))) {
+            print "Contact does not exist.\n";
+            return 1;
+        }
+        
+        $acl = new CentreonACLResources($this->DB);
+        $aclid = $acl->getACLResourceID($data[1]);
+        if ($aclid) {
+        	return $acl->delContact($contactId, $aclid);
+        } else {
+        	print "ACL Group doesn't exists.\n";
+        	return 1;
+        }
 	}
 }
 ?>

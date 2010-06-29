@@ -44,8 +44,29 @@ class CentreonACLResources {
 	}
 
 	public function getACLResourceID($name) {
-		$request = "SELECT "
+		$request = "SELECT acl_res_id FROM acl_groups WHERE acl_group_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
+		$DBRESULT = $this->DB->query($request);
+		$data = $DBRESUTL->fetchRow();
+		if ($data["acl_res_id"]) {
+			return $data["acl_res_id"];
+		} else {
+			return 0;
+		}
 	}
 
+	public function addContact($contact_id, $aclid) {
+		$request = "DELETE FROM acl_group_contacts_relations WHERE acl_group_id = '$aclid' AND contact_contact_id = '$contact_id'";
+		$DBRESULT = $this->DB->query($request);
+		
+		$request = "INSERT INTO acl_group_contacts_relations (acl_group_id, contact_contact_id) VALUES ('".$aclid."', '".$contact_id."')";
+		$DBRESULT = $this->DB->query($request);
+		return 0;
+	}
+	
+	public function delContact($contact_id, $aclid) {
+		$request = "DELETE FROM acl_group_contacts_relations WHERE acl_group_id = '$aclid' AND contact_contact_id = '$contact_id'";
+		$DBRESULT = $this->DB->query($request);
+		return 0;
+	}
 }
 ?>
