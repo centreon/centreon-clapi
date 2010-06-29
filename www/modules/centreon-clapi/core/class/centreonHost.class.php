@@ -41,6 +41,7 @@ class CentreonHost {
 	private $host_name;
 	private $host_id;
 	private $register;
+	private $cg;
 		
 	public function __construct($DB, $objName) {
 		$this->DB = $DB;
@@ -49,6 +50,13 @@ class CentreonHost {
 		if (strtoupper($objName) == "HTPL") {
 			$this->setTemplateFlag();
 		}
+		
+		/*
+		 * Create ContactGroup object
+		 */
+		require_once "./class/centreonContactGroup.class.php";
+		$this->cg = new CentreonContactGroup($this->DB, "CG");
+		
 	}
 	
 	protected function setTemplateFlag() {
@@ -750,6 +758,67 @@ class CentreonHost {
 			return 1;
 		}
 	}	
+
+	/* ***************************************
+	 * Set ContactGroup link for notification
+	 */
+	public function setCG($options) {
+		$this->checkParameters($options);
+		$info = split(";", $options);
+		
+		$cg_id = $this->cg->getContactGroupID($info[1]);		
+		
+		/*
+		 * Check contact ID
+		 */
+		if ($cg_id != 0) {
+
+			$host_id = $this->getHostID($info[0]);		
+			
+			/*
+			 * Clean all data 
+			 */
+			$request = "DELETE FROM contactgroup_host_relation WHERE contactgroup_cg_id = '$cg_id'  AND host_host_id = '$host_id'";
+			$this->DB->query($request);
+			
+			/*
+			 * Insert new entry
+			 */
+			$request = "INSERT INTO contactgroup_host_relation (contactgroup_cg_id, host_host_id) VALUES ('$cg_id', '$host_id')";
+			$this->DB->query($request);
+			return 0;			
+		} else {
+			print "Cannot find contact group : '".$info[1]."'.\n";
+			return 1;
+		}
+	} 
+
+	/* ***************************************
+	 * UN-Set ContactGroup lionk for notification
+	 */
+	public function unsetCG($options) {
+		$this->checkParameters($options);
+		$info = split(";", $options);
+		
+		$cg_id = $this->cg->getContactGroupID($info[1]);		
+		
+		/*
+		 * Check contact ID
+		 */
+		if ($cg_id != 0) {
+			$host_id = $this->getHostID($info[0]);		
+			
+			/*
+			 * Clean all data 
+			 */
+			$request = "DELETE FROM contactgroup_host_relation WHERE contactgroup_cg_id = '$cg_id'  AND host_host_id = '$host_id'";
+			$this->DB->query($request);
+			return 0;			
+		} else {
+			print "Cannot find contact group : '".$info[1]."'.\n";
+			return 1;
+		}
+	} 
 
 	 
 }
