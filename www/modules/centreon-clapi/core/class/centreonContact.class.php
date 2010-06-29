@@ -323,6 +323,9 @@ class CentreonContact {
         $conversionTable["admin"] = "contact_admin";
         $conversionTable["authtype"] = "contact_auth_type";
         
+        $conversionTable["hostnotifopt"] = "contact_host_notification_options";
+        $conversionTable["servicenotifopt"] = "contact_service_notification_options";
+        
         if ($data[1] == "password") {
         	$data[2] = md5($data[2]);
         }
@@ -375,6 +378,12 @@ class CentreonContact {
                 case "authtype":
                     return $this->_setParamCommand($options);
                     break;
+                case "hostnotifopt":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "servicenotifopt":
+                    return $this->_setParamCommand($options);
+                    break;    
                 case "hostnotifcmd":
                      return $this->_setHostNotificationCommand($options);
                     break;
