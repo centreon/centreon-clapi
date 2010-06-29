@@ -288,7 +288,6 @@ class CentreonContactGroup {
 				
 				if ($info[1] == "name" || $info[1] == "alias") {
 					$request = "UPDATE contactgroup SET cg_".$info[1] . " = '".$info[2]."' WHERE cg_id = '".$cg_id."'";
-					print $request;
 					$DBRESULT =& $this->DB->query($request);
 					return $this->checkRequestStatus();
 				}
