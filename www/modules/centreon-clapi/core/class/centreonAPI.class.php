@@ -118,9 +118,13 @@ class CentreonAPI {
 		$this->relationObject["COMMAND"] = "Command";
 		$this->relationObject["HOST"] = "Host";
 		$this->relationObject["SERVICE"] = "Service";
+		
 		$this->relationObject["HG"] = "HostGroup";
+		$this->relationObject["HC"] = "HostCategory";
+		
 		$this->relationObject["SG"] = "ServiceGroup";
 		$this->relationObject["SC"] = "ServiceCategory";
+		
 		$this->relationObject["CONTACT"] = "Contact";
 		$this->relationObject["CG"] = "ContactGroup";
 		/* Templates */
