@@ -35,7 +35,10 @@
  * SVN : $Id: centreonContact.class.php 25 2010-03-30 05:52:19Z jmathis $
  *
  */
- 
+
+require_once "./class/centreonContact.class.php";
+require_once "./class/centreonCommand.class.php"; 
+
 class CentreonContactGroup {
 	private $DB;
 	private $nameLen;
@@ -201,7 +204,6 @@ class CentreonContactGroup {
 			$cg_id = $this->getContactGroupID($info[0]);
 			
 			$request = "SELECT * FROM contactgroup_contact_relation WHERE contact_contact_id = '".$contact_id."' AND contactgroup_cg_id = '".$cg_id."'";
-			print $request;
 			$DBRESULT =& $this->DB->query($request);
 			if ($DBRESULT->numRows() == 0) {
 				$request = "INSERT INTO contactgroup_contact_relation (contactgroup_cg_id, contact_contact_id) VALUES ('".$cg_id."', '".$contact_id."')";		
@@ -272,10 +274,11 @@ class CentreonContactGroup {
 	public function setParam($options) {
 		$this->checkParameters($options);
 		
-		if ($this->contactGroupExists($options)) {
-			$info = split(";", $options);	
+		$info = split(";", $options);	
+			
+		if ($this->contactGroupExists($info[0])) {
 						
-			if (count($info[1]) == 3) {
+			if (count($info) == 3) {
 				$cg_id = $this->getContactGroupID($info[0]);
 				
 				if ($cg_id == 0) {
@@ -284,7 +287,8 @@ class CentreonContactGroup {
 				}
 				
 				if ($info[1] == "name" || $info[1] == "alias") {
-					$request = "UPDATE coontactgroup SET cg_".$info[1] . " = '".$info[2]."' WHERE cg_id = '".$cg_id."'";
+					$request = "UPDATE contactgroup SET cg_".$info[1] . " = '".$info[2]."' WHERE cg_id = '".$cg_id."'";
+					print $request;
 					$DBRESULT =& $this->DB->query($request);
 					return $this->checkRequestStatus();
 				}
