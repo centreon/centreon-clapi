@@ -96,8 +96,11 @@ class CentreonServiceCategory {
 	 * Dislay all SG
 	 */
 	public function show($search = NULL) {
+		
+		print "Action currently not active.\n";
+		return 1;
 		/*
-		 * Set Search
+		 *  * Set Search
 		 */
 		$searchStr = "";
 		if (isset($search) && $search != "") {
@@ -113,19 +116,20 @@ class CentreonServiceCategory {
 		$host = new CentreonHost($this->DB, "HOST");
 		$svc = new CentreonService($this->DB, "SERVICE");
 
-		$request = "SELECT sc_id, sc_name, sc_alias FROM service_categories $searchStr ORDER BY sc_name";
+		$request = "SELECT sc_id, sc_name, sc_description FROM service_categories $searchStr ORDER BY sc_name";
+		print $request;
 		$DBRESULT =& $this->DB->query($request);
 		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
 			if ($i == 0) {
 				print "Name;Alias;Members\n";
 			}
-			print html_entity_decode($data["sc_name"], ENT_QUOTES).";".html_entity_decode($data["sc_alias"], ENT_QUOTES).";";
+			print html_entity_decode($data["sc_name"], ENT_QUOTES).";".html_entity_decode($data["sc_description"], ENT_QUOTES).";";
 			
 			/*
 			 * Get Childs informations
 			 */
-			$request = "SELECT host_host_id, service_service_id FROM service_categories_relation WHERE sc_id = '".$data["sc_id"]."'";
+			$request = "SELECT service_service_id FROM service_categories_relation WHERE sc_id = '".$data["sc_id"]."'";
 			$DBRESULT2 =& $this->DB->query($request);
 			$i2 = 0;
 			while ($m =& $DBRESULT2->fetchRow()) {
@@ -152,7 +156,7 @@ class CentreonServiceCategory {
 		$info = split(";", $options);
 		
 		if (!$this->serviceCategoryExists($info[0])) {
-			$convertionTable = array(0 => "sc_name", 1 => "sc_alias");
+			$convertionTable = array(0 => "sc_name", 1 => "sc_description");
 			$informations = array();
 			foreach ($info as $key => $value) {
 				$informations[$convertionTable[$key]] = $value;
@@ -169,10 +173,10 @@ class CentreonServiceCategory {
 		if (!isset($information["sc_name"])) {
 			return 0;
 		} else {
-			if (!isset($information["sc_alias"]) || $information["sc_alias"] == "")
-				$information["sc_alias"] = $information["sc_name"];
+			if (!isset($information["sc_description"]) || $information["sc_description"] == "")
+				$information["sc_description"] = $information["sc_name"];
 			
-			$request = "INSERT INTO service_categories (sc_name, sc_alias, sc_activate) VALUES ('".htmlentities($information["sc_name"], ENT_QUOTES)."', '".htmlentities($information["sc_alias"], ENT_QUOTES)."', '1')";
+			$request = "INSERT INTO service_categories (sc_name, sc_description, sc_activate) VALUES ('".htmlentities($information["sc_name"], ENT_QUOTES)."', '".htmlentities($information["sc_description"], ENT_QUOTES)."', '1')";
 			$DBRESULT =& $this->DB->query($request);
 	
 			$sc_id = $this->getServiceCategoryID($information["sc_name"]);
@@ -193,7 +197,11 @@ class CentreonServiceCategory {
 		
 		$value = htmlentities($value, ENT_QUOTES);
 
-		if ($parameter != "name" && $parameter != "alias") {
+		if ($parameter == "alias") {
+			$parameter = "description";
+		}
+
+		if ($parameter != "name" && $parameter != "description") {
 			print "Unknown parameters.\n";
 			return 1;
 		}
@@ -244,9 +252,9 @@ class CentreonServiceCategory {
 		 */				
 		$sc_id = $this->getServiceCategoryID($sc_name);
 		if ($sc_id && $host_id && $service_id) {
-			$request = "DELETE FROM service_categories_relation WHERE host_host_id = '$host_id' AND service_service_id = '$service_id' AND sc_id = '$sc_id'";
+			$request = "DELETE FROM service_categories_relation WHERE service_service_id = '$service_id' AND sc_id = '$sc_id'";
 			$DBRESULT =& $this->DB->query($request);
-			$request = "INSERT INTO service_categories_relation (host_host_id, service_service_id, sc_id) VALUES ('$host_id', '$service_id', '$sc_id')";
+			$request = "INSERT INTO service_categories_relation (service_service_id, sc_id) VALUES ('$service_id', '$sc_id')";
 			$DBRESULT =& $this->DB->query($request);
 			if ($DBRESULT) {
 				return 0;
@@ -254,7 +262,7 @@ class CentreonServiceCategory {
 				return 1;
 			}
 		} else {
-			print "Servicegroup or host doesn't exists. Please check your arguments\n";
+			print "Service category or host doesn't exists. Please check your arguments\n";
 			return 1;	
 		}
 	}
@@ -290,7 +298,7 @@ class CentreonServiceCategory {
 		 */				
 		$sc_id = $this->getServiceCategoryID($sc_name);
 		if ($sc_id && $host_id && $service_id) {
-			$request = "DELETE FROM service_categories_relation WHERE host_host_id = '$host_id' AND service_service_id = '$service_id' AND sc_id = '$sc_id'";
+			$request = "DELETE FROM service_categories_relation WHERE service_service_id = '$service_id' AND sc_id = '$sc_id'";
 			$DBRESULT =& $this->DB->query($request);
 			if ($DBRESULT) {
 				return 0;
@@ -298,7 +306,7 @@ class CentreonServiceCategory {
 				return 1;
 			}
 		} else {
-			print "Service category or host or service doesn't exists. Please check your arguments\n";
+			print "Service category or service doesn't exists. Please check your arguments\n";
 			return 1;	
 		}
 	}
