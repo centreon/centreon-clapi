@@ -478,10 +478,10 @@ class CentreonContact {
         $acl = new CentreonACLResources($this->DB);
         $aclid = $acl->getACLResourceID($data[1]);
         if ($aclid) {
-        	if (!$this->iscontactAdmin($data[1])) {
+        	if (!$this->iscontactAdmin($data[0])) {
         		return $acl->addContact($contactId, $aclid);
         	} else {
-        		print "Contact '".$data[1]."' is admin. This contact cannot be added to an access list.\n";
+        		print "Contact '".$data[0]."' is admin. This contact cannot be added to an access list.\n";
         		return 1;
         	}
         } else {
