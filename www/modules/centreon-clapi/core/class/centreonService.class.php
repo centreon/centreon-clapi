@@ -221,6 +221,55 @@ class CentreonService {
 			return "";
 	}
 	
+	public function hostTypeLink($service_id) {
+		/*
+		 * return 1 = host(s)
+		 * return 2 = hostgroup(s)
+		 * return 3 = host(s) + hostgroup(s) (Futur)
+		 */
+		$request = "SELECT host_host_id FROM host_service_relation WHERE hostgroup_hg_id IS NULL and service_service_id = '".(int)$service_id."'";
+		$DBRESULT = $this->DB->query($request);
+		if ($DBRESULT->numRows()) {
+			return 1;
+		} else {
+			$request = "SELECT hostgroup_hg_id FROM host_service_relation WHERE hostgroup_hg_id IS NOT NULL and service_service_id = '".(int)$service_id."'";
+			$DBRESULT = $this->DB->query($request);
+			if ($DBRESULT->numRows()) {
+				return 2;
+			} else {
+				return 0;
+			}
+		}
+	}
+	
+	public function getServiceHosts($service_id) {
+		
+		$hostList = array();
+		
+		$request = "SELECT host_host_id FROM host_service_relation WHERE hostgroup_hg_id IS NULL and service_service_id = '".(int)$service_id."'";
+		$DBRESULT = $this->DB->query($request);
+		if ($DBRESULT->numRows()) {
+			while ($h = $DBRESULT->fetchRow()) {
+				$hostList[$h["host_host_id"]] = $h["host_host_id"];
+			}
+		}
+		return $hostList;
+	}
+	
+	public function getServiceHostGroups($service_id) {
+		
+		$hostGroupList = array();
+		
+		$request = "SELECT hostgroup_hg_id FROM host_service_relation WHERE hostgroup_hg_id IS NOT NULL and service_service_id = '".(int)$service_id."'";
+		$DBRESULT = $this->DB->query($request);
+		if ($DBRESULT->numRows()) {
+			while ($h = $DBRESULT->fetchRow()) {
+				$hostGroupList[$h["hostgroup_hg_id"]] = $h["hostgroup_hg_id"];
+			}
+		}
+		return $hostGroupList;
+	}
+	
 	protected function encode($str) {
 		$str = str_replace("/", "#S#", $str);
 		$str = str_replace("\\", "#BS#", $str);

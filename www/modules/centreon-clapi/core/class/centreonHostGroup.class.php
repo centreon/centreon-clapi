@@ -81,6 +81,17 @@ class CentreonHostGroup {
 		return $data["hg_id"];
 	}
 	
+	public function getHostGroupHosts($hg_id) {
+		$hostList = array();
+		$request = "SELECT host_host_id FROM hostgroup_relation WHERE hostgroup_hg_id = '".(int)$hg_id."'";
+		$DBRESULT =& $this->DB->query($request);
+		while ($hg = $DBRESULT->fetchRow()) {
+			$hostList[$hg["host_host_id"]] = $hg["host_host_id"];
+		}
+		$DBRESULT->free();
+		return $hostList;
+	}
+	
 	public function del($options) {
 		
 		$this->checkParameters($options);

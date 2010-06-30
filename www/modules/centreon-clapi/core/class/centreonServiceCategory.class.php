@@ -96,9 +96,6 @@ class CentreonServiceCategory {
 	 * Dislay all SG
 	 */
 	public function show($search = NULL) {
-		
-		print "Action currently not active.\n";
-		return 1;
 		/*
 		 *  * Set Search
 		 */
@@ -106,8 +103,7 @@ class CentreonServiceCategory {
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE sc_name LILE '%".htmlentities($search, ENT_QUOTES)."%'";
 		}
-		
-		
+				
 		/*
 		 * Get Child informations
 		 */
@@ -117,7 +113,6 @@ class CentreonServiceCategory {
 		$svc = new CentreonService($this->DB, "SERVICE");
 
 		$request = "SELECT sc_id, sc_name, sc_description FROM service_categories $searchStr ORDER BY sc_name";
-		print $request;
 		$DBRESULT =& $this->DB->query($request);
 		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
@@ -133,11 +128,31 @@ class CentreonServiceCategory {
 			$DBRESULT2 =& $this->DB->query($request);
 			$i2 = 0;
 			while ($m =& $DBRESULT2->fetchRow()) {
-				if ($i2) {
-					print ",";
+				$type = $svc->hostTypeLink($m["service_service_id"]);
+				if ($type == 1) {
+					$hostList = $svc->getServiceHosts($m["service_service_id"]);
+					foreach ($hostList as $host_id) {
+						if ($i2) {
+							print ",";
+						}
+						print $host->getHostName($host_id).",".$svc->getServiceName($m["service_service_id"], 1);
+						$i2++;						
+					}
+				} else if ($type == 2) {
+					$hg = new CentreonHostGroup($this->DB);
+					foreach ($hg as $hg_id) {
+						$hostList = $svc->getServiceHosts($m["service_service_id"]);
+						foreach ($hostList as $host_id) {
+							if ($i2) {
+								print ",";
+							}
+							print $host->getHostName($host_id).",".$svc->getServiceName($m["service_service_id"], 1);
+							$i2++;						
+						}
+					}
+				} else {
+					;
 				}
-				print $host->getHostName($m["host_host_id"]).",".$svc->getServiceName($m["service_service_id"], 1);
-				$i2++;
 			}
 			$DBRESULT2->free();
 			print "\n";
