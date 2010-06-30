@@ -44,11 +44,11 @@ class CentreonACLResources {
 	}
 
 	public function getACLResourceID($name) {
-		$request = "SELECT acl_res_id FROM acl_groups WHERE acl_group_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
+		$request = "SELECT acl_group_id FROM acl_groups WHERE acl_group_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT = $this->DB->query($request);
-		$data = $DBRESUTL->fetchRow();
-		if ($data["acl_res_id"]) {
-			return $data["acl_res_id"];
+		$data = $DBRESULT->fetchRow();
+		if ($data["acl_group_id"]) {
+			return $data["acl_group_id"];
 		} else {
 			return 0;
 		}

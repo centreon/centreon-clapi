@@ -97,6 +97,16 @@ class CentreonContact {
 		$data = $DBRESULT->fetchRow();
 		return $data["contact_id"];
 	}
+	
+	public function iscontactAdmin($contact_name = NULL) {
+		if (!isset($contact_name))
+			return;
+
+		$request = "SELECT contact_admin FROM contact WHERE contact_name LIKE '$contact_name'";
+		$DBRESULT = $this->DB->query($request);
+		$data = $DBRESULT->fetchRow();
+		return $data["contact_admin"];
+	}
 
 	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
@@ -468,7 +478,12 @@ class CentreonContact {
         $acl = new CentreonACLResources($this->DB);
         $aclid = $acl->getACLResourceID($data[1]);
         if ($aclid) {
-        	return $acl->addContact($contactId, $aclid);
+        	if (!$this->iscontactAdmin($data[1])) {
+        		return $acl->addContact($contactId, $aclid);
+        	} else {
+        		print "Contact '".$data[1]."' is admin. This contact cannot be added to an access list.\n";
+        		return 1;
+        	}
         } else {
         	print "ACL Group doesn't exists.\n";
         	return 1;
