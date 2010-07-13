@@ -106,9 +106,9 @@ class CentreonTimePeriod
         $i = 0;
         while ($row = $res->fetchRow()) {
             if (!$i) {
-                print "name;alias;sunday;monday;tuesday;wednesday;thursday;friday,saturday\n";
+                print "id;name;alias;sunday;monday;tuesday;wednesday;thursday;friday,saturday\n";
             }
-            print html_entity_decode($row['tp_name'].";".$row['tp_alias'].";".$row['tp_sunday'].";".$row['tp_monday'].";".$row['tp_tuesday'].";".$row['tp_wednesday'].";".$row['tp_thursday'].";".$row['tp_friday'].";".$row['tp_saturday']."\n", ENT_QUOTES);
+            print html_entity_decode($row['tp_id'].";".$row['tp_name'].";".$row['tp_alias'].";".$row['tp_sunday'].";".$row['tp_monday'].";".$row['tp_tuesday'].";".$row['tp_wednesday'].";".$row['tp_thursday'].";".$row['tp_friday'].";".$row['tp_saturday']."\n", ENT_QUOTES);
             $i++;
         }
         return 0;
