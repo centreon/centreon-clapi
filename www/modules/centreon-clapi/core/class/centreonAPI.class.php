@@ -82,7 +82,7 @@ class CentreonAPI {
 		 */
 		$this->debug 	= 0;
 		$this->return_code = 0;
-		
+
 		if (isset($user)) {
 			$this->login 	= htmlentities($user, ENT_QUOTES);
 		}
@@ -92,7 +92,7 @@ class CentreonAPI {
 		if (isset($action)) {
 			$this->action 	= htmlentities(strtoupper($action), ENT_QUOTES);
 		}
-		
+
 		$this->options 	= $options;
 		$this->centreon_path = $centreon_path;
 
@@ -118,18 +118,20 @@ class CentreonAPI {
 		$this->relationObject["COMMAND"] = "Command";
 		$this->relationObject["HOST"] = "Host";
 		$this->relationObject["SERVICE"] = "Service";
-		
+
 		$this->relationObject["HG"] = "HostGroup";
 		$this->relationObject["HC"] = "HostCategory";
-		
+
 		$this->relationObject["SG"] = "ServiceGroup";
 		$this->relationObject["SC"] = "ServiceCategory";
-		
+
 		$this->relationObject["CONTACT"] = "Contact";
 		$this->relationObject["CG"] = "ContactGroup";
 		/* Templates */
 		$this->relationObject["HTPL"] = "Host";
 		$this->relationObject["STPL"] = "Service";
+
+		$this->relationObject["TIMEPERIOD"] = "TimePeriod";
 	}
 
 	/*
@@ -141,16 +143,19 @@ class CentreonAPI {
 				require_once "./class/centreon".$this->relationObject[$object].".class.php";
 			}
 			if ($this->relationObject[$object] == "Host") {
-				require_once "./class/centreonService.class.php";				
+				require_once "./class/centreonService.class.php";
 			}
 			if ($this->relationObject[$object] == "Service") {
-				require_once "./class/centreonHost.class.php";				
+				require_once "./class/centreonHost.class.php";
 			}
 			if ($this->relationObject[$object] == "Contact") {
-				require_once "./class/centreonCommand.class.php";				
+				require_once "./class/centreonCommand.class.php";
+			}
+		    if ($this->relationObject[$object] == "TimePeriod") {
+				require_once "./class/centreonTimePeriod.class.php";
 			}
 		}
-		
+
 		/*
 		 * Default class needed
 		 */
@@ -270,14 +275,18 @@ class CentreonAPI {
  		 */
  		if ($this->object) {
 			/*
-			 * Require needed class 
+			 * Require needed class
 			 */
 			$this->requireLibs($this->object);
-			
+
 			/*
 			 * Check class declaration
 			 */
 			$objName = "Centreon".$this->relationObject[$this->object];
+			if (!class_exists($objName)) {
+                print "Object not found in Centreon API.\n";
+			    return 1;
+			}
 			$obj = new $objName($this->DB, $this->object);
 			if (method_exists($obj, $action)) {
 				$obj->$action($this->options["v"]);

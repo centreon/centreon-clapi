@@ -35,7 +35,7 @@
  * SVN : $Id: centreonHost.class.php 25 2010-03-30 05:52:19Z jmathis $
  *
  */
- 
+
 class CentreonTimePeriod
 {
     /**
@@ -84,6 +84,32 @@ class CentreonTimePeriod
         $res = $this->_db->query($query);
         while ($row = $res->fetchRow()) {
             return $row['tp_id'];
+        }
+        return 0;
+    }
+
+    /**
+     * show list of timeperiods
+     *
+     * @param string $search
+     * @return int
+     */
+    public function show($search = null)
+    {
+        $searchQuery = "";
+        if (isset ($search) && $search) {
+            $searchQuery = " WHERE tp_name LIKE '%".htmlentities($search, ENT_QUOTES)."%'
+            				 OR tp_alias LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
+        }
+        $query = "SELECT * FROM timeperiod $searchQuery ORDER BY tp_name";
+        $res = $this->_db->query($query);
+        $i = 0;
+        while ($row = $res->fetchRow()) {
+            if (!$i) {
+                print "name;alias;sunday;monday;tuesday;wednesday;thursday;friday,saturday\n";
+            }
+            print html_entity_decode($row['tp_name'].";".$row['tp_alias'].";".$row['tp_sunday'].";".$row['tp_monday'].";".$row['tp_tuesday'].";".$row['tp_wednesday'].";".$row['tp_thursday'].";".$row['tp_friday'].";".$row['tp_saturday']."\n", ENT_QUOTES);
+            $i++;
         }
         return 0;
     }
