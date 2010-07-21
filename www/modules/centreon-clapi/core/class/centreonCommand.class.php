@@ -97,7 +97,7 @@ class CentreonCommand {
 	}
 	
 	private function checkParameters($options) {
-		if (!isset($options) || $options == "") {
+		if (!isset($options) || (isset($options) && $options == "")) {
 			print "No options defined. $str\n";
 			return 1;
 		}
@@ -130,7 +130,12 @@ class CentreonCommand {
 	 * Delete
 	 */
 	public function del($name) {
-		$this->checkParameters($name);
+		
+		$check = $this->checkParameters($name);
+		if ($check) {
+			return $check;
+		}
+		
 		$request = "DELETE FROM command WHERE command_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
@@ -165,7 +170,10 @@ class CentreonCommand {
 	 */
 	public function add($options) {
 		
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$info = split(";", $options);
 		$info[0] = $this->validateName($info[0]);
@@ -213,8 +221,12 @@ class CentreonCommand {
 	 * Set parameters
 	 */
 	public function setParam($options) {
-		$this->checkParameters($options);
-
+		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$info = split(";", $options);
 		if ($this->commandExists($info[0])) {
 			if ($info[1] != "template" && $info[1] != "type") {
