@@ -78,7 +78,7 @@ class CentreonCommand {
 	}
 
 	protected function encode($name) {
-		$name = str_replace("\$", "\\\$", $name);
+		$name = str_replace("$", "\$", $name);
 		$name = str_replace("/", "#S#", htmlentities($name, ENT_QUOTES));
 		$name = str_replace("\\", "#BS#", $name);
 		$name = str_replace("\n", "#BR#", $name);
