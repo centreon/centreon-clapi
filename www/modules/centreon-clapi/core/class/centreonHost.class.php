@@ -595,7 +595,7 @@ class CentreonHost {
 				$value = "'".$value."'";
 			}
 			if ($tabName[$parameter] == "host") {
-				$request = "UPDATE ".$tabName[$parameter]." SET ".$realNameField[$parameter]." = ".$value." WHERE host_name LIKE '$host_name'";
+				$request = "UPDATE ".$tabName[$parameter]." SET ".$realNameField[$parameter]." = ".$value." WHERE host_name LIKE '$host_name' AND host_register = '".$this->register."'";
 			} else {
 				$request = "UPDATE ".$tabName[$parameter]." SET ".$realNameField[$parameter]." = ".$value." WHERE ".$host_id_field[$tabName[$parameter]]." = (SELECT host_id FROM host WHERE host_name LIKE '$host_name')";
 			}

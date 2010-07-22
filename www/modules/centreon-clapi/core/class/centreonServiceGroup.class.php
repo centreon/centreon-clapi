@@ -148,6 +148,10 @@ class CentreonServiceGroup {
 	 */
 	
 	public function add($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$info = split(";", $options);
 		
@@ -185,6 +189,11 @@ class CentreonServiceGroup {
 	 */
 	
 	public function setParam($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->setParamServiceGroup($elem[0], $elem[1], $elem[2]);
 	}
@@ -218,6 +227,11 @@ class CentreonServiceGroup {
 	 */
 	 
 	public function addChild($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->addChildServiceGroup($elem[0], $elem[1], $elem[2]);
 	}
@@ -264,6 +278,11 @@ class CentreonServiceGroup {
 	 */
 	 
 	public function delChild($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->delChildServiceGroup($elem[0], $elem[1], $elem[2]);
 	}

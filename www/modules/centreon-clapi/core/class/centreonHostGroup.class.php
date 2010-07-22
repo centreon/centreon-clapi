@@ -94,7 +94,10 @@ class CentreonHostGroup {
 	
 	public function del($options) {
 		
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '".htmlentities($options, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
@@ -137,6 +140,11 @@ class CentreonHostGroup {
 	 * Add functions
 	 */
 	public function add($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		/*
 		 * Split options
 		 */
@@ -177,6 +185,11 @@ class CentreonHostGroup {
 	 * Set params
 	 */
 	public function setParam($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->setParamHostGroup($elem[0], $elem[1], $elem[2]);
 	}
@@ -205,6 +218,11 @@ class CentreonHostGroup {
 	 */
 	
 	public function addChild($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->return_code = $this->addChildHostGroup($elem[0], $elem[1]);
 	} 
@@ -241,6 +259,11 @@ class CentreonHostGroup {
 	 */
 	
 	public function delChild($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->return_code = $this->delChildHostGroup($elem[0], $elem[1]);
 	} 

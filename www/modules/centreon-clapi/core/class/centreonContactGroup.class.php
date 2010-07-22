@@ -159,6 +159,12 @@ class CentreonContactGroup {
 	 */
 	public function add($options) {
 		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
+		
 		$info = split(";", $options);
 		
 		$info[0] = $this->validateName($info[0]);
@@ -197,6 +203,11 @@ class CentreonContactGroup {
 	public function setChild($options) {		
 		$info = split(";", $options);
 		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		if ($this->contactGroupExists($info[0])) {
 			$contact = new CentreonContact($this->DB);
 			
@@ -222,6 +233,11 @@ class CentreonContactGroup {
 	public function unsetChild($options) {
 		$info = split(";", $options);
 		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		if ($this->contactGroupExists($info[0])) {
 			$contact = new CentreonContact($this->DB);
 		
@@ -242,6 +258,11 @@ class CentreonContactGroup {
 	 */
 	public function enable($options) {
 		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		if ($this->contactGroupExists($options)) {
 			$cg_id = $this->getContactGroupID($options);
 			
@@ -259,6 +280,11 @@ class CentreonContactGroup {
 	 */
 	public function disable($options) {
 		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		if ($this->contactGroupExists($options)) {
 			$cg_id = $this->getContactGroupID($options);
 			
@@ -272,7 +298,11 @@ class CentreonContactGroup {
 	}
 	
 	public function setParam($options) {
-		$this->checkParameters($options);
+		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$info = split(";", $options);	
 			

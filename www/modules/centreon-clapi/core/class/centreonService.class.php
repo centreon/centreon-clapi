@@ -344,7 +344,10 @@ class CentreonService {
 	 */
 	public function add($information) {
 
-		$this->checkParameters($information);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$tabInfo = split(";", $information);
 		
@@ -522,7 +525,10 @@ class CentreonService {
 	 */
 	public function del($information) {
 		
-		$this->checkParameters($information);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$tabInfo = split(";", $information);
 		
@@ -559,7 +565,10 @@ class CentreonService {
 	 */
 	public function setMacro($informations) {
 		
-		$this->checkParameters($informations);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$info = split(";", $informations);
 		if (count($info) == 4) {
@@ -606,7 +615,10 @@ class CentreonService {
 	 */
 	public function delMacro($informations) {
 		
-		$this->checkParameters($informations);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$info = split(";", $informations);
 		$return_code = $this->delMacroService($info[0], $info[1], $info[2]);
@@ -634,7 +646,10 @@ class CentreonService {
 	 */
 	public function setParam($informations) {
 		
-		$this->checkParameters($informations);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$info = split(";", $informations);
 		$return_code = $this->setParamService($info[0], $info[1], $info[2], $info[3]);
@@ -708,7 +723,11 @@ class CentreonService {
 	 * Set Contact lionk for notification
 	 */
 	public function setContact($options) {
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$info = split(";", $options);
 		if ($this->register) {
 			$contact_id = $this->contact->getContactID($info[2]);
@@ -749,7 +768,11 @@ class CentreonService {
 	 * UN-Set Contact lionk for notification
 	 */
 	public function unsetContact($options) {
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$info = split(";", $options);
 		
 		require_once "./class/centreonContact.class.php";
@@ -772,7 +795,11 @@ class CentreonService {
 	 * Set ContactGroup lionk for notification
 	 */
 	public function setCG($options) {
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$info = split(";", $options);
 		if ($this->register) {
 			$cg_id = $this->cg->getContactGroupID($info[2]);	
@@ -813,7 +840,11 @@ class CentreonService {
 	 * UN-Set ContactGroup lionk for notification
 	 */
 	public function unsetCG($options) {
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$info = split(";", $options);
 		if ($this->register) {
 			$cg_id = $this->cg->getContactGroupID($info[2]);	
@@ -848,7 +879,11 @@ class CentreonService {
 	 * Set Hopst Link
 	 */
 	public function setHost($options) {
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$info = split(";", $options);
 		
 		if ($this->register) {
@@ -898,7 +933,11 @@ class CentreonService {
 	 * Set Hopst Link
 	 */
 	public function unsetHost($options) {
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$info = split(";", $options);
 		
 		if ($this->register) {

@@ -168,6 +168,11 @@ class CentreonServiceCategory {
 	
 	public function add($options) {
 		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$info = split(";", $options);
 		
 		if (!$this->serviceCategoryExists($info[0])) {
@@ -204,6 +209,11 @@ class CentreonServiceCategory {
 	 */
 	
 	public function setParam($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->setParamServiceCategory($elem[0], $elem[1], $elem[2]);
 	}
@@ -241,6 +251,12 @@ class CentreonServiceCategory {
 	 */
 	 
 	public function addChild($options) {
+		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->addChildServiceCategory($elem[0], $elem[1], $elem[2]);
 	}
@@ -287,6 +303,11 @@ class CentreonServiceCategory {
 	 */
 	 
 	public function delChild($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->delChildServiceCategory($elem[0], $elem[1], $elem[2]);
 	}

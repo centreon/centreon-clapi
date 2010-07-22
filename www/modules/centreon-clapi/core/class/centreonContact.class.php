@@ -158,7 +158,10 @@ class CentreonContact {
 
 	public function add($options) {
 
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 
 		$info = split(";", $options);
 
@@ -358,7 +361,10 @@ class CentreonContact {
 	 * @return null|void
 	 */
 	public function setParam($options = null) {
-	    $this->checkParameters($options);
+	   	$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 	    
 	    $data = split(';', $options);
 	    if (isset($data[PARAM])) {
@@ -422,7 +428,11 @@ class CentreonContact {
 	 * @return null|void
 	 */
 	public function enable($options = null) {
-	    $this->checkParameters($options);
+	    $check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 	    if (!($contactId = $this->contactExists($options))) {
             print "Contact does not exist.\n";
             return 1;
@@ -442,7 +452,11 @@ class CentreonContact {
 	 * @return null|void
 	 */
 	public function disable($options = null) {
-	    $this->checkParameters($options);
+	    $check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 	    if (!($contactId = $this->contactExists($options))) {
             print "Contact does not exist.\n";
             return 1;
@@ -463,7 +477,10 @@ class CentreonContact {
 	 */
 	public function setACLGroup($options) {
 		
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		/*
 		 * Split parameters
@@ -498,7 +515,10 @@ class CentreonContact {
 	 */
 	public function unsetACLGroup($options) {
 		
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		/*
 		 * Split parameters

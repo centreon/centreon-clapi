@@ -83,7 +83,10 @@ class CentreonHostCategory {
 	
 	public function del($options) {
 		
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$request = "DELETE FROM hostcategories WHERE hc_name LIKE '".htmlentities($options, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
@@ -131,6 +134,11 @@ class CentreonHostCategory {
 		 */
 		$info = split(";", $options);
 
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+
 		if (!$this->hostCategoryExists($info[0])) {
 			$convertionTable = array(0 => "hc_name", 1 => "hc_alias");
 			$informations = array();
@@ -166,6 +174,12 @@ class CentreonHostCategory {
 	 * Set params
 	 */
 	public function setParam($options) {
+		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->setParamHostCategory($elem[0], $elem[1], $elem[2]);
 	}
@@ -194,6 +208,11 @@ class CentreonHostCategory {
 	 */
 	
 	public function addChild($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->return_code = $this->addChildHostCategory($elem[0], $elem[1]);
 	} 
@@ -230,6 +249,11 @@ class CentreonHostCategory {
 	 */
 	
 	public function delChild($options) {
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
+		
 		$elem = split(";", $options);
 		return $this->return_code = $this->delChildHostCategory($elem[0], $elem[1]);
 	} 
