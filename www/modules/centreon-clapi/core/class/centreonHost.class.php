@@ -365,7 +365,10 @@ class CentreonHost {
 	 */
 	public function setMacro($options) {
 		
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$info = split(";", $options);
 		$return_code = $this->setMacroHost($info[0], $info[1], $info[2]);
@@ -373,8 +376,10 @@ class CentreonHost {
 	}
 	
 	public function delMacro($options) {
-
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$info = split(";", $options);
 		$return_code = $this->delMacroHost($info[0], $info[1]);
@@ -499,6 +504,43 @@ class CentreonHost {
 			$request = 	"INSERT INTO host_hostparent_relation (host_parent_hp_id, host_host_id) " .
 						"VALUES ((SELECT host_id FROM host WHERE host_name LIKE '$parent_name'), (SELECT host_id FROM host WHERE host_name LIKE '$child_name'))";
 						
+			$DBRESULT =& $this->DB->query($request);
+			return 0;		
+		} else {
+			print "Child or parent host unknown.\n";
+			return 1;	
+		}
+	}
+	
+	
+	public function unsetParent($options) {
+		
+		$check = $this->checkParameters("Cannot unset parents for host.");
+		if ($check) {
+			return $check;
+		}
+		$elem = split(";", $options);
+		$exitcode = $this->unsetParentHost($elem[0], $elem[1]);		
+		return $exitcode;
+	} 
+	
+	protected function unsetParentHost($child_name, $parent_name) {
+		if ($this->register == 0) {
+			return ;
+		}
+		
+		if ($child_name == $parent_name) {
+			print "Error in arguments. A host cannot be the parent of himself....\n";
+			return 1;
+		}
+		
+		$request = "SELECT host_id FROM host WHERE host_name IN ('$child_name', '$parent_name')";				
+		$DBRESULT =& $this->DB->query($request);
+		if ($DBRESULT->numRows() == 2) {
+			/*
+			 * Insert all data
+			 */
+			$request = 	"DELETE FROM host_hostparent_relation WHERE host_parent_hp_id IN (SELECT host_id FROM host WHERE host_name LIKE '$parent_name') AND host_host_id IN (SELECT host_id FROM host WHERE host_name LIKE '$child_name') ";
 			$DBRESULT =& $this->DB->query($request);
 			return 0;		
 		} else {
