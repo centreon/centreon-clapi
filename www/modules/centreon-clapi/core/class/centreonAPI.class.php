@@ -289,16 +289,17 @@ class CentreonAPI {
 			}
 			$obj = new $objName($this->DB, $this->object);
 			if (method_exists($obj, $action)) {
-				$obj->$action($this->variables);
+				$this->return_code = $obj->$action($this->variables);
 			} else {
 				print "Method not implemented into Centreon API.\n";
 				return 1;
 			}
 		} else {
 			if (method_exists($this, $action)) {
-				$this->$action();
+				$this->return_code = $this->$action();
 			} else {
 				print "Method not implemented into Centreon API.\n";
+				$this->return_code = 1;
 			}
 		}
 		exit($this->return_code);
