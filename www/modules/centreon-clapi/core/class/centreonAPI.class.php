@@ -132,6 +132,8 @@ class CentreonAPI {
 		$this->relationObject["STPL"] = "Service";
 
 		$this->relationObject["TIMEPERIOD"] = "TimePeriod";
+		$this->relationObject["TP"] = "TimePeriod";
+		
 	}
 
 	/*
@@ -167,7 +169,7 @@ class CentreonAPI {
 	}
 
 	public function setPassword($password) {
-		$this->password = $password;
+		$this->password = trim($password);
 	}
 
 	public function checkUser() {
