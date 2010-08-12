@@ -201,7 +201,7 @@ class CentreonAPI {
 
 	public function close() {
 		print "\n";
-		exit ($this->exitcode);
+		exit ($this->return_code);
 	}
 
 	public function setFormat($format) {

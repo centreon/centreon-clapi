@@ -552,22 +552,26 @@ class CentreonService {
 	 */
 	public function del($information) {
 		
-		$check = $this->checkParameters($options);
+		$check = $this->checkParameters($information);
 		if ($check) {
 			return $check;
 		}
 		
 		$tabInfo = split(";", $information);
 		
-		if (!$this->host->hostExists($tabInfo[0])) {
+		if ($this->register && !$this->host->hostExists($tabInfo[0])) {
 			print "Host doesn't exists.\n";
 			return 1;
 		}
 		
-		if (!$this->serviceExists($tabInfo[1], $tabInfo[0])) {
-			print "Service doesn't exists.\n";
-			return 1;
-		} else {
+		if ($this->register) {
+			
+			print "----------------------\n";
+			
+			if (!$this->serviceExists($tabInfo[1], $tabInfo[0])) {
+				print "Service doesn't exists.\n";
+				return 1;
+			}
 			
 			/*
 			 * Looking for service id 
@@ -584,7 +588,29 @@ class CentreonService {
 			$request = "DELETE FROM service WHERE service_id = '".$service_id."' ";
 			$this->DB->query($request);
 			return 0;
-		} 
+			
+		} else {
+			if (!$this->serviceTplExists($tabInfo[0])) {
+				print "Service doesn't exists.\n";
+				return 1;
+			}
+			
+			/*
+			 * Looking for service id 
+			 */
+			$request = "SELECT service_id FROM service WHERE service_description LIKE '".$tabInfo[0]."' AND service_register = '0'";
+			$DBRESULT = $this->DB->query($request);
+			$data =& $DBRESULT->fetchRow();
+			$service_id = $data["service_id"];
+			$DBRESULT->free();
+			
+			/*
+			 * Delete service
+			 */
+			$request = "DELETE FROM service WHERE service_id = '".$service_id."' ";
+			$this->DB->query($request);
+			return 0;
+		}
 	}
 	
 	/* *******************************************
@@ -592,7 +618,7 @@ class CentreonService {
 	 */
 	public function setMacro($informations) {
 		
-		$check = $this->checkParameters($options);
+		$check = $this->checkParameters($informations);
 		if ($check) {
 			return $check;
 		}
@@ -642,7 +668,7 @@ class CentreonService {
 	 */
 	public function delMacro($informations) {
 		
-		$check = $this->checkParameters($options);
+		$check = $this->checkParameters($informations);
 		if ($check) {
 			return $check;
 		}
@@ -673,7 +699,7 @@ class CentreonService {
 	 */
 	public function setParam($informations) {
 		
-		$check = $this->checkParameters($options);
+		$check = $this->checkParameters($informations);
 		if ($check) {
 			return $check;
 		}
@@ -749,13 +775,14 @@ class CentreonService {
 	/* ***************************************
 	 * Set Contact lionk for notification
 	 */
-	public function setContact($options) {
-		$check = $this->checkParameters($options);
+	public function setContact($informations) {
+		
+		$check = $this->checkParameters($informations);
 		if ($check) {
 			return $check;
 		}
 		
-		$info = split(";", $options);
+		$info = split(";", $informations);
 		if ($this->register) {
 			$contact_id = $this->contact->getContactID($info[2]);
 		} else {
@@ -794,8 +821,9 @@ class CentreonService {
 	/* ***************************************
 	 * UN-Set Contact lionk for notification
 	 */
-	public function unsetContact($options) {
-		$check = $this->checkParameters($options);
+	public function unsetContact($informations) {
+		
+		$check = $this->checkParameters($informations);
 		if ($check) {
 			return $check;
 		}
