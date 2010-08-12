@@ -115,6 +115,15 @@ class CentreonContact {
 			return 1;
 		}
 	}
+	
+	protected function validateName($name) {
+		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
+			return $this->checkNameformat($name);
+		} else {
+			print "Name '$name' doesn't match with Centreon naming rules.\n";
+			exit (1);	
+		}
+	}
 
 	/* **************************************
 	 * Delete action
@@ -165,6 +174,8 @@ class CentreonContact {
 
 		$info = split(";", $options);
 
+		$info[0] = $this->validateName($info[0]);
+		
 		if (!$this->contactExists($info[0])) {
 			// contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_lang, contact_auth_type, contact_passwd
 			//test;test;jmathis@merethis.com;test;1;1;en_US;local

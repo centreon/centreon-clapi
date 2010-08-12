@@ -91,7 +91,7 @@ class CentreonHost {
 	}
 	
 	protected function validateName($name) {
-		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches)) {
+		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
 			return $this->checkNameformat($name);
 		} else {
 			print "Name '$name' doesn't match with Centreon naming rules.\n";
@@ -174,16 +174,20 @@ class CentreonHost {
 	 */
 	public function add($options) {
 		
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return $check;
+		}
 		
 		$svc = new CentreonService($this->DB, "Service");
 		$info = split(";", $options);
+		
 		/*
 		 * Check host_name / host_alias rules
 		 */
 		$info[0] = $this->validateName($info[0]);
 		
-		if (!$this->hostExists($info[0])) {
+		if (!$this->hostExists($info[0]) && strlen($info[0])) {
 			if ($this->register) {
 				$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template", 4 => "host_poller", 5 => "hostgroup");
 				$informations = array();

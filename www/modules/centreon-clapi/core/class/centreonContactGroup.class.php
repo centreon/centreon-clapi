@@ -168,6 +168,7 @@ class CentreonContactGroup {
 		$info = split(";", $options);
 		
 		$info[0] = $this->validateName($info[0]);
+		
 		if (!$this->contactGroupExists($info[0])) {
 			$convertionTable = array(0 => "cg_name", 1 => "cg_alias");
 			$informations = array();

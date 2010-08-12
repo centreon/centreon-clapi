@@ -71,6 +71,15 @@ class CentreonServiceGroup {
 		}
 	}
 	
+	protected function validateName($name) {
+		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
+			return $this->checkNameformat($name);
+		} else {
+			print "Name '$name' doesn't match with Centreon naming rules.\n";
+			exit (1);	
+		}
+	}
+	
 	public function getServiceGroupID($sg_name = NULL) {
 		if (!isset($sg_name))
 			return;
@@ -154,6 +163,8 @@ class CentreonServiceGroup {
 		}
 		
 		$info = split(";", $options);
+		
+		$info[0] = $this->validateName($info[0]);
 		
 		if (!$this->serviceGroupExists($info[0])) {
 			$convertionTable = array(0 => "sg_name", 1 => "sg_alias");

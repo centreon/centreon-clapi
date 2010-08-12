@@ -71,6 +71,15 @@ class CentreonHostGroup {
 		}
 	}
 	
+	protected function validateName($name) {
+		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
+			return $this->checkNameformat($name);
+		} else {
+			print "Name '$name' doesn't match with Centreon naming rules.\n";
+			exit (1);	
+		}
+	}
+	
 	protected function getHostGroupID($hg_name = NULL) {
 		if (!isset($hg_name))
 			return;
@@ -140,6 +149,7 @@ class CentreonHostGroup {
 	 * Add functions
 	 */
 	public function add($options) {
+		
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
@@ -150,6 +160,8 @@ class CentreonHostGroup {
 		 */
 		$info = split(";", $options);
 
+		$info[0] = $this->validateName($info[0]);
+		
 		if (!$this->hostGroupExists($info[0])) {
 			$convertionTable = array(0 => "hg_name", 1 => "hg_alias");
 			$informations = array();

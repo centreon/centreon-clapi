@@ -71,6 +71,15 @@ class CentreonHostCategory {
 		}
 	}
 	
+	protected function validateName($name) {
+		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
+			return $this->checkNameformat($name);
+		} else {
+			print "Name '$name' doesn't match with Centreon naming rules.\n";
+			exit (1);	
+		}
+	}
+	
 	protected function getHostCategoryID($hc_name = NULL) {
 		if (!isset($hc_name))
 			return;
@@ -139,6 +148,8 @@ class CentreonHostCategory {
 			return $check;
 		}
 
+		$info[0] = $this->validateName($info[0]);
+		
 		if (!$this->hostCategoryExists($info[0])) {
 			$convertionTable = array(0 => "hc_name", 1 => "hc_alias");
 			$informations = array();

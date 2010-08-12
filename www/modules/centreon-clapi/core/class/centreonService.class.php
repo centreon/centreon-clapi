@@ -168,6 +168,15 @@ class CentreonService {
 		return -1;
 	}
 	
+	protected function validateName($name) {
+		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.\:]*$/', $name, $matches) && strlen($name)) {
+			return $this->checkNameformat($name);
+		} else {
+			print "Name '$name' doesn't match with Centreon naming rules.\n";
+			exit (1);	
+		}
+	}
+	
 	/* ************************************
 	 * Check if service already exists.
 	 */
@@ -365,6 +374,8 @@ class CentreonService {
 		}
 		
 		$tabInfo = split(";", $information);
+		
+		$tabInfo[0] = $this->validateName($tabInfo[0]);
 		
 		if ($this->register) {
 			if ($this->register && !$this->host->hostExists($tabInfo[0])) {
@@ -565,8 +576,6 @@ class CentreonService {
 		}
 		
 		if ($this->register) {
-			
-			print "----------------------\n";
 			
 			if (!$this->serviceExists($tabInfo[1], $tabInfo[0])) {
 				print "Service doesn't exists.\n";

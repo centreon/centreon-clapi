@@ -81,6 +81,15 @@ class CentreonServiceCategory {
 		return $data["sc_id"];
 	}
 	
+	protected function validateName($name) {
+		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
+			return $this->checkNameformat($name);
+		} else {
+			print "Name '$name' doesn't match with Centreon naming rules.\n";
+			exit (1);	
+		}
+	}
+	
 	/* ****************************************
 	 *  Delete Action
 	 */
@@ -175,6 +184,8 @@ class CentreonServiceCategory {
 		}
 		
 		$info = split(";", $options);
+		
+		$info[0] = $this->validateName($info[0]);
 		
 		if (!$this->serviceCategoryExists($info[0])) {
 			$convertionTable = array(0 => "sc_name", 1 => "sc_description");
