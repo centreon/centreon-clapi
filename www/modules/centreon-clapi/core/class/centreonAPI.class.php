@@ -250,7 +250,7 @@ class CentreonAPI {
 
 	private function checkParameters($str) {
 		if (!isset($this->options["v"]) || $this->options["v"] == "") {
-			print "No options defined. $str\n";
+			print "No options defined.\n";
 			$this->return_code = 1;
 			return 1;
 		}

@@ -110,7 +110,7 @@ class CentreonContact {
 
 	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
-			print "No options defined. $str\n";
+			print "No options defined.\n";
 			$this->return_code = 1;
 			return 1;
 		}

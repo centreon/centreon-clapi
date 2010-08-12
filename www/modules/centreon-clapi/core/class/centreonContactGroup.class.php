@@ -80,7 +80,7 @@ class CentreonContactGroup {
 	
 	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
-			print "No options defined. $str\n";
+			print "No options defined.\n";
 			return 1;
 		}
 	}
