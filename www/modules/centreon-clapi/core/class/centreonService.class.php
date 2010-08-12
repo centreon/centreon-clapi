@@ -339,29 +339,44 @@ class CentreonService {
 		return false;
 	}
 	
+	public function serviceTplExists($name = NULL)	{
+
+		$DBRESULT =& $this->DB->query(	"SELECT service_id " .
+										"FROM service " .
+										"WHERE service.service_description = '".htmlentities($this->encode($name), ENT_QUOTES)."'".
+										" AND service_register = '0'");
+		$service =& $DBRESULT->fetchRow();
+		if ($DBRESULT->numRows() >= 1) {
+			$DBRESULT->free();
+			return true;
+		}
+		$DBRESULT->free();		
+		return false;
+	}
+	
 	/* **************************************
 	 * Add services
 	 */
 	public function add($information) {
 
-		$check = $this->checkParameters($options);
+		$check = $this->checkParameters($information);
 		if ($check) {
 			return $check;
 		}
 		
 		$tabInfo = split(";", $information);
 		
-		if ($this->register && !$this->host->hostExists($tabInfo[0])) {
-			print "Host doesn't exists.\n";
-			return 1;
-		}
-		
-		if ($this->serviceExists($tabInfo[1], $tabInfo[0])) {
-			print "Service already exists.\n";
-			return 1;
-		}
-		
 		if ($this->register) {
+			if ($this->register && !$this->host->hostExists($tabInfo[0])) {
+				print "Host doesn't exists.\n";
+				return 1;
+			}
+			
+			if ($this->serviceExists($tabInfo[1], $tabInfo[0])) {
+				print "Service already exists.\n";
+				return 1;
+			}
+		
 			if (count($tabInfo) == 3) {
 				$data = array("host" => $tabInfo[0], "service_description" => $tabInfo[1], "template" => $tabInfo[2]);
 				return $this->addService($data);
@@ -370,6 +385,12 @@ class CentreonService {
 				return 1;
 			}
 		} else {
+			
+			if ($this->serviceTplExists($tabInfo[0])) {
+				print "Service template already exists.\n";
+				return 1;
+			}
+			
 			if (count($tabInfo) == 3) {
 				$data = array("service_description" => $tabInfo[0], "service_alias" => $tabInfo[1], "template" => $tabInfo[2]);
 				return $this->addServiceTemplate($data);
@@ -494,6 +515,9 @@ class CentreonService {
 				if ($i == 0) {
 					print "hostid;svcid;host;description;command;args;checkPeriod;maxAttempts;checkInterval;retryInterval;active;passive\n";
 				}
+				if (!isset($data["command_name"])) {
+					$data["command_name"] = "";
+				}
 				$i++;
 				print $data["host_id"].";".$data["service_id"].";".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
 			}
@@ -513,6 +537,9 @@ class CentreonService {
 					print "svcid;name;service_name;command;args;checkPeriod;maxAttempts;checkInterval;retryInterval;active;passive\n";
 				}
 				$i++;
+				if (!isset($data["command_name"])) {
+					$data["command_name"] = "";
+				}
 				print $data["service_id"].";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["service_alias"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
 			}
 			$DBRESULT->free();
