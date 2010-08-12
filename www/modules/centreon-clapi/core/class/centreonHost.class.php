@@ -652,7 +652,10 @@ class CentreonHost {
 	 * Add host template 
 	 */
 	public function addTemplate($information) {
-		$this->checkParameters($information);
+		$check = $this->checkParameters($information);
+		if ($check) {
+			return 1;
+		}
 		
 		$elem = split(";", $information);
 		$exitcode = $this->addTemplateHost($elem[0], $elem[1]);
@@ -669,7 +672,6 @@ class CentreonHost {
 								"AND host_tpl_id = (SELECT host_id FROM host WHERE host_name LIKE '".$template."')";
 			$DBRESULT = $this->DB->query($request);
 			if ($DBRESULT->numRows() == 0) {
-				
 				/*
 				 * Get Host ID
 				 */
@@ -682,6 +684,49 @@ class CentreonHost {
 				}
 			} else {
 				print "Template already added.\n";
+				return 1;
+			}
+		} else {
+			print "Check parameters.\n";
+			return 1;
+		}
+	}
+	
+	/* *******************************
+	 * Delete host template
+	 */
+	public function delTemplate($information) {
+		$check = $this->checkParameters($information);
+		if ($check) {
+			return 1;
+		}
+		
+		$elem = split(";", $information);
+		$exitcode = $this->delTemplateHost($elem[0], $elem[1]);
+		return $exitcode;
+	}
+	
+	protected function delTemplateHost($host_name, $template) {
+		if (isset($host_name) && $host_name != "" && isset($template) && $template != "") {
+			
+			$svc = new CentreonService($this->DB, "Service");
+		
+			$request = "SELECT * FROM host_template_relation " .
+						"WHERE host_host_id = (SELECT host_id FROM host WHERE host_name LIKE '".$host_name."') " .
+								"AND host_tpl_id = (SELECT host_id FROM host WHERE host_name LIKE '".$template."')";
+			$DBRESULT = $this->DB->query($request);
+			if ($DBRESULT->numRows() == 1) {
+				
+				/*
+				 * Get Host ID
+				 */
+				$host_id = $this->getHostID($host_name);
+				
+				$request = "DELETE FROM host_template_relation WHERE host_tpl_id IN (SELECT host_id FROM host WHERE host_name LIKE '".$template."') AND host_host_id = '".$host_id."'";
+				$this->DB->query($request);
+				return 0;
+			} else {
+				print "No link between host $host_name and template $template.\n";
 				return 1;
 			}
 		} else {
@@ -773,7 +818,10 @@ class CentreonHost {
 	 */
 	public function enable($options) {
 		
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return 1;
+		}
 	
 		$host_id = $this->getHostID(htmlentities($options, ENT_QUOTES));
 		if ($this->hostExists($options)) {
@@ -788,7 +836,10 @@ class CentreonHost {
 	
 	public function disable($options) {
 		
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return 1;
+		}
 	
 		$host_id = $this->getHostID(htmlentities($options, ENT_QUOTES));
 		if ($this->hostExists($options)) {
@@ -805,7 +856,11 @@ class CentreonHost {
 	 * Set ContactGroup link for notification
 	 */
 	public function setCG($options) {
-		$this->checkParameters($options);
+		
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return 1;
+		}
 		$info = split(";", $options);
 		
 		$cg_id = $this->cg->getContactGroupID($info[1]);		
@@ -839,7 +894,11 @@ class CentreonHost {
 	 * UN-Set ContactGroup link for notification
 	 */
 	public function unsetCG($options) {
-		$this->checkParameters($options);
+		$check = $this->checkParameters($options);
+		if ($check) {
+			return 1;
+		}
+		
 		$info = split(";", $options);
 		
 		$cg_id = $this->cg->getContactGroupID($info[1]);		
@@ -860,9 +919,6 @@ class CentreonHost {
 			print "Cannot find contact group : '".$info[1]."'.\n";
 			return 1;
 		}
-	} 
-
-	 
+	}	 
 }
- 
 ?>
