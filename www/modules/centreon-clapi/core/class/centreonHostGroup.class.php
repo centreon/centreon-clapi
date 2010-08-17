@@ -80,6 +80,14 @@ class CentreonHostGroup {
 		}
 	}
 	
+	protected function checkNameformat($name) {
+		if (strlen($name) > 45) {
+			print "Warning: host name reduce to 45 caracters.\n";
+		}
+		return sprintf("%.45s", $name);
+	}
+	
+	
 	protected function getHostGroupID($hg_name = NULL) {
 		if (!isset($hg_name))
 			return;
