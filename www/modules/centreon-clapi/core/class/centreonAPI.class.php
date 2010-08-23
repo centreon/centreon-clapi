@@ -133,7 +133,7 @@ class CentreonAPI {
 
 		$this->relationObject["TIMEPERIOD"] = "TimePeriod";
 		$this->relationObject["TP"] = "TimePeriod";
-		
+
 	}
 
 	/*
@@ -146,6 +146,7 @@ class CentreonAPI {
 			}
 			if ($this->relationObject[$object] == "Host") {
 				require_once "./class/centreonService.class.php";
+				require_once "./class/centreonHostGroup.class.php";
 			}
 			if ($this->relationObject[$object] == "Service") {
 				require_once "./class/centreonHost.class.php";
