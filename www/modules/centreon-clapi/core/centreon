@@ -64,11 +64,10 @@
 	require_once "$centreon_etc/centreon.conf.php";
 	require_once "./class/centreonAPI.class.php";
 
-
 	/*
 	 * Create Centreon API object
 	 */
-	$api = new CentreonAPI($options["u"], $options["p"], $options["a"], $centreon_path, $options);
+	$api = new CentreonAPI((isset($options["u"]) ? $options["u"] : "") , (isset($options["p"]) ? $options["p"] : ""), $options["a"], $centreon_path, $options);
 
 	if (isset($options["h"]))
 		$api->printHelp();
