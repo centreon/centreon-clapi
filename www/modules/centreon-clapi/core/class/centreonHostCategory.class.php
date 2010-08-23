@@ -35,10 +35,10 @@
  * SVN : $Id: centreonHost.class.php 25 2010-03-30 05:52:19Z jmathis $
  *
  */
- 
+
 class CentreonHostCategory {
 	private $DB;
-	
+
 	public function __construct($DB) {
 		$this->DB = $DB;
 	}
@@ -49,7 +49,7 @@ class CentreonHostCategory {
 	protected function hostCategoryExists($name) {
 		if (!isset($name))
 			return 0;
-		
+
 		/*
 		 * Get informations
 		 */
@@ -62,7 +62,7 @@ class CentreonHostCategory {
 			return 0;
 		}
 	}
-	
+
 	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
 			print "No options defined.\n";
@@ -70,39 +70,46 @@ class CentreonHostCategory {
 			return 1;
 		}
 	}
-	
+
 	protected function validateName($name) {
 		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
 			return $this->checkNameformat($name);
 		} else {
 			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);	
+			exit (1);
 		}
 	}
-	
+
+	protected function checkNameformat($name) {
+		if (strlen($name) > 40) {
+			print "Warning: host name reduce to 40 caracters.\n";
+		}
+		return sprintf("%.40s", $name);
+	}
+
 	protected function getHostCategoryID($hc_name = NULL) {
 		if (!isset($hc_name))
 			return;
-			
+
 		$request = "SELECT hc_id FROM hostcategories WHERE hc_name LIKE '$hc_name'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
 		return $data["hc_id"];
 	}
-	
+
 	public function del($options) {
-		
+
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$request = "DELETE FROM hostcategories WHERE hc_name LIKE '".htmlentities($options, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return;
 	}
-	
+
 	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
@@ -116,7 +123,7 @@ class CentreonHostCategory {
 				print "id;name;alias;members\n";
 			}
 			print $data["hc_id"].";".html_entity_decode($data["hc_name"], ENT_QUOTES).";".html_entity_decode($data["hc_alias"], ENT_QUOTES).";";
-			
+
 			$members = "";
 			$request = "SELECT host_name FROM host, hostcategories_relation WHERE hostcategories_hc_id = '".$data["hc_id"]."' AND host_host_id = host_id ORDER BY host_name";
 			$DBRESULT2 =& $this->DB->query($request);
@@ -124,11 +131,11 @@ class CentreonHostCategory {
 				if ($members != "") {
 					$members .= ",";
 				}
-				$members .= $m["host_name"];				
+				$members .= $m["host_name"];
 			}
 			$DBRESULT2->free();
 			print $members."\n";
-			
+
 			$i++;
 		}
 		$DBRESULT->free();
@@ -149,7 +156,7 @@ class CentreonHostCategory {
 		}
 
 		$info[0] = $this->validateName($info[0]);
-		
+
 		if (!$this->hostCategoryExists($info[0])) {
 			$convertionTable = array(0 => "hc_name", 1 => "hc_alias");
 			$informations = array();
@@ -172,33 +179,33 @@ class CentreonHostCategory {
 		} else {
 			if (!isset($information["hc_alias"]) || $information["hc_alias"] == "")
 				$information["hc_alias"] = $information["hc_name"];
-			
+
 			$request = "INSERT INTO hostcategories (hc_name, hc_alias, hc_activate) VALUES ('".htmlentities($information["hc_name"], ENT_QUOTES)."', '".htmlentities($information["hc_alias"], ENT_QUOTES)."', '1')";
 			$DBRESULT =& $this->DB->query($request);
-	
+
 			$hc_id = $this->getHostCategoryID($information["hc_name"]);
 			return $hc_id;
 		}
 	}
-	
+
 	/* ***************************************
 	 * Set params
 	 */
 	public function setParam($options) {
-		
+
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$elem = split(";", $options);
 		return $this->setParamHostCategory($elem[0], $elem[1], $elem[2]);
 	}
-	
+
 	protected function setParamHostCategory($hc_name, $parameter, $value) {
-		
+
 		$value = htmlentities($value, ENT_QUOTES);
-		
+
 		$hc_id = $this->getHostCategoryID($hc_name);
 		if ($hc_id) {
 			$request = "UPDATE hostcategories SET $parameter = '$value' WHERE hc_id = '$hc_id'";
@@ -210,34 +217,34 @@ class CentreonHostCategory {
 			}
 		} else {
 			print "Host category doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
-	
+
 	/* ************************************
 	 * Add Child
 	 */
-	
+
 	public function addChild($options) {
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$elem = split(";", $options);
 		return $this->return_code = $this->addChildHostCategory($elem[0], $elem[1]);
-	} 
-	
+	}
+
 	protected function addChildHostCategory($hc_name, $child) {
-		
+
 		require_once "./class/centreonHost.class.php";
-		
+
 		/*
 		 * Get Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
 		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
-		
+
 		$hc_id = $this->getHostCategoryID($hc_name);
 		if ($hc_id && $host_id) {
 			$request = "DELETE FROM hostcategories_relation WHERE host_host_id = '$host_id' AND hostcategories_hc_id = '$hc_id'";
@@ -251,34 +258,34 @@ class CentreonHostCategory {
 			}
 		} else {
 			print "Host category or host doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
-	
+
 	/* ************************************
 	 * Del Child
 	 */
-	
+
 	public function delChild($options) {
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$elem = split(";", $options);
 		return $this->return_code = $this->delChildHostCategory($elem[0], $elem[1]);
-	} 
-	
+	}
+
 	protected function delChildHostCategory($hc_name, $child) {
-		
+
 		require_once "./class/centreonHost.class.php";
-		
+
 		/*
 		 * Get Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
 		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
-		
+
 		$hc_id = $this->getHostCategoryID($hc_name);
 		if ($hc_id && $host_id) {
 			$request = "DELETE FROM hostcategories_relation WHERE host_host_id = '$host_id' AND hostcategories_hc_id = '$hc_id'";
@@ -290,7 +297,7 @@ class CentreonHostCategory {
 			}
 		} else {
 			print "Host category or host doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
 }

@@ -35,10 +35,10 @@
  * SVN : $Id: centreonHost.class.php 25 2010-03-30 05:52:19Z jmathis $
  *
  */
- 
+
 class CentreonServiceGroup {
 	private $DB;
-	
+
 	public function __construct($DB) {
 		$this->DB = $DB;
 	}
@@ -49,7 +49,7 @@ class CentreonServiceGroup {
 	protected function serviceGroupExists($name) {
 		if (!isset($name))
 			return 0;
-		
+
 		/*
 		 * Get informations
 		 */
@@ -62,7 +62,7 @@ class CentreonServiceGroup {
 			return 0;
 		}
 	}
-	
+
 	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
 			print "No options defined.\n";
@@ -70,37 +70,44 @@ class CentreonServiceGroup {
 			return 1;
 		}
 	}
-	
+
 	protected function validateName($name) {
 		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
 			return $this->checkNameformat($name);
 		} else {
 			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);	
+			exit (1);
 		}
 	}
-	
+
+	protected function checkNameformat($name) {
+		if (strlen($name) > 40) {
+			print "Warning: host name reduce to 40 caracters.\n";
+		}
+		return sprintf("%.40s", $name);
+	}
+
 	public function getServiceGroupID($sg_name = NULL) {
 		if (!isset($sg_name))
 			return;
-			
+
 		$request = "SELECT sg_id FROM servicegroup WHERE sg_name LIKE '$sg_name'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
 		return $data["sg_id"];
 	}
-	
+
 	/* ****************************************
 	 *  Delete Action
 	 */
-	 
+
 	public function del($name) {
 		$request = "DELETE FROM servicegroup WHERE sg_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return;
 	}
-	
+
 	/* ****************************************
 	 * Dislay all SG
 	 */
@@ -112,8 +119,8 @@ class CentreonServiceGroup {
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE sg_name LILE '%".htmlentities($search, ENT_QUOTES)."%'";
 		}
-		
-		
+
+
 		/*
 		 * Get Child informations
 		 */
@@ -130,7 +137,7 @@ class CentreonServiceGroup {
 				print "Name;Alias;Members\n";
 			}
 			print html_entity_decode($data["sg_name"], ENT_QUOTES).";".html_entity_decode($data["sg_alias"], ENT_QUOTES).";";
-			
+
 			/*
 			 * Get Childs informations
 			 */
@@ -149,23 +156,23 @@ class CentreonServiceGroup {
 			$i++;
 		}
 		$DBRESULT->free();
-		
+
 	}
-	
+
 	/* ****************************************
 	 * Add Action
 	 */
-	
+
 	public function add($options) {
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$info = split(";", $options);
-		
+
 		$info[0] = $this->validateName($info[0]);
-		
+
 		if (!$this->serviceGroupExists($info[0])) {
 			$convertionTable = array(0 => "sg_name", 1 => "sg_alias");
 			$informations = array();
@@ -179,45 +186,45 @@ class CentreonServiceGroup {
 			return;
 		}
 	}
-	
+
 	protected function addServiceGroup($information) {
 		if (!isset($information["sg_name"])) {
 			return 0;
 		} else {
 			if (!isset($information["sg_alias"]) || $information["sg_alias"] == "")
 				$information["sg_alias"] = $information["sg_name"];
-			
+
 			$request = "INSERT INTO servicegroup (sg_name, sg_alias, sg_activate) VALUES ('".htmlentities($information["sg_name"], ENT_QUOTES)."', '".htmlentities($information["sg_alias"], ENT_QUOTES)."', '1')";
 			$DBRESULT =& $this->DB->query($request);
-	
+
 			$sg_id = $this->getServiceGroupID($information["sg_name"]);
 			return $sg_id;
 		}
 	}
-	
+
 	/* ****************************************
 	 * Add Action
 	 */
-	
+
 	public function setParam($options) {
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$elem = split(";", $options);
 		return $this->setParamServiceGroup($elem[0], $elem[1], $elem[2]);
 	}
-	
+
 	protected function setParamServiceGroup($sg_name, $parameter, $value) {
-		
+
 		$value = htmlentities($value, ENT_QUOTES);
 
 		if ($parameter != "name" && $parameter != "alias") {
 			print "Unknown parameters.\n";
 			return 1;
 		}
-		
+
 		$sg_id = $this->getServiceGroupID($sg_name);
 		if ($sg_id) {
 			$request = "UPDATE servicegroup SET sg_$parameter = '$value' WHERE sg_id = '$sg_id'";
@@ -229,26 +236,26 @@ class CentreonServiceGroup {
 			}
 		} else {
 			print "Service group doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
-	
+
 	/* **************************************
 	 * Add childs
 	 */
-	 
+
 	public function addChild($options) {
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$elem = split(";", $options);
 		return $this->addChildServiceGroup($elem[0], $elem[1], $elem[2]);
 	}
-	 
+
 	protected function addChildServiceGroup($sg_name, $child_host, $child_service) {
-		
+
 		require_once "./class/centreonHost.class.php";
 		require_once "./class/centreonService.class.php";
 
@@ -257,7 +264,7 @@ class CentreonServiceGroup {
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
 		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
-		
+
 		/*
 		 * Get service Child information
 		 */
@@ -266,7 +273,7 @@ class CentreonServiceGroup {
 
 		/*
 		 * Add link.
-		 */				
+		 */
 		$sg_id = $this->getServiceGroupID($sg_name);
 		if ($sg_id && $host_id && $service_id) {
 			$request = "DELETE FROM servicegroup_relation WHERE host_host_id = '$host_id' AND service_service_id = '$service_id' AND servicegroup_sg_id = '$sg_id'";
@@ -280,35 +287,35 @@ class CentreonServiceGroup {
 			}
 		} else {
 			print "Servicegroup or host doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
-	
+
 	/* **************************************
 	 * Add childs
 	 */
-	 
+
 	public function delChild($options) {
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$elem = split(";", $options);
 		return $this->delChildServiceGroup($elem[0], $elem[1], $elem[2]);
 	}
-	
+
 	protected function delChildServiceGroup($sg_name, $child_host, $child_service) {
-		
+
 		require_once "./class/centreonHost.class.php";
 		require_once "./class/centreonService.class.php";
-		
+
 		/*
 		 * Get host Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
 		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
-		
+
 		/*
 		 * Get service Child information
 		 */
@@ -317,7 +324,7 @@ class CentreonServiceGroup {
 
 		/*
 		 * Add link.
-		 */				
+		 */
 		$sg_id = $this->getServiceGroupID($sg_name);
 		if ($sg_id && $host_id && $service_id) {
 			$request = "DELETE FROM servicegroup_relation WHERE host_host_id = '$host_id' AND service_service_id = '$service_id' AND servicegroup_sg_id = '$sg_id'";
@@ -329,7 +336,7 @@ class CentreonServiceGroup {
 			}
 		} else {
 			print "Servicegroup or host doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
 }

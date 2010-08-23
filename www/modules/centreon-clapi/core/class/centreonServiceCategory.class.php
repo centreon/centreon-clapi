@@ -35,10 +35,10 @@
  * SVN : $Id: centreonHost.class.php 25 2010-03-30 05:52:19Z jmathis $
  *
  */
- 
+
 class CentreonServiceCategory {
 	private $DB;
-	
+
 	public function __construct($DB) {
 		$this->DB = $DB;
 	}
@@ -49,7 +49,7 @@ class CentreonServiceCategory {
 	protected function serviceCategoryExists($name) {
 		if (!isset($name))
 			return 0;
-		
+
 		/*
 		 * Get informations
 		 */
@@ -62,7 +62,7 @@ class CentreonServiceCategory {
 			return 0;
 		}
 	}
-	
+
 	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
 			print "No options defined.\n";
@@ -70,37 +70,44 @@ class CentreonServiceCategory {
 			return 1;
 		}
 	}
-	
+
 	public function getServiceCategoryID($sc_name = NULL) {
 		if (!isset($sc_name))
 			return;
-			
+
 		$request = "SELECT sc_id FROM service_categories WHERE sc_name LIKE '$sc_name'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
 		return $data["sc_id"];
 	}
-	
+
 	protected function validateName($name) {
 		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
 			return $this->checkNameformat($name);
 		} else {
 			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);	
+			exit (1);
 		}
 	}
-	
+
+	protected function checkNameformat($name) {
+		if (strlen($name) > 40) {
+			print "Warning: host name reduce to 40 caracters.\n";
+		}
+		return sprintf("%.40s", $name);
+	}
+
 	/* ****************************************
 	 *  Delete Action
 	 */
-	 
+
 	public function del($name) {
 		$request = "DELETE FROM service_categories WHERE sc_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return;
 	}
-	
+
 	/* ****************************************
 	 * Dislay all SG
 	 */
@@ -112,7 +119,7 @@ class CentreonServiceCategory {
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE sc_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' OR sc_description LIKE '%".htmlentities($search, ENT_QUOTES)."%'";
 		}
-				
+
 		/*
 		 * Get Child informations
 		 */
@@ -130,7 +137,7 @@ class CentreonServiceCategory {
 					print "Name;Alias;Members\n";
 				}
 				print html_entity_decode($data["sc_name"], ENT_QUOTES).";".html_entity_decode($data["sc_description"], ENT_QUOTES).";";
-				
+
 				/*
 				 * Get Childs informations
 				 */
@@ -146,7 +153,7 @@ class CentreonServiceCategory {
 								print ",";
 							}
 							print $host->getHostName($host_id).",".$svc->getServiceName($m["service_service_id"], 1);
-							$i2++;						
+							$i2++;
 						}
 					} else if ($type == 2) {
 						$hg = new CentreonHostGroup($this->DB);
@@ -157,7 +164,7 @@ class CentreonServiceCategory {
 									print ",";
 								}
 								print $host->getHostName($host_id).",".$svc->getServiceName($m["service_service_id"], 1);
-								$i2++;						
+								$i2++;
 							}
 						}
 					} else {
@@ -169,24 +176,24 @@ class CentreonServiceCategory {
 				$i++;
 			}
 			$DBRESULT->free();
-		}	
+		}
 	}
-	
+
 	/* ****************************************
 	 * Add Action
 	 */
-	
+
 	public function add($options) {
-		
+
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$info = split(";", $options);
-		
+
 		$info[0] = $this->validateName($info[0]);
-		
+
 		if (!$this->serviceCategoryExists($info[0])) {
 			$convertionTable = array(0 => "sc_name", 1 => "sc_description");
 			$informations = array();
@@ -200,38 +207,38 @@ class CentreonServiceCategory {
 			return;
 		}
 	}
-	
+
 	protected function addServiceCategory($information) {
 		if (!isset($information["sc_name"])) {
 			return 0;
 		} else {
 			if (!isset($information["sc_description"]) || $information["sc_description"] == "")
 				$information["sc_description"] = $information["sc_name"];
-			
+
 			$request = "INSERT INTO service_categories (sc_name, sc_description, sc_activate) VALUES ('".htmlentities($information["sc_name"], ENT_QUOTES)."', '".htmlentities($information["sc_description"], ENT_QUOTES)."', '1')";
 			$DBRESULT =& $this->DB->query($request);
-	
+
 			$sc_id = $this->getServiceCategoryID($information["sc_name"]);
 			return $sc_id;
 		}
 	}
-	
+
 	/* ****************************************
 	 * Add Action
 	 */
-	
+
 	public function setParam($options) {
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$elem = split(";", $options);
 		return $this->setParamServiceCategory($elem[0], $elem[1], $elem[2]);
 	}
-	
+
 	protected function setParamServiceCategory($sc_name, $parameter, $value) {
-		
+
 		$value = htmlentities($value, ENT_QUOTES);
 
 		if ($parameter == "alias") {
@@ -242,7 +249,7 @@ class CentreonServiceCategory {
 			print "Unknown parameters.\n";
 			return 1;
 		}
-		
+
 		$sc_id = $this->getServiceCategoryID($sc_name);
 		if ($sc_id) {
 			$request = "UPDATE service_categories SET sc_$parameter = '$value' WHERE sc_id = '$sc_id'";
@@ -254,31 +261,31 @@ class CentreonServiceCategory {
 			}
 		} else {
 			print "Service category doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
-	
+
 	/* **************************************
 	 * Add childs
 	 */
-	 
+
 	public function addChild($options) {
-		
+
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$elem = split(";", $options);
 		if (count($elem) == 2) {
 			return $this->addTemplateChildServiceCategory($elem[0], $elem[1]);
 		} else {
-			return $this->addChildServiceCategory($elem[0], $elem[1], $elem[2]);	
+			return $this->addChildServiceCategory($elem[0], $elem[1], $elem[2]);
 		}
 	}
-	 
+
 	protected function addChildServiceCategory($sc_name, $child_host, $child_service) {
-		
+
 		require_once "./class/centreonHost.class.php";
 		require_once "./class/centreonService.class.php";
 
@@ -287,7 +294,7 @@ class CentreonServiceCategory {
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
 		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
-		
+
 		/*
 		 * Get service Child information
 		 */
@@ -296,7 +303,7 @@ class CentreonServiceCategory {
 
 		/*
 		 * Add link.
-		 */				
+		 */
 		$sc_id = $this->getServiceCategoryID($sc_name);
 		if ($sc_id && $host_id && $service_id) {
 			$request = "DELETE FROM service_categories_relation WHERE service_service_id = '$service_id' AND sc_id = '$sc_id'";
@@ -310,12 +317,12 @@ class CentreonServiceCategory {
 			}
 		} else {
 			print "Service category or host doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
-	
+
 	protected function addTemplateChildServiceCategory($sc_name, $child_service) {
-		
+
 		require_once "./class/centreonHost.class.php";
 		require_once "./class/centreonService.class.php";
 
@@ -327,7 +334,7 @@ class CentreonServiceCategory {
 
 		/*
 		 * Add link.
-		 */				
+		 */
 		$sc_id = $this->getServiceCategoryID($sc_name);
 		if ($sc_id && $service_id) {
 			$request = "DELETE FROM service_categories_relation WHERE service_service_id = '$service_id' AND sc_id = '$sc_id'";
@@ -341,20 +348,20 @@ class CentreonServiceCategory {
 			}
 		} else {
 			print "Service category or service doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
-	
+
 	/* **************************************
 	 * Add childs
 	 */
-	 
+
 	public function delChild($options) {
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$elem = split(";", $options);
 		if (count($elem) == 2) {
 			return $this->delTemplateChildServiceCategory($elem[0], $elem[1]);
@@ -362,18 +369,18 @@ class CentreonServiceCategory {
 			return $this->delChildServiceCategory($elem[0], $elem[1], $elem[2]);
 		}
 	}
-	
+
 	protected function delChildServiceCategory($sc_name, $child_host, $child_service) {
-		
+
 		require_once "./class/centreonHost.class.php";
 		require_once "./class/centreonService.class.php";
-		
+
 		/*
 		 * Get host Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
 		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
-		
+
 		/*
 		 * Get service Child information
 		 */
@@ -382,7 +389,7 @@ class CentreonServiceCategory {
 
 		/*
 		 * Add link.
-		 */				
+		 */
 		$sc_id = $this->getServiceCategoryID($sc_name);
 		if ($sc_id && $host_id && $service_id) {
 			$request = "DELETE FROM service_categories_relation WHERE service_service_id = '$service_id' AND sc_id = '$sc_id'";
@@ -394,15 +401,15 @@ class CentreonServiceCategory {
 			}
 		} else {
 			print "Service category or service doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
-	
+
 	protected function delTemplateChildServiceCategory($sc_name, $child_service) {
-		
+
 		require_once "./class/centreonHost.class.php";
 		require_once "./class/centreonService.class.php";
-		
+
 		/*
 		 * Get service Child information
 		 */
@@ -411,7 +418,7 @@ class CentreonServiceCategory {
 
 		/*
 		 * Add link.
-		 */				
+		 */
 		$sc_id = $this->getServiceCategoryID($sc_name);
 		if ($sc_id && $service_id) {
 			$request = "DELETE FROM service_categories_relation WHERE service_service_id = '$service_id' AND sc_id = '$sc_id'";
@@ -423,7 +430,7 @@ class CentreonServiceCategory {
 			}
 		} else {
 			print "Service category or service doesn't exists. Please check your arguments\n";
-			return 1;	
+			return 1;
 		}
 	}
 }

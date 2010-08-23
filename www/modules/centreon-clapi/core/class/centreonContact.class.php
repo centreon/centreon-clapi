@@ -97,7 +97,7 @@ class CentreonContact {
 		$data = $DBRESULT->fetchRow();
 		return $data["contact_id"];
 	}
-	
+
 	public function iscontactAdmin($contact_name = NULL) {
 		if (!isset($contact_name))
 			return;
@@ -115,14 +115,21 @@ class CentreonContact {
 			return 1;
 		}
 	}
-	
+
 	protected function validateName($name) {
 		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
 			return $this->checkNameformat($name);
 		} else {
 			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);	
+			exit (1);
 		}
+	}
+
+	protected function checkNameformat($name) {
+		if (strlen($name) > 40) {
+			print "Warning: host name reduce to 40 caracters.\n";
+		}
+		return sprintf("%.40s", $name);
 	}
 
 	/* **************************************
@@ -175,7 +182,7 @@ class CentreonContact {
 		$info = split(";", $options);
 
 		$info[0] = $this->validateName($info[0]);
-		
+
 		if (!$this->contactExists($info[0])) {
 			// contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_lang, contact_auth_type, contact_passwd
 			//test;test;jmathis@merethis.com;test;1;1;en_US;local
@@ -325,7 +332,7 @@ class CentreonContact {
         $query = "UPDATE contact SET timeperiod_tp_id2 = '".htmlentities($timeperiodId, ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
         $this->DB->query($query);
 	}
-	
+
 	/**
 	 * Set standart parameter for contact
 	 *
@@ -338,7 +345,7 @@ class CentreonContact {
             print "Contact does not exist.\n";
             return 1;
         }
-        
+
         $conversionTable = array();
         $conversionTable["name"] = "contact_name";
         $conversionTable["alias"] = "contact_alias";
@@ -348,14 +355,14 @@ class CentreonContact {
         $conversionTable["language"] = "contact_language";
         $conversionTable["admin"] = "contact_admin";
         $conversionTable["authtype"] = "contact_auth_type";
-        
+
         $conversionTable["hostnotifopt"] = "contact_host_notification_options";
         $conversionTable["servicenotifopt"] = "contact_service_notification_options";
-        
+
         if ($data[1] == "password") {
         	$data[2] = md5($data[2]);
         }
-        
+
         /*
          * Update
          */
@@ -376,7 +383,7 @@ class CentreonContact {
 		if ($check) {
 			return $check;
 		}
-	    
+
 	    $data = split(';', $options);
 	    if (isset($data[PARAM])) {
     	    if (!$this->_checkNotifOptions($data)) {
@@ -412,7 +419,7 @@ class CentreonContact {
                     break;
                 case "servicenotifopt":
                     return $this->_setParamCommand($options);
-                    break;    
+                    break;
                 case "hostnotifcmd":
                      return $this->_setHostNotificationCommand($options);
                     break;
@@ -443,19 +450,19 @@ class CentreonContact {
 		if ($check) {
 			return $check;
 		}
-		
+
 	    if (!($contactId = $this->contactExists($options))) {
             print "Contact does not exist.\n";
             return 1;
         }
-        
+
         /*
          * enable user
          */
         $query = "UPDATE contact SET contact_activate = '1' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
         $this->DB->query($query);
 	}
-	
+
 	/**
 	 * Disable contact
 	 *
@@ -467,42 +474,42 @@ class CentreonContact {
 		if ($check) {
 			return $check;
 		}
-		
+
 	    if (!($contactId = $this->contactExists($options))) {
             print "Contact does not exist.\n";
             return 1;
         }
-        
+
         /*
          * enable user
          */
         $query = "UPDATE contact SET contact_activate = '0' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
         $this->DB->query($query);
 	}
-	
+
 	/**
 	 * set ACL Resource
-	 * 
+	 *
 	 * @param string options
 	 * @return int
 	 */
 	public function setACLGroup($options) {
-		
+
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		/*
 		 * Split parameters
 		 */
 		$data = split(';', $options);
-		
+
 		if (!($contactId = $this->contactExists($data[0]))) {
             print "Contact does not exist.\n";
             return 1;
         }
-        
+
         $acl = new CentreonACLResources($this->DB);
         $aclid = $acl->getACLResourceID($data[1]);
         if ($aclid) {
@@ -520,27 +527,27 @@ class CentreonContact {
 
 	/**
 	 * unset ACL Resource
-	 * 
+	 *
 	 * @param string options
 	 * @return int
 	 */
 	public function unsetACLGroup($options) {
-		
+
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		/*
 		 * Split parameters
 		 */
 		$data = split(';', $options);
-		
+
 		if (!($contactId = $this->contactExists($data[0]))) {
             print "Contact does not exist.\n";
             return 1;
         }
-        
+
         $acl = new CentreonACLResources($this->DB);
         $aclid = $acl->getACLResourceID($data[1]);
         if ($aclid) {
