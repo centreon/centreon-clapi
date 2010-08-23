@@ -46,14 +46,14 @@ class CentreonHostCategory {
 	/*
 	 * Check host existance
 	 */
-	protected function hostCategoryExists($name) {
+	protected function _hostCategoryExists($name) {
 		if (!isset($name))
 			return 0;
 
 		/*
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT hc_name, hc_id FROM hostcategories WHERE hc_name = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT hc_name, hc_id FROM hostcategories WHERE hc_name LIKE '".htmlentities($name, ENT_QUOTES)."'");
 		if ($DBRESULT->numRows() >= 1) {
 			$host =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
@@ -157,7 +157,7 @@ class CentreonHostCategory {
 
 		$info[0] = $this->validateName($info[0]);
 
-		if (!$this->hostCategoryExists($info[0])) {
+		if (!$this->_hostCategoryExists($info[0])) {
 			$convertionTable = array(0 => "hc_name", 1 => "hc_alias");
 			$informations = array();
 			foreach ($info as $key => $value) {
@@ -243,9 +243,33 @@ class CentreonHostCategory {
 		 * Get Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
 
+		/**
+		 * Check if host exists
+		 */
+		if (!$host->hostExists($child)) {
+			print "Host doesn't exists.\n";
+			return 1;
+		}
+
+		/**
+		 * Check if host exists
+		 */
+		if (!$this->_hostCategoryExists($hc_name)) {
+			print "Host category doesn't exists.\n";
+			return 1;
+		}
+
+		/*
+		 * Get Host ID
+		 */
+		$host_id = $host->getHostID($child);
+
+		/*
+		 * Get Host category ID
+		 */
 		$hc_id = $this->getHostCategoryID($hc_name);
+
 		if ($hc_id && $host_id) {
 			$request = "DELETE FROM hostcategories_relation WHERE host_host_id = '$host_id' AND hostcategories_hc_id = '$hc_id'";
 			$DBRESULT =& $this->DB->query($request);
@@ -284,9 +308,33 @@ class CentreonHostCategory {
 		 * Get Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
 
+		/**
+		 * Check if host exists
+		 */
+		if (!$host->hostExists($child)) {
+			print "Host doesn't exists.\n";
+			return 1;
+		}
+
+		/**
+		 * Check if host exists
+		 */
+		if (!$this->_hostCategoryExists($hc_name)) {
+			print "Host category doesn't exists.\n";
+			return 1;
+		}
+
+		/*
+		 * Get Host ID
+		 */
+		$host_id = $host->getHostID($child);
+
+		/*
+		 * Get Host category ID
+		 */
 		$hc_id = $this->getHostCategoryID($hc_name);
+
 		if ($hc_id && $host_id) {
 			$request = "DELETE FROM hostcategories_relation WHERE host_host_id = '$host_id' AND hostcategories_hc_id = '$hc_id'";
 			$DBRESULT =& $this->DB->query($request);
