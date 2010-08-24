@@ -41,6 +41,7 @@
  */
 require_once "../../../class/centreonDB.class.php";
 require_once "../../../class/centreonXML.class.php";
+require_once "./class/centreonACLResources.class.php";
 
 if (file_exists("../../../class/centreonSession.class.php")) {
 	require_once "../../../class/centreonSession.class.php";

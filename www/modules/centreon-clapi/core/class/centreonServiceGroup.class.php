@@ -38,9 +38,16 @@
 
 class CentreonServiceGroup {
 	private $DB;
+	private $access;
 
 	public function __construct($DB) {
 		$this->DB = $DB;
+
+		/**
+		 * Enable Access Object
+		 */
+		$this->access = new CentreonACLResources($this->DB);
+
 	}
 
 	/*
@@ -104,8 +111,13 @@ class CentreonServiceGroup {
 	public function del($name) {
 		$request = "DELETE FROM servicegroup WHERE sg_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
-		$this->return_code = 0;
-		return;
+
+		/**
+		 * Update ACL
+		 */
+		$this->access->updateACL();
+
+		return 0;
 	}
 
 	/* ****************************************
@@ -191,13 +203,20 @@ class CentreonServiceGroup {
 		if (!isset($information["sg_name"])) {
 			return 0;
 		} else {
-			if (!isset($information["sg_alias"]) || $information["sg_alias"] == "")
+			if (!isset($information["sg_alias"]) || $information["sg_alias"] == "") {
 				$information["sg_alias"] = $information["sg_name"];
+			}
 
 			$request = "INSERT INTO servicegroup (sg_name, sg_alias, sg_activate) VALUES ('".htmlentities($information["sg_name"], ENT_QUOTES)."', '".htmlentities($information["sg_alias"], ENT_QUOTES)."', '1')";
 			$DBRESULT =& $this->DB->query($request);
 
 			$sg_id = $this->getServiceGroupID($information["sg_name"]);
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
 			return $sg_id;
 		}
 	}
@@ -281,6 +300,11 @@ class CentreonServiceGroup {
 			$request = "INSERT INTO servicegroup_relation (host_host_id, service_service_id, servicegroup_sg_id) VALUES ('$host_id', '$service_id', '$sg_id')";
 			$DBRESULT =& $this->DB->query($request);
 			if ($DBRESULT) {
+				/**
+				 * Update ACL
+				 */
+				$this->access->updateACL();
+
 				return 0;
 			} else {
 				return 1;
@@ -329,7 +353,12 @@ class CentreonServiceGroup {
 		if ($sg_id && $host_id && $service_id) {
 			$request = "DELETE FROM servicegroup_relation WHERE host_host_id = '$host_id' AND service_service_id = '$service_id' AND servicegroup_sg_id = '$sg_id'";
 			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
+				/**
+				 * Update ACL
+				 */
+				$this->access->updateACL();
+
+				if ($DBRESULT) {
 				return 0;
 			} else {
 				return 1;

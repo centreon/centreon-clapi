@@ -38,9 +38,16 @@
 
 class CentreonHostCategory {
 	private $DB;
+	private $access;
 
 	public function __construct($DB) {
 		$this->DB = $DB;
+
+		/**
+		 * Enable Access Object
+		 */
+		$this->access = new CentreonACLResources($this->DB);
+
 	}
 
 	/*

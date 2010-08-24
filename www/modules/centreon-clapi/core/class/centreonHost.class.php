@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2005-2010 MERETHIS
  * Centreon is developped by : Julien Mathis and Romain Le Merlus under
  * GPL Licence 2.0.
@@ -44,15 +44,22 @@ class CentreonHost {
 	private $cg;
 	private $hg;
 
+	private $access;
+
 	public function __construct($DB, $objName) {
 		$this->DB = $DB;
 		$this->register = 1;
+
+		/***
+		 * Enable Access Object
+		 */
+		$this->access = new CentreonACLResources($this->DB);
 
 		if (strtoupper($objName) == "HTPL") {
 			$this->setTemplateFlag();
 		}
 
-		/*
+		/**
 		 * Create ContactGroup object
 		 */
 		require_once "./class/centreonContactGroup.class.php";
@@ -64,14 +71,14 @@ class CentreonHost {
 		$this->register = 0;
 	}
 
-	/*
+	/**
 	 * Check host existance
 	 */
 	public function hostExists($name) {
 		if (!isset($name))
 			return 0;
 
-		/*
+		/**
 		 * Get informations
 		 */
 		$DBRESULT =& $this->DB->query("SELECT host_name, host_id FROM host WHERE host_name = '".htmlentities($name, ENT_QUOTES)."' AND host_register = '".$this->register."'");
@@ -88,7 +95,7 @@ class CentreonHost {
 		if (!isset($name))
 			return 0;
 
-		/*
+		/**
 		 * Get informations
 		 */
 		$DBRESULT =& $this->DB->query("SELECT host_name, host_id FROM host WHERE host_name = '".htmlentities($name, ENT_QUOTES)."' AND host_register = '0'");
@@ -124,7 +131,7 @@ class CentreonHost {
 		return sprintf("%.25s", $name);
 	}
 
-	/*
+	/**
 	 * Get Poller id
 	 */
 	protected function getPollerID($name) {
@@ -139,7 +146,7 @@ class CentreonHost {
 		}
 	}
 
-	/*
+	/**
 	 * Get id of host
 	 */
 	public function getHostID($name) {
@@ -155,7 +162,7 @@ class CentreonHost {
 		}
 	}
 
-	/*
+	/**
 	 * Get Name of an host
 	 */
 	public function getHostName($host_id, $readable = NULL) {
@@ -187,7 +194,7 @@ class CentreonHost {
 	}
 
 
-	/* ***********************************
+	/** ***********************************
 	 * Add functions
 	 */
 	public function add($options) {
@@ -200,7 +207,7 @@ class CentreonHost {
 		$svc = new CentreonService($this->DB, "Service");
 		$info = split(";", $options);
 
-		/*
+		/**
 		 * Check host_name / host_alias rules
 		 */
 		$info[0] = $this->validateName($info[0]);
@@ -234,7 +241,7 @@ class CentreonHost {
 		}
 	}
 
-	/**
+	/***
 	 * Add an host
 	 */
 	protected function addHost($information) {
@@ -245,12 +252,12 @@ class CentreonHost {
 				$information["host_alias"] = $information["host_name"];
 			}
 
-			/**
+			/***
 			 * Init HostGroup object
 			 */
 			$this->hg = new CentreonHostGroup($this->DB);
 
-			/**
+			/***
 			 * check host template existance
 			 */
 			if ($information["host_template"]) {
@@ -270,7 +277,7 @@ class CentreonHost {
 				}
 			}
 
-			/**
+			/***
 			 * Check if hostgroup(s) exists
 			 */
 			if ($information["hostgroup"]) {
@@ -290,19 +297,19 @@ class CentreonHost {
 				}
 			}
 
-			/**
+			/***
 			 * Insert Host
 			 */
 			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
 						"VALUES ('".htmlentities(trim($this->encode($information["host_name"])), ENT_QUOTES)."', '".htmlentities(trim($this->encode($information["host_alias"])), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 
-			/**
+			/***
 			 * Get host ID.
 			 */
 			$host_id = $this->getHostID(htmlentities($information["host_name"], ENT_QUOTES));
 
-			/**
+			/***
 			 * Insert Template Relation
 			 */
 			if ($information["host_template"]) {
@@ -318,7 +325,7 @@ class CentreonHost {
 				}
 			}
 
-			/**
+			/***
 			 * Insert hostgroup relation
 			 */
 			if ($information["hostgroup"]) {
@@ -334,21 +341,27 @@ class CentreonHost {
 				}
 			}
 
-			/**
+			/***
 			 * Insert Extended Info
 			 */
 			$request = "INSERT INTO extended_host_information (host_host_id) VALUES ('".$host_id."')";
 			$this->DB->query($request);
 
-			/**
+			/***
 			 * Insert Host Poller
 			 */
 			$this->setPoller($host_id, $this->getPollerID($information["host_poller"]));
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
 			return $host_id;
 		}
 	}
 
-	/*
+	/**
 	 * Add an host template
 	 */
 	protected function addHostTemplate($information) {
@@ -359,7 +372,7 @@ class CentreonHost {
 				$information["host_alias"] = $information["host_name"];
 			}
 
-			/**
+			/***
 			 * check host template existance
 			 */
 			if ($information["host_template"]) {
@@ -379,19 +392,19 @@ class CentreonHost {
 				}
 			}
 
-			/*
+			/**
 			 * Insert Host
 			 */
 			$request = 	"INSERT INTO host (host_name, host_alias, host_address, host_register, host_activate, host_active_checks_enabled, host_passive_checks_enabled, host_checks_enabled, host_obsess_over_host, host_check_freshness, host_event_handler_enabled, host_flap_detection_enabled, host_process_perf_data, host_retain_status_information, host_retain_nonstatus_information, host_notifications_enabled) " .
 						"VALUES ('".htmlentities(trim($this->encode($information["host_name"])), ENT_QUOTES)."', '".htmlentities(trim($this->encode($information["host_alias"])), ENT_QUOTES)."', '".htmlentities(trim($information["host_address"]), ENT_QUOTES)."', '".$this->register."', '1', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 
-			/*
+			/**
 			 * Get host ID.
 			 */
 			$host_id = $this->getHostID(htmlentities($information["host_name"], ENT_QUOTES));
 
-			/*
+			/**
 			 * Insert Template Relation
 			 */
 			if ($information["host_template"]) {
@@ -407,7 +420,7 @@ class CentreonHost {
 				}
 			}
 
-			/*
+			/**
 			 * Insert Extended Info
 			 */
 			$request = "INSERT INTO extended_host_information (host_host_id) VALUES ('".$host_id."')";
@@ -417,23 +430,29 @@ class CentreonHost {
 		}
 	}
 
-	/*
+	/**
 	 * Apply Template
 	 */
 	public function applyTPL($options) {
 
 		$this->checkParameters($options);
 
-		/*
+		/**
 		 * Create service class
 		 */
 		$svc = new CentreonService($this->DB, "Service");
 
 		$host_id = $this->getHostID($options);
 		$this->deployServiceTemplates($host_id, $svc);
+
+		/**
+		 * Update ACL
+		 */
+		$this->access->updateACL();
+
 	}
 
-	/* *************************************
+	/** *************************************
 	 * Delete Host
 	 */
 	public function del($options) {
@@ -446,7 +465,7 @@ class CentreonHost {
 		return;
 	}
 
-	/* *******************************************
+	/** *******************************************
 	 * Macro Management
 	 */
 	public function setMacro($options) {
@@ -472,7 +491,7 @@ class CentreonHost {
 		return $return_code;
 	}
 
-	/* ******************************************
+	/** ******************************************
 	 * Deploy all services of an host
 	 */
 	protected function deployServiceTemplates($host_id, $objService, $tpl_id = NULL) {
@@ -484,7 +503,7 @@ class CentreonHost {
 			$request = "SELECT host_tpl_id FROM host_template_relation WHERE host_host_id = '$tpl_id'";
 			$DBRESULT =& $this->DB->query($request);
 			while ($data =& $DBRESULT->fetchRow()) {
-				/*
+				/**
 				 * Check if service is linked
 				 */
 				$request2 = "SELECT service_service_id FROM host_service_relation WHERE host_host_id = '".$data["host_tpl_id"]."'";
@@ -502,7 +521,7 @@ class CentreonHost {
 		}
 	}
 
-	/* ***********************************************
+	/** ***********************************************
 	 * List all hosts or templates
 	 */
 	public function show($host_name = NULL) {
@@ -525,7 +544,7 @@ class CentreonHost {
 		unset($data);
 	}
 
-	/* *********************************************
+	/** *********************************************
 	 * Set parents
 	 */
 	public function setParent($options) {
@@ -560,7 +579,7 @@ class CentreonHost {
 		$request = "SELECT host_id FROM host WHERE host_name IN ('$child_name', '$parent_name')";
 		$DBRESULT =& $this->DB->query($request);
 		if ($DBRESULT->numRows() == 2) {
-			/*
+			/**
 			 * Check Circular link
 			 */
 			$request = 	"SELECT * FROM host_hostparent_relation " .
@@ -572,7 +591,7 @@ class CentreonHost {
 				return 1;
 			}
 
-			/*
+			/**
 			 * Check parent state
 			 */
 			$request = 	"SELECT * FROM host_hostparent_relation " .
@@ -584,7 +603,7 @@ class CentreonHost {
 				return 1;
 			}
 
-			/*
+			/**
 			 * Insert all data
 			 */
 			$request = 	"INSERT INTO host_hostparent_relation (host_parent_hp_id, host_host_id) " .
@@ -623,7 +642,7 @@ class CentreonHost {
 		$request = "SELECT host_id FROM host WHERE host_name IN ('$child_name', '$parent_name')";
 		$DBRESULT =& $this->DB->query($request);
 		if ($DBRESULT->numRows() == 2) {
-			/*
+			/**
 			 * Insert all data
 			 */
 			$request = 	"DELETE FROM host_hostparent_relation WHERE host_parent_hp_id IN (SELECT host_id FROM host WHERE host_name LIKE '$parent_name') AND host_host_id IN (SELECT host_id FROM host WHERE host_name LIKE '$child_name') ";
@@ -635,7 +654,7 @@ class CentreonHost {
 		}
 	}
 
-	/* ***********************************************
+	/** ***********************************************
 	 * Parameters management
 	 */
 	public function setParam($options) {
@@ -648,11 +667,11 @@ class CentreonHost {
 	}
 
 
-	/*
+	/**
 	 * Set Parameters
 	 */
 	protected function setParameterHost($host_name, $parameter, $value) {
-		/*
+		/**
 		 * Parameters List
 		 */
 		$tabName = array(
@@ -667,7 +686,7 @@ class CentreonHost {
 			"actionurl" => "extended_host_information",
 		);
 
-		/*
+		/**
 		 * Set Real field name
 		 */
 		$realNameField = array(
@@ -681,7 +700,7 @@ class CentreonHost {
 			"actionurl" => "ehi_action_url",
 		);
 
-		/*
+		/**
 		 * Host or host_extentended info
 		 */
 		$host_id_field = array("host" => "host_id", "extended_host_information" => "host_host_id");
@@ -690,7 +709,7 @@ class CentreonHost {
 			return 1;
 		}
 
-		/*
+		/**
 		 * Check timeperiod case
 		 */
 		if ($parameter == "tpcheck") {
@@ -700,7 +719,7 @@ class CentreonHost {
 			$value = $data["tp_id"];
 		}
 
-		/*
+		/**
 		 * Check poller case
 		 */
 		if ($parameter == "poller") {
@@ -734,7 +753,7 @@ class CentreonHost {
 		}
 	}
 
-	/* **************************************
+	/** **************************************
 	 * Add host template
 	 */
 	public function addTemplate($information) {
@@ -769,7 +788,7 @@ class CentreonHost {
 								"AND host_tpl_id = (SELECT host_id FROM host WHERE host_name LIKE '".$template."')";
 			$DBRESULT = $this->DB->query($request);
 			if ($DBRESULT->numRows() == 0) {
-				/*
+				/**
 				 * Get Host ID
 				 */
 				$host_id = $this->getHostID($host_name);
@@ -779,6 +798,12 @@ class CentreonHost {
 				if ($this->register) {
 					$this->deployServiceTemplates($host_id, $svc);
 				}
+
+				/**
+				 * Update ACL
+				 */
+				$this->access->updateACL();
+
 			} else {
 				print "Template already added.\n";
 				return 1;
@@ -789,7 +814,7 @@ class CentreonHost {
 		}
 	}
 
-	/* *******************************
+	/** *******************************
 	 * Delete host template
 	 */
 	public function delTemplate($information) {
@@ -824,13 +849,19 @@ class CentreonHost {
 			$DBRESULT = $this->DB->query($request);
 			if ($DBRESULT->numRows() == 1) {
 
-				/*
+				/**
 				 * Get Host ID
 				 */
 				$host_id = $this->getHostID($host_name);
 
 				$request = "DELETE FROM host_template_relation WHERE host_tpl_id IN (SELECT host_id FROM host WHERE host_name LIKE '".$template."') AND host_host_id = '".$host_id."'";
 				$this->DB->query($request);
+
+				/**
+				 * Update ACL
+				 */
+				$this->access->updateACL();
+
 				return 0;
 			} else {
 				print "No link between host $host_name and template $template.\n";
@@ -842,7 +873,7 @@ class CentreonHost {
 		}
 	}
 
-	/*
+	/**
 	 * Set host macro
 	 */
 	protected function setMacroHost($host_name, $macro_name, $macro_value) {
@@ -868,7 +899,7 @@ class CentreonHost {
 		}
 	}
 
-	/*
+	/**
 	 * Delete host macro
 	 */
 	protected function delMacroHost($host_name, $macro_name) {
@@ -885,7 +916,7 @@ class CentreonHost {
 		return 0;
 	}
 
-	/*
+	/**
 	 * Set Poller link for an host
 	 */
 	protected function setPoller($host_id, $poller_id) {
@@ -902,7 +933,7 @@ class CentreonHost {
 		}
 	}
 
-	/*
+	/**
 	 * Free Poller link
 	 */
 	protected function unsetPoller($host_id) {
@@ -920,7 +951,7 @@ class CentreonHost {
 		}
 	}
 
-	/* *************************************
+	/** *************************************
 	 * Enable Disable Host
 	 */
 	public function enable($options) {
@@ -959,7 +990,7 @@ class CentreonHost {
 		}
 	}
 
-	/* ***************************************
+	/** ***************************************
 	 * Set ContactGroup link for notification
 	 */
 	public function setCG($options) {
@@ -972,20 +1003,20 @@ class CentreonHost {
 
 		$cg_id = $this->cg->getContactGroupID($info[1]);
 
-		/*
+		/**
 		 * Check contact ID
 		 */
 		if ($cg_id != 0) {
 
 			$host_id = $this->getHostID($info[0]);
 
-			/*
+			/**
 			 * Clean all data
 			 */
 			$request = "DELETE FROM contactgroup_host_relation WHERE contactgroup_cg_id = '$cg_id'  AND host_host_id = '$host_id'";
 			$this->DB->query($request);
 
-			/*
+			/**
 			 * Insert new entry
 			 */
 			$request = "INSERT INTO contactgroup_host_relation (contactgroup_cg_id, host_host_id) VALUES ('$cg_id', '$host_id')";
@@ -997,7 +1028,7 @@ class CentreonHost {
 		}
 	}
 
-	/* ***************************************
+	/** ***************************************
 	 * UN-Set ContactGroup link for notification
 	 */
 	public function unsetCG($options) {
@@ -1010,13 +1041,13 @@ class CentreonHost {
 
 		$cg_id = $this->cg->getContactGroupID($info[1]);
 
-		/*
+		/**
 		 * Check contact ID
 		 */
 		if ($cg_id != 0) {
 			$host_id = $this->getHostID($info[0]);
 
-			/*
+			/**
 			 * Clean all data
 			 */
 			$request = "DELETE FROM contactgroup_host_relation WHERE contactgroup_cg_id = '$cg_id'  AND host_host_id = '$host_id'";

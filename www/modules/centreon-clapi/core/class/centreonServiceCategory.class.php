@@ -38,9 +38,16 @@
 
 class CentreonServiceCategory {
 	private $DB;
+	private $access;
 
 	public function __construct($DB) {
 		$this->DB = $DB;
+
+		/**
+		 * Enable Access Object
+		 */
+		$this->access = new CentreonACLResources($this->DB);
+
 	}
 
 	/*
@@ -104,8 +111,13 @@ class CentreonServiceCategory {
 	public function del($name) {
 		$request = "DELETE FROM service_categories WHERE sc_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
-		$this->return_code = 0;
-		return;
+
+		/**
+		 * Update ACL
+		 */
+		$this->access->updateACL();
+
+		return 0;
 	}
 
 	/* ****************************************
@@ -200,11 +212,10 @@ class CentreonServiceCategory {
 			foreach ($info as $key => $value) {
 				$informations[$convertionTable[$key]] = $value;
 			}
-			$this->addServiceCategory($informations);
+			return $this->addServiceCategory($informations);
 		} else {
 			print "Service category ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return;
+			return 1;
 		}
 	}
 
@@ -219,6 +230,12 @@ class CentreonServiceCategory {
 			$DBRESULT =& $this->DB->query($request);
 
 			$sc_id = $this->getServiceCategoryID($information["sc_name"]);
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
 			return $sc_id;
 		}
 	}
@@ -278,9 +295,23 @@ class CentreonServiceCategory {
 
 		$elem = split(";", $options);
 		if (count($elem) == 2) {
-			return $this->addTemplateChildServiceCategory($elem[0], $elem[1]);
+			$id = $this->addTemplateChildServiceCategory($elem[0], $elem[1]);
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
+			return $id;
 		} else {
-			return $this->addChildServiceCategory($elem[0], $elem[1], $elem[2]);
+			$id =  $this->addChildServiceCategory($elem[0], $elem[1], $elem[2]);
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
+			return $id;
 		}
 	}
 

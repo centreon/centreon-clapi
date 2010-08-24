@@ -38,9 +38,16 @@
 
 class CentreonHostGroup {
 	private $DB;
+	private $access;
 
 	public function __construct($DB) {
 		$this->DB = $DB;
+
+		/**
+		 * Enable Access Object
+		 */
+		$this->access = new CentreonACLResources($this->DB);
+
 	}
 
 	/*
@@ -87,7 +94,6 @@ class CentreonHostGroup {
 		return sprintf("%.45s", $name);
 	}
 
-
 	protected function getHostGroupID($hg_name = NULL) {
 		if (!isset($hg_name))
 			return;
@@ -118,8 +124,14 @@ class CentreonHostGroup {
 
 		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '".htmlentities($options, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
-		$this->return_code = 0;
-		return;
+
+		/**
+		 * Update ACL
+		 */
+		$this->access->updateACL();
+
+
+		return 0;
 	}
 
 	public function show($search = NULL) {
@@ -197,6 +209,12 @@ class CentreonHostGroup {
 			$DBRESULT =& $this->DB->query($request);
 
 			$hg_id = $this->getHostGroupID($information["hg_name"]);
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
 			return $hg_id;
 		}
 	}
@@ -263,6 +281,12 @@ class CentreonHostGroup {
 			$DBRESULT =& $this->DB->query($request);
 			$request = "INSERT INTO hostgroup_relation (host_host_id, hostgroup_hg_id) VALUES ('$host_id', '$hg_id')";
 			$DBRESULT =& $this->DB->query($request);
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
 			if ($DBRESULT) {
 				return 0;
 			} else {

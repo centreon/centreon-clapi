@@ -39,6 +39,8 @@
 class CentreonService {
 
 	var $DB;
+	private $access;
+
 	var $register;
 	var $flag;
 	var $object;
@@ -54,6 +56,11 @@ class CentreonService {
 		$this->DB = $DB;
 		$this->register = 1;
 		$this->object = $objName;
+
+		/**
+		 * Enable Access Object
+		 */
+		$this->access = new CentreonACLResources($this->DB);
 
 		if (strtoupper($objName) == "STPL") {
 			$this->setTemplateFlag();
@@ -456,6 +463,12 @@ class CentreonService {
 					}
 				}
 			}
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
 			return $service_id;
 		}
 	}
@@ -509,6 +522,12 @@ class CentreonService {
 					}
 				}
 			}
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
 			return $service_id;
 		}
 	}
@@ -602,6 +621,12 @@ class CentreonService {
 			 */
 			$request = "DELETE FROM service WHERE service_id = '".$service_id."' ";
 			$this->DB->query($request);
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
 			return 0;
 
 		} else {
@@ -624,6 +649,12 @@ class CentreonService {
 			 */
 			$request = "DELETE FROM service WHERE service_id = '".$service_id."' ";
 			$this->DB->query($request);
+
+			/**
+			 * Update ACL
+			 */
+			$this->access->updateACL();
+
 			return 0;
 		}
 	}
@@ -996,6 +1027,12 @@ class CentreonService {
 			$request = "INSERT INTO host_service_relation (host_host_id, service_service_id) VALUES ('".$host_link_id."', '".$service_id."')";
 			$this->DB->query($request);
 		}
+
+		/**
+		 * Update ACL
+		 */
+		$this->access->updateACL();
+
 		return 0;
 	}
 
@@ -1052,8 +1089,14 @@ class CentreonService {
 			$request = "DELETE FROM host_service_relation WHERE service_service_id = '".$service_id."' AND host_host_id = '".$host_link_id."'";
 			$this->DB->query($request);
 		}
+
+		/**
+		 * Update ACL
+		 */
+		$this->access->updateACL();
+
 		return 0;
 	}
-
 }
+
 ?>
