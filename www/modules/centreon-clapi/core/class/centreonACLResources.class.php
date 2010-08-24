@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2005-2010 MERETHIS
  * Centreon is developped by : Julien Mathis and Romain Le Merlus under
  * GPL Licence 2.0.
@@ -40,12 +40,12 @@ class CentreonACLResources {
 	private $DB;
 
 	public function __construct($DB) {
-		$this->DB = $DB;
+		$this->_DB = $DB;
 	}
 
 	public function getACLResourceID($name) {
 		$request = "SELECT acl_group_id FROM acl_groups WHERE acl_group_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
-		$DBRESULT = $this->DB->query($request);
+		$DBRESULT = $this->_DB->query($request);
 		$data = $DBRESULT->fetchRow();
 		if ($data["acl_group_id"]) {
 			return $data["acl_group_id"];
@@ -56,23 +56,24 @@ class CentreonACLResources {
 
 	public function addContact($contact_id, $aclid) {
 		$request = "DELETE FROM acl_group_contacts_relations WHERE acl_group_id = '$aclid' AND contact_contact_id = '$contact_id'";
-		$DBRESULT = $this->DB->query($request);
+		$DBRESULT = $this->_DB->query($request);
 
 		$request = "INSERT INTO acl_group_contacts_relations (acl_group_id, contact_contact_id) VALUES ('".$aclid."', '".$contact_id."')";
-		$DBRESULT = $this->DB->query($request);
+		$DBRESULT = $this->_DB->query($request);
 		return 0;
 	}
 
 	public function delContact($contact_id, $aclid) {
 		$request = "DELETE FROM acl_group_contacts_relations WHERE acl_group_id = '$aclid' AND contact_contact_id = '$contact_id'";
-		$DBRESULT = $this->DB->query($request);
+		$DBRESULT = $this->_DB->query($request);
 		return 0;
 	}
 
 	public function updateACL() {
 		$request = "UPDATE `acl_resources` SET `changed` = '1'";
-		$DBRESULT = $this->DB->query($request);
+		$DBRESULT = $this->_DB->query($request);
 		return 0;
 	}
 }
+
 ?>

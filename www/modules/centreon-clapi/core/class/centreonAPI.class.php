@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2005-2010 MERETHIS
  * Centreon is developped by : Julien Mathis and Romain Le Merlus under
  * GPL Licence 2.0.
@@ -36,12 +36,11 @@
  *
  */
 
-/*
+/**
  * Include Centreon Class
  */
 require_once "../../../class/centreonDB.class.php";
 require_once "../../../class/centreonXML.class.php";
-require_once "./class/centreonACLResources.class.php";
 
 if (file_exists("../../../class/centreonSession.class.php")) {
 	require_once "../../../class/centreonSession.class.php";
@@ -49,12 +48,12 @@ if (file_exists("../../../class/centreonSession.class.php")) {
 	require_once "../../../class/Session.class.php";
 }
 
-/*
+/**
  * General Centeon Management
  */
 require_once "./class/centreon.Config.Poller.class.php";
 
-/*
+/**
  * Declare Centreon API
  *
  */
@@ -78,7 +77,7 @@ class CentreonAPI {
 	private $relationObject;
 
 	public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
-		/*
+		/**
 		 * Set variables
 		 */
 		$this->debug 	= 0;
@@ -108,7 +107,7 @@ class CentreonAPI {
 			$this->object = "";
 		}
 
-		/*
+		/**
   		 * Centreon DB Connexion
 		 */
 		$this->DB = new CentreonDB();
@@ -128,6 +127,7 @@ class CentreonAPI {
 
 		$this->relationObject["CONTACT"] = "Contact";
 		$this->relationObject["CG"] = "ContactGroup";
+
 		/* Templates */
 		$this->relationObject["HTPL"] = "Host";
 		$this->relationObject["STPL"] = "Service";
@@ -137,7 +137,7 @@ class CentreonAPI {
 
 	}
 
-	/*
+	/**
 	 * Centreon Object Management
 	 */
 	protected function requireLibs($object) {
@@ -160,20 +160,36 @@ class CentreonAPI {
 			}
 		}
 
-		/*
+		/**
 		 * Default class needed
 		 */
 		require_once "./class/centreonTimePeriod.class.php";
+		require_once "./class/centreonACLResources.class.php";
 	}
 
+	/**
+	 *
+	 * Set user login
+	 * @param varchar $login
+	 */
 	public function setLogin($login) {
 		$this->login = $login;
 	}
 
+	/**
+	 *
+	 * Set password of the user
+	 * @param varchar $password
+	 */
 	public function setPassword($password) {
 		$this->password = trim($password);
 	}
 
+	/**
+	 *
+	 * check user access ...
+	 * @return return bool 1 if user can login
+	 */
 	public function checkUser() {
 		if (!isset($this->login) || $this->login == "") {
 			print "ERROR: Can not connect to centreon without login.\n";
@@ -185,7 +201,7 @@ class CentreonAPI {
 			$this->printHelp();
 		}
 
-		/*
+		/**
 		 * Check Login / Password
 		 */
 		$DBRESULT =& $this->DB->query("SELECT contact_id FROM contact WHERE contact_alias = '".$this->login."' AND contact_passwd = MD5('".$this->password."') AND contact_activate = '1' AND contact_oreon = '1'");
@@ -197,19 +213,27 @@ class CentreonAPI {
 		}
 	}
 
+	/**
+	 *
+	 * return (print) a "\n"
+	 */
 	public function endOfLine() {
 		print "\n";
 	}
 
+	/**
+	 *
+	 * close the current action
+	 */
 	public function close() {
 		print "\n";
 		exit ($this->return_code);
 	}
 
-	public function setFormat($format) {
-		$this->format = format;
-	}
-
+	/**
+	 *
+	 * Print usage for using CLAPI ...
+	 */
 	public function printHelp() {
 		$this->printLegals();
 		print "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n";
@@ -245,11 +269,21 @@ class CentreonAPI {
 		exit($this->return_code);
 	}
 
+	/**
+	 *
+	 * Get variable passed in parameters
+	 * @param varchar $str
+	 */
 	public function getVar($str) {
 		$res = split("=", $str);
  		return $res[1];
 	}
 
+	/**
+	 *
+	 * Check that parameters are not empty
+	 * @param varchar $str
+	 */
 	private function checkParameters($str) {
 		if (!isset($this->options["v"]) || $this->options["v"] == "") {
 			print "No options defined.\n";
@@ -258,32 +292,37 @@ class CentreonAPI {
 		}
 	}
 
+	/**
+	 *
+	 * Init XML Flow
+	 */
 	public function initXML() {
 		$this->xmlObj = new CentreonXML();
 	}
 
-	/*
+	/**
+	 *
 	 * Main function : Launch action
 	 */
 	public function launchAction() {
 		$action = strtoupper($this->action);
- 		/*
+ 		/**
  		 * Debug
  		 */
  		if ($this->debug) {
  			print "DEBUG : $action\n";
  		}
 
- 		/*
+ 		/**
  		 * Check method availability before using it.
  		 */
  		if ($this->object) {
-			/*
+			/**
 			 * Require needed class
 			 */
 			$this->requireLibs($this->object);
 
-			/*
+			/**
 			 * Check class declaration
 			 */
 			$objName = "Centreon".$this->relationObject[$this->object];
@@ -309,6 +348,10 @@ class CentreonAPI {
 		exit($this->return_code);
 	}
 
+	/**
+	 *
+	 * Print centreon version and legal use
+	 */
 	public function printLegals() {
 		$DBRESULT =& $this->DB->query("SELECT * FROM informations WHERE `key` = 'version'");
  		$data =& $DBRESULT->fetchRow();
@@ -317,6 +360,10 @@ class CentreonAPI {
 		unset($data);
 	}
 
+	/**
+	 *
+	 * Print centreon version
+	 */
 	public function printVersion() {
 		$DBRESULT =& $this->DB->query("SELECT * FROM informations WHERE `key` = 'version'");
  		$data =& $DBRESULT->fetchRow();
@@ -324,11 +371,13 @@ class CentreonAPI {
  		unset($data);
 	}
 
-	/*
+	/** ******************************************************
+	 *
 	 * API Possibilities
 	 */
 
-	/*
+	/**
+	 *
 	 * List all poller declared in Centreon
 	 */
 	public function POLLERLIST() {
@@ -336,7 +385,8 @@ class CentreonAPI {
 		$this->return_code = $poller->getPollerList($this->format);
 	}
 
-	/*
+	/**
+	 *
 	 * Launch poller restart
 	 */
 	public function POLLERRESTART() {
@@ -344,7 +394,8 @@ class CentreonAPI {
 		$this->return_code = $poller->pollerRestart($this->variables);
 	}
 
-	/*
+	/**
+	 *
 	 * Launch poller reload
 	 */
 	public function POLLERRELOAD() {
@@ -352,7 +403,8 @@ class CentreonAPI {
 		$this->return_code = $poller->pollerReload($this->variables);
 	}
 
-	/*
+	/**
+	 *
 	 * Launch poller configuration files generation
 	 */
 	public function POLLERGENERATE() {
@@ -360,7 +412,8 @@ class CentreonAPI {
 		$this->return_code = $poller->pollerGenerate($this->variables, $this->login, $this->password);
 	}
 
-	/*
+	/**
+	 *
 	 * Launch poller configuration test
 	 */
 	public function POLLERTEST() {
@@ -368,7 +421,8 @@ class CentreonAPI {
 		$this->return_code = $poller->pollerTest($this->format, $this->variables);
 	}
 
-	/*
+	/**
+	 *
 	 * move configuration files into final directory
 	 */
 	public function CFGMOVE() {
@@ -376,16 +430,17 @@ class CentreonAPI {
 		$this->return_code = $poller->cfgMove($this->variables);
 	}
 
-	/*
+	/**
+	 *
 	 * Apply configuration Generation + move + restart
 	 */
 	public function APPLYCFG() {
-		/*
+		/**
 		 * Display time for logs
 		 */
 		print date("Y-m-d H:i:s") . " - APPLYCFG\n";
 
-		/*
+		/**
 		 * Launch Actions
 		 */
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
