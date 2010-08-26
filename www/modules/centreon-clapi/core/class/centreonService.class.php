@@ -144,10 +144,16 @@ class CentreonService {
 	}
 
 	protected function checkNameformat($name) {
-		if (strlen($name) > 30) {
-			print "Warning: host name reduce to 30 caracters.\n";
+		if ($this->register) {
+			$len = 40;
+		} else {
+			$len = 50
 		}
-		return sprintf("%.30s", $name);
+
+		if (strlen($name) > $len) {
+			print "Warning: host name reduce to $len caracters.\n";
+		}
+		return sprintf("%.".$lens."s", $name);
 	}
 
 	/* ************************
