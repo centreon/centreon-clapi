@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2005-2010 MERETHIS
  * Centreon is developped by : Julien Mathis and Romain Le Merlus under
  * GPL Licence 2.0.
@@ -49,14 +49,14 @@ class CentreonCommand {
 		$this->params = array("name" => 1, "line" => 1, "example" => 1, "type" => 1, "template" => 1);
 	}
 
-	/*
+	/**
 	 * Check command existance
 	 */
 	public function commandExists($name) {
 		if (!isset($name))
 			return 0;
 		
-		/*
+		/**
 		 * Get informations
 		 */
 		$DBRESULT =& $this->DB->query("SELECT command_name, command_id FROM command WHERE command_name = '".htmlentities($name, ENT_QUOTES)."'");
@@ -126,7 +126,7 @@ class CentreonCommand {
 		return $information;
 	}
 	
-	/* *****************************************
+	/** *****************************************
 	 * Delete
 	 */
 	public function del($name) {
@@ -142,7 +142,7 @@ class CentreonCommand {
 		return 0;
 	}
 
-	/* *****************************************
+	/** *****************************************
 	 * display all commands
 	 */
 	public function show($search = NULL) {
@@ -165,7 +165,7 @@ class CentreonCommand {
 		return 0;
 	}
 
-	/* ******************************
+	/** ******************************
 	 * add a command
 	 */
 	public function add($options) {
@@ -217,7 +217,7 @@ class CentreonCommand {
 		}
 	}
 
-	/* ****************************************
+	/** ****************************************
 	 * Set parameters
 	 */
 	public function setParam($options) {
