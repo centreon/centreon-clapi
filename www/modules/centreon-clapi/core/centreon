@@ -1,6 +1,6 @@
 #! /usr/bin/php
 <?php
-/*
+/**
  * Copyright 2005-2010 MERETHIS
  * Centreon is developped by : Julien Mathis and Romain Le Merlus under
  * GPL Licence 2.0.
@@ -40,17 +40,17 @@
 	
 	ini_set("html_errors", "Off");
 
-	/*
+	/**
 	 * Declare Options 
 	 */
 	$shortopts  = "";
-	$shortopts .= "u:"; /* Users */
-	$shortopts .= "p:"; /* Password */
-	$shortopts .= "a:"; /* Action */
-	$shortopts .= "o:"; /* Object type */
-	$shortopts .= "v:"; /* Action */
-	$shortopts .= "h"; /* Help */
-	$shortopts .= "V"; /* Version */
+	$shortopts .= "u:"; /** Users */
+	$shortopts .= "p:"; /** Password */
+	$shortopts .= "a:"; /** Action */
+	$shortopts .= "o:"; /** Object type */
+	$shortopts .= "v:"; /** Action */
+	$shortopts .= "h"; /** Help */
+	$shortopts .= "V"; /** Version */
 	
 	$options = getopt($shortopts);
 	if ($debug)
@@ -64,7 +64,7 @@
 	require_once "$centreon_etc/centreon.conf.php";
 	require_once "./class/centreonAPI.class.php";
 
-	/*
+	/**
 	 * Create Centreon API object
 	 */
 	$api = new CentreonAPI((isset($options["u"]) ? $options["u"] : "") , (isset($options["p"]) ? $options["p"] : ""), $options["a"], $centreon_path, $options);
@@ -77,7 +77,7 @@
 		exit(0);		
 	}
 
-	/*
+	/**
 	 * Now works
 	 */
 	if ($api->login == "" || $api->password == "" || $api->action == "") {
@@ -87,7 +87,7 @@
 			if (strcmp($perms,'400') == 0  && strcmp($_SERVER['USER'], $uid['name']) == 0) {
 				$handle = @fopen($_SERVER["HOME"]."/.centreonApi", "r");
 				if ($handle) {
-					/*
+					/**
 					 * Read Only the first line 
 					 */
 					$str = fgets($handle);
@@ -99,16 +99,17 @@
 				}
 				$api->launchAction();
 			} else {
-				print "Please check access on login file.... \n\n";
+				print "Please check access on login file...\n\n";
 				$api->printHelp();
 			}
 		} else {
 	 	   $api->printHelp();
 		}
 	} else {
-	  if (!isset($api->options["V"]) && !isset($api->options["h"]))
+	  	if (!isset($api->options["V"]) && !isset($api->options["h"])) {
 			$api->checkUser();
-	  $api->launchAction();
+		}
+	  	$api->launchAction();
 	}
 	$api->close();
 ?>
