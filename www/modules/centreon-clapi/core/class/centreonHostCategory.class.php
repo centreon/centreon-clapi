@@ -246,15 +246,16 @@ class CentreonHostCategory {
 
 		require_once "./class/centreonHost.class.php";
 
-		/*
+		/**
 		 * Get Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
+		$htpl = new CentreonHost($this->DB, "HTPL");
 
 		/**
 		 * Check if host exists
 		 */
-		if (!$host->hostExists($child)) {
+		if (!$host->hostExists($child) && !$htpl->hostTemplateExists($child)) {
 			print "Host doesn't exists.\n";
 			return 1;
 		}
@@ -267,12 +268,15 @@ class CentreonHostCategory {
 			return 1;
 		}
 
-		/*
+		/**
 		 * Get Host ID
 		 */
 		$host_id = $host->getHostID($child);
+		if ($host_id == 0) {
+			$host_id = $htpl->getHostID($child);
+		}
 
-		/*
+		/**
 		 * Get Host category ID
 		 */
 		$hc_id = $this->getHostCategoryID($hc_name);
