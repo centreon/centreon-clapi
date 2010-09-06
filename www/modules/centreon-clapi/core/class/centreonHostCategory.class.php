@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2005-2010 MERETHIS
  * Centreon is developped by : Julien Mathis and Romain Le Merlus under
  * GPL Licence 2.0.
@@ -50,14 +50,14 @@ class CentreonHostCategory {
 
 	}
 
-	/*
+	/**
 	 * Check host existance
 	 */
 	protected function _hostCategoryExists($name) {
 		if (!isset($name))
 			return 0;
 
-		/*
+		/**
 		 * Get informations
 		 */
 		$DBRESULT =& $this->DB->query("SELECT hc_name, hc_id FROM hostcategories WHERE hc_name LIKE '".htmlentities($name, ENT_QUOTES)."'");
@@ -148,7 +148,7 @@ class CentreonHostCategory {
 		$DBRESULT->free();
 	}
 
-	/* *************************************
+	/** *************************************
 	 * Add functions
 	 */
 	public function add($options) {
@@ -195,7 +195,7 @@ class CentreonHostCategory {
 		}
 	}
 
-	/* ***************************************
+	/** ***************************************
 	 * Set params
 	 */
 	public function setParam($options) {
@@ -228,7 +228,7 @@ class CentreonHostCategory {
 		}
 	}
 
-	/* ************************************
+	/** ************************************
 	 * Add Child
 	 */
 
@@ -297,7 +297,7 @@ class CentreonHostCategory {
 		}
 	}
 
-	/* ************************************
+	/** ************************************
 	 * Del Child
 	 */
 
@@ -315,7 +315,7 @@ class CentreonHostCategory {
 
 		require_once "./class/centreonHost.class.php";
 
-		/*
+		/**
 		 * Get Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
@@ -336,12 +336,12 @@ class CentreonHostCategory {
 			return 1;
 		}
 
-		/*
+		/**
 		 * Get Host ID
 		 */
 		$host_id = $host->getHostID($child);
 
-		/*
+		/**
 		 * Get Host category ID
 		 */
 		$hc_id = $this->getHostCategoryID($hc_name);

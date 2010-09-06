@@ -91,7 +91,7 @@ class CentreonHost {
 		}
 	}
 
-	protected function _hostTemplateExists($name) {
+	public function _hostTemplateExists($name) {
 		if (!isset($name))
 			return 0;
 
