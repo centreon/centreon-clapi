@@ -823,6 +823,7 @@ class CentreonHost {
 			return 1;
 		}
 
+		$elem = split(";", $information);
 		if (!$this->hostExists($elem[0])) {
 			print "Host".$type." '".$elem[0]."' does not exists.\n";
 			return 1;
