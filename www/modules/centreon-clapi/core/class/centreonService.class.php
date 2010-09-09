@@ -351,7 +351,6 @@ class CentreonService {
 	 *  Check if service is defind
 	 */
 	public function serviceExists($name = NULL, $host = NULL)	{
-
 		$DBRESULT =& $this->DB->query(	"SELECT service_id " .
 										"FROM service, host_service_relation hsr, host h " .
 										"WHERE hsr.host_host_id = h.host_id " .
@@ -766,7 +765,7 @@ class CentreonService {
 			if ($this->register) {
 				$host_id = $this->host->getHostID(htmlentities($host_name, ENT_QUOTES));
 
-				if (!$this->serviceExists($service_description, $host_id)) {
+				if (!$this->serviceExists($service_description, $host_name)) {
 					print "Unknown service.\n";
 					return 1;
 				}
