@@ -147,7 +147,7 @@ class CentreonService {
 		if ($this->register) {
 			$len = 40;
 		} else {
-			$len = 50
+			$len = 50;
 		}
 
 		if (strlen($name) > $len) {
