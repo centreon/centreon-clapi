@@ -219,7 +219,7 @@ class CentreonContact {
 						"(contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_lang, contact_auth_type, contact_passwd, contact_activate) VALUES " .
 						"('".htmlentities($information["contact_name"], ENT_QUOTES)."', '".htmlentities($information["contact_alias"], ENT_QUOTES)."', '".htmlentities($information["contact_email"], ENT_QUOTES)."', " .
 						" '".htmlentities($information["contact_oreon"], ENT_QUOTES)."', '".htmlentities($information["contact_admin"], ENT_QUOTES)."', '".htmlentities($information["contact_lang"], ENT_QUOTES)."', " .
-						" '".htmlentities($information["contact_auth_type"], ENT_QUOTES)."', '".htmlentities(md5($information["contact_passwd"]), ENT_QUOTES)."', '1')";
+						" '".htmlentities($information["contact_auth_type"], ENT_QUOTES)."', '".md5($information["contact_passwd"])."', '1')";
 			$DBRESULT = $this->DB->query($request);
 
 			$contact_id = $this->getContactID($information["contact_name"]);
@@ -366,7 +366,8 @@ class CentreonContact {
         /*
          * Update
          */
-        $query = "UPDATE contact SET ".htmlentities($conversionTable[$data[1]], ENT_QUOTES)." = '".htmlentities($conversionTable[$data[2]], ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $query = "UPDATE contact SET ".htmlentities($conversionTable[$data[1]], ENT_QUOTES)." = '".htmlentities($data[2], ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+		print $query;
         $this->DB->query($query);
         return 0;
 	}
