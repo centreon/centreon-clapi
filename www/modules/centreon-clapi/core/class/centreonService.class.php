@@ -153,7 +153,7 @@ class CentreonService {
 		if (strlen($name) > $len) {
 			print "Warning: host name reduce to $len caracters.\n";
 		}
-		return sprintf("%.".$lens."s", $name);
+		return sprintf("%.".$len."s", $name);
 	}
 
 	/* ************************
