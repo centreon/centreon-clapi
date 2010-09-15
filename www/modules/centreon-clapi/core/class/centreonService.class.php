@@ -322,6 +322,9 @@ class CentreonService {
 	 * Get service ID
 	 */
 	public function getServiceID($host_id, $service_description) {
+
+		$service_description = $this->encode($service_description);
+
 		$DBRESULT =& $this->DB->query(	"SELECT service_id FROM service, host_service_relation hsr " .
 										"WHERE hsr.host_host_id = '".$host_id."' AND hsr.service_service_id = service_id " .
 										"AND service_description = '".$service_description."' LIMIT 1");
@@ -337,6 +340,9 @@ class CentreonService {
 	 * Get service ID
 	 */
 	public function getServiceTplID($service_description) {
+
+		$service_description = $this->encode($service_description);
+
 		$DBRESULT =& $this->DB->query(	"SELECT service_id FROM service " .
 										"WHERE service_description = '".$service_description."' LIMIT 1");
 		$row =& $DBRESULT->fetchRow();
