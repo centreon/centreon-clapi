@@ -115,6 +115,8 @@ class CentreonService {
 		$this->parameters["check_period"] = "timeperiod_tp_id";
 		$this->parameters["notif_period"] = "timeperiod_tp_id2";
 
+		$this->parameters["activate"] = "service_activate";
+
 		$this->parameters["url"] = "esi_notes_url";
 	}
 
@@ -139,6 +141,8 @@ class CentreonService {
 
 		$this->paramTable["check_period"] = "service";
 		$this->paramTable["notif_period"] = "service";
+
+		$this->parameters["activate"] = "service";
 
 		$this->paramTable["url"] = "extended_service_information";
 	}
