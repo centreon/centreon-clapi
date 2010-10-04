@@ -129,7 +129,7 @@ class CentreonServiceGroup {
 		 */
 		$searchStr = "";
 		if (isset($search) && $search != "") {
-			$searchStr = " WHERE sg_name LILE '%".htmlentities($search, ENT_QUOTES)."%'";
+			$searchStr = " WHERE sg_name LIKE '%".htmlentities($search, ENT_QUOTES)."%'";
 		}
 
 
