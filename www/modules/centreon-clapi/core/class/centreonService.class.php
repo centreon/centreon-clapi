@@ -625,7 +625,7 @@ class CentreonService {
 			/*
 			 * Looking for service id
 			 */
-			$request = "SELECT service_service_id as service_id FROM host_service_relation hr, host h, service s WHERE s.service_description LIKE '".$tabInfo[1]."' AND hr.service_service_id = s.service_id AND h.host_id = hr.host_host_id AND h.host_name LIKE '".$tabInfo[0]."' AND h.host_register = '".$this->register."'";
+			$request = "SELECT service_service_id as service_id FROM host_service_relation hr, host h, service s WHERE s.service_description LIKE '".$this->encode($tabInfo[1])."' AND hr.service_service_id = s.service_id AND h.host_id = hr.host_host_id AND h.host_name LIKE '".$this->encode($tabInfo[0])."' AND h.host_register = '".$this->register."'";
 			$DBRESULT = $this->DB->query($request);
 			$data =& $DBRESULT->fetchRow();
 			$service_id = $data["service_id"];
@@ -653,7 +653,7 @@ class CentreonService {
 			/*
 			 * Looking for service id
 			 */
-			$request = "SELECT service_id FROM service WHERE service_description LIKE '".$tabInfo[0]."' AND service_register = '0'";
+			$request = "SELECT service_id FROM service WHERE service_description LIKE '".$this->encode($tabInfo[0])."' AND service_register = '0'";
 			$DBRESULT = $this->DB->query($request);
 			$data =& $DBRESULT->fetchRow();
 			$service_id = $data["service_id"];
