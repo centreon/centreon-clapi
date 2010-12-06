@@ -50,7 +50,7 @@ class CentreonConfigPoller {
 		$this->nagiosCFGPath = "$centreon_path/filesGeneration/nagiosCFG/";
 		$this->centreon_path = $centreon_path;
 		$this->resultTest = array("warning" => 0, "errors" => 0);
-		$this->centcore_pipe = "/var/lib/centreon/centcore.cmd";
+		$this->centcore_pipe = "@CENTREON_VARLIB@/centcore.cmd";
 	}
 
 	private function getOptGen() {
