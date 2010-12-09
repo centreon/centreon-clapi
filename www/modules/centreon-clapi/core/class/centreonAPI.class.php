@@ -145,17 +145,17 @@ class CentreonAPI {
 			if (isset($this->relationObject[$object]) && !class_exists("Centreon".$this->relationObject[$object])) {
 				require_once "./class/centreon".$this->relationObject[$object].".class.php";
 			}
-			if ($this->relationObject[$object] == "Host") {
+			if (isset($this->relationObject[$object]) && $this->relationObject[$object] == "Host") {
 				require_once "./class/centreonService.class.php";
 				require_once "./class/centreonHostGroup.class.php";
 			}
-			if ($this->relationObject[$object] == "Service") {
+			if (isset($this->relationObject[$object]) && $this->relationObject[$object] == "Service") {
 				require_once "./class/centreonHost.class.php";
 			}
-			if ($this->relationObject[$object] == "Contact") {
+			if (isset($this->relationObject[$object]) && $this->relationObject[$object] == "Contact") {
 				require_once "./class/centreonCommand.class.php";
 			}
-		    if ($this->relationObject[$object] == "TimePeriod") {
+		    if (isset($this->relationObject[$object]) && $this->relationObject[$object] == "TimePeriod") {
 				require_once "./class/centreonTimePeriod.class.php";
 			}
 		}
