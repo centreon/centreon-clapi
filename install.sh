@@ -177,8 +177,8 @@ function install_module() {
 	fi
 
 
-	chmod +x $TEMP_D/www/modules/centreon-clapi/core/centreon
-	dos2unix $TEMP_D/www/modules/centreon-clapi/core/centreon
+	chmod +x $TEMP_D/www/modules/centreon-clapi/core/centreon >> $LOG_FILE 2>> $LOG_FILE
+	dos2unix $TEMP_D/www/modules/centreon-clapi/core/centreon >> $LOG_FILE 2>> $LOG_FILE
 
 	echo_success "Copying module" "$ok"
     /bin/cp -Rf --preserve $TEMP_D/www/* $INSTALL_DIR_CENTREON/www >> $LOG_FILE 2>> $LOG_FILE
