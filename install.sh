@@ -52,7 +52,7 @@ WEB_GROUP="0"
 NAGIOS_USER="0"
 NAGIOS_GROUP="0"
 NAGIOS_PLUGIN="0"
-BACKUP="www/modules/centreon-dsm-backup"
+BACKUP="www/modules/centreon-clapi-backup"
 PWD=`pwd`
 TEMP=/tmp/install.$$
 PROGRAM="install.sh"
@@ -127,7 +127,7 @@ function get_centreon_configuration_location() {
 }
 
 #---
-## {Install Centreon DSM Module}
+## {Install Centreon CLAPI Module}
 ##
 ## @Stdout Actions realised by function
 ## @Stderr Log into $LOG_FILE
@@ -135,7 +135,7 @@ function get_centreon_configuration_location() {
 function install_module() {
 	echo ""
 	echo "$line"
-	echo -e "\tCentreon DSM Module Installation"
+	echo -e "\tCentreon CLAPI Module Installation"
 	echo "$line"
 	
 	TEMP_D="/tmp/installation-clapi"
@@ -146,12 +146,7 @@ function install_module() {
 	/bin/rm -Rf $TEMP_D/install $TEMP_D/*.log
 
 	echo_success "Replacing macros" "$ok"
-	for file in $MACRO_FILES {
-		if [ -e $TEMP_D/$file ]
-		then
-			replace_macro $TEMP_D/$file
-		fi
-	}
+	replace_macro $TEMP_D/$MACRO_FILES
 
 	echo_success "Setting right" "$ok"
 	chmod -R 755 $TEMP_D/* >> $LOG_FILE 2>> $LOG_FILE
@@ -163,7 +158,7 @@ function install_module() {
 
 	if [ -d $INSTALL_DIR_MODULE ] ; then
 		if [ -d  $INSTALL_DIR_CENTREON/$BACKUP ] ; then
-			echo_success "Delete old Centreon DSM backup" "$ok"
+			echo_success "Delete old Centreon CLAPI backup" "$ok"
 			/bin/rm -Rf $INSTALL_DIR_CENTREON/$BACKUP/*
 		else
 			echo_success "Create a directory to backup old files" "$ok"
