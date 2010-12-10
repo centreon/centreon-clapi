@@ -325,8 +325,7 @@ class CentreonAPI {
 			/**
 			 * Check class declaration
 			 */
-			$objName = "Centreon".$this->relationObject[$this->object];
-			if (!class_exists($objName)) {
+			if (!isset($this->relationObject[$this->object]) || !class_exists($this->relationObject[$this->object])) {
                 print "Object not found in Centreon API.\n";
 			    return 1;
 			}
