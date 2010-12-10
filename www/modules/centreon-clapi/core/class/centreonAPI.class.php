@@ -325,10 +325,15 @@ class CentreonAPI {
 			/**
 			 * Check class declaration
 			 */
-			if (!isset($this->relationObject[$this->object]) || !class_exists($this->relationObject[$this->object])) {
-                print "Object not found in Centreon API.\n";
-			    return 1;
-			}
+			if (isset($this->relationObject[$this->object])) {
+           		$objName = "centreon".$this->relationObject[$this->object];
+			} else {
+            	$objName = "";
+            }
+            if (!isset($this->relationObject[$this->object]) || !class_exists($objName)) {
+            	print "Object not found in Centreon API.\n";
+           		return 1;
+            }
 			$obj = new $objName($this->DB, $this->object);
 			if (method_exists($obj, $action)) {
 				$this->return_code = $obj->$action($this->variables);
