@@ -181,12 +181,18 @@ class CentreonHost {
 		}
 	}
 
+	/*
+	 * Encode String
+	 */
 	protected function encode($str) {
 		$str = str_replace("/", "#S#", $str);
 		$str = str_replace("\\", "#BS#", $str);
 		return $str;
 	}
 
+	/*
+	 * Decode String
+	 */
 	protected function decode($str) {
 		$str = str_replace("#S#", "/", $str);
 		$str = str_replace("#BS#", "\\", $str);
@@ -530,19 +536,52 @@ class CentreonHost {
 			$search = " AND (host_name like '%".htmlentities($host_name, ENT_QUOTES)."%' OR host_alias LIKE '%".htmlentities($host_name, ENT_QUOTES)."%') ";
 		}
 
-		$request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '".$this->register."' $search ORDER BY host_name";
+		$request = "SELECT host_id, host_address, host_name, host_alias, ns.name AS poller FROM host, nagios_server ns , ns_host_relation nhr WHERE host.host_id = nhr.host_host_id AND nhr.nagios_server_id AND ns.id = nhr.nagios_server_id AND host_register = '".$this->register."' $search ORDER BY host_name";
 		$DBRESULT =& $this->DB->query($request);
 		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
 			if ($i == 0) {
-				print "id;name;alias;address\n";
+				print "id;name;alias;address;poller;templates;hostgroups\n";
 			}
-			print $this->decode($data["host_id"]).";".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"]."\n";
+			print $this->decode($data["host_id"]).";".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].($this->register ? ";".$data["poller"].";".$this->getTemplateList($data["host_id"]).";".$this->getHostGroupList($data["host_id"]) : "")."\n";
 			$i++;
 		}
 		$DBRESULT->free();
 		unset($data);
 	}
+
+	/** **********************************************
+	 * Get the list of all hostgroup for one host
+	 */
+	private function getHostGroupList($host_id) {
+	
+		$request = "SELECT hg_name FROM hostgroup, hostgroup_relation hr WHERE hr.host_host_id = '$host_id' AND hostgroup.hg_id = hr.hostgroup_hg_id";
+		$DBRESULT =& $this->DB->query($request);
+		$list = '';
+		while ($data =& $DBRESULT->fetchRow()) {
+			if ($list != '') {
+				$list .= ',';
+			}
+			$list .= $data["hg_name"];
+		}	
+		return $list;
+	}
+
+	/** **********************************************
+	 * Get the list of all templates for one host
+	 */
+	private function getTemplateList($host_id) {
+    	$request = "SELECT host_name FROM host, host_template_relation htr WHERE htr.host_host_id = '$host_id' AND host.host_id = htr.host_tpl_id";
+    	$DBRESULT =& $this->DB->query($request);
+        $list = '';
+        while ($data =& $DBRESULT->fetchRow()) {
+        	if ($list != '') {
+            	$list .= ',';
+            }
+            $list .= $data["host_name"];
+   		}
+        return $list;
+   }
 
 	/** *********************************************
 	 * Set parents
@@ -818,6 +857,8 @@ class CentreonHost {
 	 * Delete host template
 	 */
 	public function delTemplate($information) {
+		$svc = new CentreonService($this->DB, "Service");
+		
 		$check = $this->checkParameters($information);
 		if ($check) {
 			return 1;
