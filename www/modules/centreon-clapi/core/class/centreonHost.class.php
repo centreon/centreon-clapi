@@ -414,16 +414,19 @@ class CentreonHost {
 			 * Insert Template Relation
 			 */
 			if ($information["host_template"]) {
+				$order = 1;
 				if (strstr($information["host_template"], ",")) {
 					$tab = split(",", $information["host_template"]);
 					foreach ($tab as $hostTemplate) {
-						$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$hostTemplate."'), '".$host_id."')";
+						$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id, `order`) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$hostTemplate."'), '".$host_id."', '$order')";
 						$this->DB->query($request);
+						$order++;
 					}
 				} else {
-					$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$information["host_template"]."'), '".$host_id."')";
+					$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id, `order`) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$information["host_template"]."'), '".$host_id."', '$order')";
 					$this->DB->query($request);
 				}
+				unset($order);
 			}
 
 			/**
@@ -817,9 +820,20 @@ class CentreonHost {
 		return $exitcode;
 	}
 
-	protected function addTemplateHost($host_name, $template) {
+	protected function addTemplateHost($host_name, $template, $order) {
 		if (isset($host_name) && $host_name != "" && isset($template) && $template != "") {
 
+			if (!isset($order)) {
+				$request = "SELECT MAX(`order`) FROM host, host_template_relation WHERE host.host_name LIKE '$host_name' AND host_template_relation.host_host_id = host.host_id";
+				$DBRESULT = $this->DB->query($request);
+				$info = $DBRESULT->fetchRow();
+				$order = (int)$info["MAX(order)"];				
+				unset($info);
+				unset($DBRESULT);
+			} else {
+				$order = (int)$order;
+			}
+			
 			$svc = new CentreonService($this->DB, "Service");
 
 			$request = "SELECT * FROM host_template_relation " .
@@ -832,7 +846,7 @@ class CentreonHost {
 				 */
 				$host_id = $this->getHostID($host_name);
 
-				$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$template."'), '".$host_id."')";
+				$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id, `order`) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$template."'), '".$host_id."', '$order')";
 				$this->DB->query($request);
 				if ($this->register) {
 					$this->deployServiceTemplates($host_id, $svc);
