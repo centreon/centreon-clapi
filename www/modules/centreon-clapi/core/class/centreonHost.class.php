@@ -301,7 +301,7 @@ class CentreonHost {
 			/***
 			 * Check if hostgroup(s) exists
 			 */
-			if ($information["hostgroup"]) {
+			if (isset($information["hostgroup"]) && $information["hostgroup"]) {
 				if (strstr($information["hostgroup"], ",")) {
 					$tab = split(",", $information["hostgroup"]);
 					foreach ($tab as $hostgroup_name) {
@@ -352,7 +352,7 @@ class CentreonHost {
 			/***
 			 * Insert hostgroup relation
 			 */
-			if ($information["hostgroup"]) {
+			if (isset($information["hostgroup"]) && $information["hostgroup"]) {
 				if (strstr($information["hostgroup"], ",")) {
 					$tab = split(",", $information["hostgroup"]);
 					foreach ($tab as $hostgroup_name) {
