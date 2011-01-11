@@ -247,11 +247,26 @@ class CentreonHost {
 		}
 	}
 
-	/***
+	/** *************************************************
 	 * Add an host
 	 */
+
+	/**
+	 *
+	 * Add Host function
+	 * @param unknown_type $information
+	 */
 	protected function addHost($information) {
-		if (!isset($information["host_name"]) || !isset($information["host_address"]) || !isset($information["host_template"]) || !isset($information["host_poller"])) {
+		if (!isset($information["host_name"]) || !isset($information["host_address"]) || !isset($information["host_poller"])) {
+			if (!isset($information["host_name"])) {
+				print "ERROR: Name is a mandatory parameter.\n";
+			}
+			if (!isset($information["host_address"])) {
+				print "ERROR: Address is a mandatory parameter.\n";
+			}
+			if (!isset($information["host_poller"])) {
+				print "ERROR: poller is a mandatory parameter.\n";
+			}
 			return 0;
 		} else {
 			if (!isset($information["host_alias"]) || $information["host_alias"] == "") {
@@ -374,7 +389,10 @@ class CentreonHost {
 	 * Add an host template
 	 */
 	protected function addHostTemplate($information) {
-		if (!isset($information["host_name"]) || !isset($information["host_address"]) || !isset($information["host_template"])) {
+		if (!isset($information["host_name"])) {
+			if (!isset($information["host_name"])) {
+				print "ERROR: Template Name is a mandatory parameter.\n";
+			}
 			return 0;
 		} else {
 			if (!isset($information["host_alias"]) || $information["host_alias"] == "") {
@@ -830,13 +848,13 @@ class CentreonHost {
 				$request = "SELECT MAX(`order`) FROM host, host_template_relation WHERE host.host_name LIKE '$host_name' AND host_template_relation.host_host_id = host.host_id";
 				$DBRESULT = $this->DB->query($request);
 				$info = $DBRESULT->fetchRow();
-				$order = (int)$info["MAX(order)"];				
+				$order = (int)$info["MAX(order)"];
 				unset($info);
 				unset($DBRESULT);
 			} else {
 				$order = (int)$order;
 			}
-			
+
 			$svc = new CentreonService($this->DB, "Service");
 
 			$request = "SELECT * FROM host_template_relation " .
