@@ -319,16 +319,19 @@ class CentreonHost {
 			 * Insert Template Relation
 			 */
 			if ($information["host_template"]) {
+				$count = 1;
 				if (strstr($information["host_template"], ",")) {
 					$tab = split(",", $information["host_template"]);
 					foreach ($tab as $hostTemplate) {
-						$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$hostTemplate."'), '".$host_id."')";
+						$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id, `order`) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$hostTemplate."'), '".$host_id."', '$count')";
 						$this->DB->query($request);
+						$count++;
 					}
 				} else {
-					$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$information["host_template"]."'), '".$host_id."')";
+					$request = "INSERT INTO host_template_relation (host_tpl_id, host_host_id, `order`) VALUES ((SELECT host_id FROM host WHERE host_name LIKE '".$information["host_template"]."'), '".$host_id."', '$count')";
 					$this->DB->query($request);
 				}
+				unset($count);
 			}
 
 			/***
@@ -557,7 +560,7 @@ class CentreonHost {
 	 * Get the list of all hostgroup for one host
 	 */
 	private function getHostGroupList($host_id) {
-	
+
 		$request = "SELECT hg_name FROM hostgroup, hostgroup_relation hr WHERE hr.host_host_id = '$host_id' AND hostgroup.hg_id = hr.hostgroup_hg_id";
 		$DBRESULT =& $this->DB->query($request);
 		$list = '';
@@ -566,7 +569,7 @@ class CentreonHost {
 				$list .= ',';
 			}
 			$list .= $data["hg_name"];
-		}	
+		}
 		return $list;
 	}
 
@@ -872,7 +875,7 @@ class CentreonHost {
 	 */
 	public function delTemplate($information) {
 		$svc = new CentreonService($this->DB, "Service");
-		
+
 		$check = $this->checkParameters($information);
 		if ($check) {
 			return 1;
