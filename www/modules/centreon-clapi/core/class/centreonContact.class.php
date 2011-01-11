@@ -171,7 +171,6 @@ class CentreonContact {
 	/* **************************************
 	 * Add
 	 */
-
 	public function add($options) {
 
 		$check = $this->checkParameters($options);
@@ -204,6 +203,11 @@ class CentreonContact {
 		}
 	}
 
+	/**
+	 *
+	 * Add contact in DB.
+	 * @param unknown_type $information
+	 */
 	protected function addContact($information) {
 		if (!isset($information["contact_name"])) {
 			return 0;
@@ -215,11 +219,19 @@ class CentreonContact {
 			if (!isset($information["contact_auth_type"]) || $information["contact_auth_type"] == "")
 				$information["contact_auth_type"] = "local";
 
+			if (isset($information["contact_passwd"]) && !strncmp("{MD5}", $information["contact_passwd"], 5)) {
+				$password = str_replace("{MD5}", "", $information["contact_passwd"]);
+			} else if (isset($information["contact_passwd"]) && !strncmp("{SHA1}", $information["contact_passwd"], 6)) {
+				$password = str_replace("{SHA1}", "", $information["contact_passwd"]);
+			} else {
+				$password = md5($information["contact_passwd"])
+			}
+
 			$request = 	"INSERT INTO contact " .
 						"(contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_lang, contact_auth_type, contact_passwd, contact_activate) VALUES " .
 						"('".htmlentities($information["contact_name"], ENT_QUOTES)."', '".htmlentities($information["contact_alias"], ENT_QUOTES)."', '".htmlentities($information["contact_email"], ENT_QUOTES)."', " .
 						" '".htmlentities($information["contact_oreon"], ENT_QUOTES)."', '".htmlentities($information["contact_admin"], ENT_QUOTES)."', '".htmlentities($information["contact_lang"], ENT_QUOTES)."', " .
-						" '".htmlentities($information["contact_auth_type"], ENT_QUOTES)."', '".md5($information["contact_passwd"])."', '1')";
+						" '".htmlentities($information["contact_auth_type"], ENT_QUOTES)."', '".$password."', '1')";
 			$DBRESULT = $this->DB->query($request);
 
 			$contact_id = $this->getContactID($information["contact_name"]);
