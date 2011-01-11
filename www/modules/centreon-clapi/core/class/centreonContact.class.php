@@ -224,7 +224,7 @@ class CentreonContact {
 			} else if (isset($information["contact_passwd"]) && !strncmp("{SHA1}", $information["contact_passwd"], 6)) {
 				$password = str_replace("{SHA1}", "", $information["contact_passwd"]);
 			} else {
-				$password = md5($information["contact_passwd"])
+				$password = md5($information["contact_passwd"]);
 			}
 
 			$request = 	"INSERT INTO contact " .
