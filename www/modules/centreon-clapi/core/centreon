@@ -38,7 +38,7 @@
  */
 	$debug = 0;
 	
-	ini_set("html_errors", "Off");
+	ini_set("display_errors", "Off");
 
 	/**
 	 * Declare Options 
