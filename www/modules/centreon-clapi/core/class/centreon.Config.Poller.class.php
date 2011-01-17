@@ -87,9 +87,10 @@ class CentreonConfigPoller {
 	}
 
 	public function getPollerList($format) {
-		$DBRESULT =& $this->_DB->query("SELECT id,name FROM nagios_server ORDER BY id");
-		if ($format == "xml")
+		$DBRESULT =& $this->_DB->query("SELECT id,name FROM nagios_server WHERE ns_activate = '1' ORDER BY id");
+		if ($format == "xml") {
 			print "";
+		}
 		while ($data =& $DBRESULT->fetchRow()) {
 	    	print $data["id"]."\t".$data["name"]."\n";
 	    }
