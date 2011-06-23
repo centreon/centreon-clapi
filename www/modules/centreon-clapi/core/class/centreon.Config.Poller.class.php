@@ -99,6 +99,11 @@ class CentreonConfigPoller {
 		return 0;
 	}
 
+	/**
+	 *
+	 * Reload a server
+	 * @param unknown_type $variables
+	 */
 	public function pollerReload($variables) {
 		$return_value = 0;
 
@@ -134,6 +139,11 @@ class CentreonConfigPoller {
 
 	}
 
+	/**
+	 *
+	 * Restart a serveur
+	 * @param unknown_type $variables
+	 */
 	public function pollerRestart($variables) {
 		if (!isset($variables)) {
 			print "Cannot get poller id.";
@@ -166,6 +176,12 @@ class CentreonConfigPoller {
 		$DBRESULT =& $this->_DB->query("UPDATE `nagios_server` SET `last_restart` = '".time()."' WHERE `id` = '".$variables."' LIMIT 1");
 	}
 
+	/**
+	 *
+	 * Test poller configuration
+	 * @param unknown_type $format
+	 * @param unknown_type $variables
+	 */
 	public function pollerTest($format, $variables) {
 		if (!isset($variables)) {
 			print "Cannot get poller id.";
@@ -207,20 +223,27 @@ class CentreonConfigPoller {
 		}
 		if ($this->resultTest["errors"] != 0) {
 			print "Error: Nagios Poller $variables cannot restart. configuration broker. Please see debug bellow :\n";
-			print "---------------------------------------------------------------------------------------------------";
-			print $msg_debug;
-			print "---------------------------------------------------------------------------------------------------";
+			print "---------------------------------------------------------------------------------------------------\n";
+			print $msg_debug."\n";
+			print "---------------------------------------------------------------------------------------------------\n";
 		} else if ($this->resultTest["warning"] != 0) {
 			print "Warning: Nagios Poller $variables can restart but configuration is not optimal. Please see debug bellow :\n";
-			print "---------------------------------------------------------------------------------------------------";
-			print $msg_debug;
-			print "---------------------------------------------------------------------------------------------------";
+			print "---------------------------------------------------------------------------------------------------\n";
+			print $msg_debug."\n";
+			print "---------------------------------------------------------------------------------------------------\n";
 		} else {
-			print "OK: Nagios Poller $variables can restart without problem...";
+			print "OK: Nagios Poller $variables can restart without problem...\n";
 		}
 		return;
 	}
 
+	/**
+	 *
+	 * Generate configuration files for a specific poller
+	 * @param $variables
+	 * @param $login
+	 * @param $password
+	 */
 	public function pollerGenerate($variables, $login, $password) {
 		require_once "../../../include/configuration/configGenerate/DB-Func.php";
 		require_once "../../../include/common/common-Func.php";
@@ -240,10 +263,11 @@ class CentreonConfigPoller {
 		/**
 		 * Init environnement
 		 */
-		if ($this->optGen["version"] == "2.2")
+		if (strncmp($this->optGen["version"], "2.1", 3)) {
 			require_once $this->centreon_path."/www/class/centreon.class.php";
-		else
+		} else {
 			require_once $this->centreon_path."/www/class/Oreon.class.php";
+		}
 
 		require_once $this->centreon_path."/www/class/centreonDB.class.php";
 		require_once $this->centreon_path."/www/class/centreonAuth.class.php";
@@ -256,10 +280,15 @@ class CentreonConfigPoller {
 		chdir("../../..");
 
 		$CentreonLog = new CentreonUserLog(-1, $pearDB);
-		$centreonAuth = new CentreonAuth($login, $password, 0, $this->_DB, $CentreonLog,NULL);
-		$user =& new User($centreonAuth->userInfos, $this->optGen["nagios_version"]);
-		$oreon = new Oreon($user);
-		$oreon->user->version = 3;
+		$centreonAuth = new CentreonAuth($login, $password, 0, $this->_DB, $CentreonLog, NULL);
+		if (strncmp($this->optGen["version"], "2.1", 3)) {
+			$oreon = new Centreon((array)$centreonAuth->userInfos);
+			$oreon->user->version = 3;
+		} else {
+			$user = new User($centreonAuth->userInfos, $this->optGen["nagios_version"]);
+			$oreon = new Oreon($user);
+			$oreon->user->version = 3;
+		}
 		$tab['id'] = $variables;
 
     	chdir("./modules/centreon-clapi/core/");
@@ -308,10 +337,10 @@ class CentreonConfigPoller {
 		require $path."centreon_pm.php";
 
  		chdir("../../..");
- 		if ($tab['localhost']) {
-			$flag_localhost = $tab['localhost'];
 
-			/**
+		if (isset($tab['localhost']) && $tab['localhost']) {
+			$flag_localhost = $tab['localhost'];
+			/*
 			 * Meta Services Generation
 			 */
 			if ($files = glob("./include/configuration/configGenerate/metaService/*.php")) {
@@ -319,27 +348,36 @@ class CentreonConfigPoller {
 					require_once($filename);
 				}
 			}
+		}
 
-			/**
-			 * Module Generation
-			 */
-			foreach ($oreon->modules as $key => $value) {
-				if (file_exists("./modules/".$key."/core/common/functions.php"))
-					require_once "./modules/".$key."/core/common/functions.php";
-				if ($files = glob("./modules/".$key."/generate_files/*.php"))
-					foreach ($files as $filename) {
-						require_once ($filename);
-					}
+		/*
+		 * Module Generation
+		 */
+		foreach ($oreon->modules as $key => $value) {
+			$flag_localhost = $tab['localhost'];
+			if (file_exists("./modules/".$key."/core/common/functions.php")) {
+				require_once "./modules/".$key."/core/common/functions.php";
+ 			}
+			if ($value["gen"] && $files = glob("./modules/".$key."/generate_files/*.php")) {
+				foreach ($files as $filename) {
+					require_once ($filename);
+				}
 			}
 		}
+
 		chdir("./modules/centreon-clapi/core/");
 		unset($generatedHG);
 		unset($generatedSG);
 		unset($generatedS);
 
- 		print "Configuration files generated for poller ".$variables;
+ 		print "Configuration files generated for poller ".$variables."\n";
 	}
 
+	/**
+	 *
+	 * Move configuration files to servers
+	 * @param unknown_type $variables
+	 */
 	public function cfgMove($variables) {
 		if (!isset($variables)) {
 			print "Cannot get poller id.";
@@ -381,6 +419,12 @@ class CentreonConfigPoller {
 		print $msg_copy;
 	}
 
+	/**
+	 *
+	 * Display Copying files
+	 * @param unknown_type $filename
+	 * @param unknown_type $status
+	 */
 	private function display_copying_file($filename = NULL, $status){
 		if (!isset($filename))
 			return ;
