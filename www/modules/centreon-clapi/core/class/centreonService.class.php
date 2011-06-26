@@ -766,7 +766,12 @@ class CentreonService {
 		}
 
 		$info = split(";", $informations);
-		$return_code = $this->setParamService($info[0], $info[1], $info[2], $info[3]);
+		
+		if ($this->register) {
+			$return_code = $this->setParamService($info[0], $info[1], $info[2], $info[3]);
+		} else {
+			$return_code = $this->setParamService("", $info[0], $info[1], $info[2]);
+		}
 		return $return_code;
 	}
 
@@ -781,7 +786,7 @@ class CentreonService {
 				}
 
 				if ($param == "template") {
-					$value = $cmd->getServiceTplID($value);
+					$value = $this->getServiceTplID($value);
 				}
 
 				if ($param == "command") {
@@ -807,7 +812,7 @@ class CentreonService {
 				}
 
 				if ($param == "template") {
-					$value = $cmd->getServiceTplID($value);
+					$value = $this->getServiceTplID($value);
 				}
 
 				if ($param == "command") {
