@@ -344,6 +344,7 @@ class CentreonAPI {
 		} else {
 			if (method_exists($this, $action)) {
 				$this->return_code = $this->$action();
+				print "Return code end : ".$this->return_code;
 			} else {
 				print "Method not implemented into Centreon API.\n";
 				$this->return_code = 1;
@@ -395,7 +396,7 @@ class CentreonAPI {
 	 */
 	public function POLLERRESTART() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$this->return_code = $poller->pollerRestart($this->variables);
+		return $poller->pollerRestart($this->variables);
 	}
 
 	/**
@@ -404,7 +405,7 @@ class CentreonAPI {
 	 */
 	public function POLLERRELOAD() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$this->return_code = $poller->pollerReload($this->variables);
+		return $poller->pollerReload($this->variables);
 	}
 
 	/**
@@ -413,7 +414,7 @@ class CentreonAPI {
 	 */
 	public function POLLERGENERATE() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$this->return_code = $poller->pollerGenerate($this->variables, $this->login, $this->password);
+		return $poller->pollerGenerate($this->variables, $this->login, $this->password);
 	}
 
 	/**
@@ -422,7 +423,7 @@ class CentreonAPI {
 	 */
 	public function POLLERTEST() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$this->return_code = $poller->pollerTest($this->format, $this->variables);
+		return $poller->pollerTest($this->format, $this->variables);
 	}
 
 	/**
@@ -431,7 +432,7 @@ class CentreonAPI {
 	 */
 	public function CFGMOVE() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$this->return_code = $poller->cfgMove($this->variables);
+		return $poller->cfgMove($this->variables);
 	}
 
 	/**
@@ -461,6 +462,7 @@ class CentreonAPI {
 		if ($this->return_code == 0) {
 			$this->return_code = $poller->pollerRestart($this->variables);
 		}
+		return $this->return_code;
 	}
 }
 ?>

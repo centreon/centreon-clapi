@@ -36,6 +36,11 @@
  *
  */
 
+/**
+ * 
+ * @author Julien Mathis
+ *
+ */
 class CentreonConfigPoller {
 	private $_DB;
 	private $resultTest;
@@ -44,7 +49,13 @@ class CentreonConfigPoller {
 	private $centreon_path;
 	private $centcore_pipe;
 
-	public function CentreonConfigPoller($DB, $centreon_path) {
+	/**
+	 * Constructor
+	 * @param unknown_type $DB
+	 * @param unknown_type $centreon_path
+	 * @return unknown_type
+	 */
+	public function __construct($DB, $centreon_path) {
 		$this->_DB = $DB;
 		$this->resultTest = 0;
 		$this->nagiosCFGPath = "$centreon_path/filesGeneration/nagiosCFG/";
@@ -53,6 +64,9 @@ class CentreonConfigPoller {
 		$this->centcore_pipe = "@CENTREON_VARLIB@/centcore.cmd";
 	}
 
+	/**
+	 * Get General option of Centreon
+	 */
 	private function getOptGen() {
 		$DBRESULT =& $this->_DB->query("SELECT * FROM options");
 		while ($row =& $DBRESULT->fetchRow()) {
@@ -129,14 +143,14 @@ class CentreonConfigPoller {
 
 		$msg_restart = "";
 		if (isset($host['localhost']) && $host['localhost'] == 1) {
-			$msg_restart = shell_exec("sudo " . $nagios_init_script . " reload");
+			$msg_restart = exec(escapeshellcmd("sudo " . $nagios_init_script . " reload"), $stdout, $retuen_code);
 		} else {
-			system("echo 'RELOAD:".$host["id"]."' >> ". $this->centcore_pipe);
+			exec(escapeshellcmd("echo 'RELOAD:".$host["id"]."' >> ". $this->centcore_pipe), $stdout, $retuen_code);
 			$msg_restart .= _("OK: A reload signal has been sent to ".$host["name"]);
 		}
 		print $msg_restart;
 		$DBRESULT =& $this->_DB->query("UPDATE `nagios_server` SET `last_restart` = '".time()."' WHERE `id` = '".$variables."' LIMIT 1");
-
+		return $return_code;
 	}
 
 	/**
@@ -167,13 +181,14 @@ class CentreonConfigPoller {
 
 		$msg_restart = "";
 		if (isset($host['localhost']) && $host['localhost'] == 1) {
-			$msg_restart = shell_exec("sudo " . $nagios_init_script . " restart");
+			$msg_restart = exec(escapeshellcmd("sudo " . $nagios_init_script . " restart"), $lines, $return_code);
 		} else {
-			system("echo 'RESTART:".$variables."' >> ". $this->centcore_pipe);
+			exec(escapeshellcmd("echo 'RESTART:".$variables."' >> ". $this->centcore_pipe), $stdout, $return_code);
 			$msg_restart = _("OK: A restart signal has been sent to ".$host["name"]);
 		}
 		print $msg_restart;
 		$DBRESULT =& $this->_DB->query("UPDATE `nagios_server` SET `last_restart` = '".time()."' WHERE `id` = '".$variables."' LIMIT 1");
+		return $return_code;
 	}
 
 	/**
@@ -197,9 +212,11 @@ class CentreonConfigPoller {
 		$nagios_bin = $DBRESULT_Servers->fetchRow();
 		$DBRESULT_Servers->free();
 
-		$stdout = shell_exec("sudo ".$nagios_bin["nagios_bin"] . " -v ".$this->nagiosCFGPath.$variables."/nagiosCFG.DEBUG");
-		$lines = split("\n", $stdout);
-
+		/*
+		 * Launch test command
+		 */
+		exec(escapeshellcmd("sudo ".$nagios_bin["nagios_bin"] . " -v ".$this->nagiosCFGPath.$variables."/nagiosCFG.DEBUG"), $lines, $return_code);
+		
 		$msg_debug = "";
 		foreach ($lines as $line) {
 			if (strncmp($line, "Processing object config file", strlen("Processing object config file"))
@@ -210,11 +227,13 @@ class CentreonConfigPoller {
 					 * Detect Errors
 					 */
 					if (preg_match("/Total Warnings: ([0-9])*/", $line, $matches))
-						if (isset($matches[1]))
+						if (isset($matches[1])) {
 							$this->resultTest["warning"] = $matches[1];
+						}
 					if (preg_match("/Total Errors: ([0-9])*/", $line, $matches))
-						if (isset($matches[1]))
+						if (isset($matches[1])) {
 							$this->resultTest["errors"] = $matches[1];
+						}
 					if (preg_match("/^Error:/", $line, $matches))
 						$this->resultTest["errors"]++;
 					if (preg_match("/^Errors:/", $line, $matches))
@@ -234,7 +253,7 @@ class CentreonConfigPoller {
 		} else {
 			print "OK: Nagios Poller $variables can restart without problem...\n";
 		}
-		return;
+		return $return_code;
 	}
 
 	/**
@@ -371,6 +390,7 @@ class CentreonConfigPoller {
 		unset($generatedS);
 
  		print "Configuration files generated for poller ".$variables."\n";
+ 		return 0;
 	}
 
 	/**
@@ -384,6 +404,8 @@ class CentreonConfigPoller {
 			exit(1);
 		}
 
+		$return = 0;
+		
 		/**
 		 * Check poller existance
 		 */
@@ -404,19 +426,23 @@ class CentreonConfigPoller {
 			foreach (glob($this->nagiosCFGPath.$variables."/*.cfg") as $filename) {
 				$bool = @copy($filename , $Nagioscfg["cfg_dir"].basename($filename));
 				$filename = array_pop(explode("/", $filename));
-				if (!$bool)
+				if (!$bool) {
 					$msg_copy .= $this->display_copying_file($filename, " - "._("movement")." KO");
+					$return = 1;
+				}
 			}
 			if (strlen($msg_copy) == 0) {
 				$msg_copy .= _("OK: All configuration files copied with success.");
 			}
 		} else {
-			passthru("echo 'SENDCFGFILE:".$host['id']."' >> ".$this->centcore_pipe, $return);
-			if (!isset($msg_copy))
+			exec(escapeshellcmd("echo 'SENDCFGFILE:".$host['id']."' >> ".$this->centcore_pipe), $stdout, $return);
+			if (!isset($msg_copy)) {
 				$msg_copy = "";
+			}
 			$msg_copy .= _("OK: All configuration will be send to '".$host['name']."' by centcore in several minutes.");
 		}
-		print $msg_copy;
+		print $msg_copy."\n";
+		return $return;
 	}
 
 	/**
@@ -426,8 +452,9 @@ class CentreonConfigPoller {
 	 * @param unknown_type $status
 	 */
 	private function display_copying_file($filename = NULL, $status){
-		if (!isset($filename))
+		if (!isset($filename)) {
 			return ;
+		}
 		$str = "- ".$filename." -> ".$status."\n";
 		return $str;
 	}
