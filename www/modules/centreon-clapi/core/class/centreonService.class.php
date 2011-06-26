@@ -850,6 +850,8 @@ class CentreonService {
 			$contact_id = $this->contact->getContactID($info[1]);
 		}
 
+		print $contact_id;
+		
 		/*
 		 * Check contact IS
 		 */
@@ -889,7 +891,7 @@ class CentreonService {
 			return $check;
 		}
 
-		$info = split(";", $options);
+		$info = split(";", $informations);
 
 		require_once "./class/centreonContact.class.php";
 		$contact = new CentreonContact($this->DB, "CONTACT");
