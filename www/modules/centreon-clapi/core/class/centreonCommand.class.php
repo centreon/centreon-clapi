@@ -70,19 +70,27 @@ class CentreonCommand {
 	}
 	
 	protected function decode($str) {
-		$str = str_replace("#S#", "/", $str);
-		$str = str_replace("#BS#", "\\", $str);
-		$str = str_replace("#BR#", "\n", $str);
-		$str = str_replace("#R#", "\t", $str);
+		global $version;
+		
+		if (!strncmp($version, "2.1", 3)) {
+			$str = str_replace("#S#", "/", $str);
+			$str = str_replace("#BS#", "\\", $str);
+			$str = str_replace("#BR#", "\n", $str);
+			$str = str_replace("#R#", "\t", $str);
+		}
 		return $str;	
 	}
 
 	protected function encode($name) {
-		$name = str_replace("$", "\$", $name);
-		$name = str_replace("/", "#S#", htmlentities($name, ENT_QUOTES));
-		$name = str_replace("\\", "#BS#", $name);
-		$name = str_replace("\n", "#BR#", $name);
-		$name = str_replace("\t", "#R#", $name);
+		global $version;
+		
+		if (!strncmp($version, "2.1", 3)) {
+			$name = str_replace("$", "\$", $name);
+			$name = str_replace("/", "#S#", htmlentities($name, ENT_QUOTES));
+			$name = str_replace("\\", "#BS#", $name);
+			$name = str_replace("\n", "#BR#", $name);
+			$name = str_replace("\t", "#R#", $name);
+		}
 		return $name;
 	}
 	

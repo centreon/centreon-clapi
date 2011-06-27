@@ -185,8 +185,12 @@ class CentreonHost {
 	 * Encode String
 	 */
 	protected function encode($str) {
-		$str = str_replace("/", "#S#", $str);
-		$str = str_replace("\\", "#BS#", $str);
+		global $version;
+		
+		if (!strncmp($version, "2.1", 3)) {
+			$str = str_replace("/", "#S#", $str);
+			$str = str_replace("\\", "#BS#", $str);
+		}
 		return $str;
 	}
 
@@ -194,8 +198,12 @@ class CentreonHost {
 	 * Decode String
 	 */
 	protected function decode($str) {
-		$str = str_replace("#S#", "/", $str);
-		$str = str_replace("#BS#", "\\", $str);
+		global $version;
+		
+		if (!strncmp($version, "2.1", 3)) {
+			$str = str_replace("#S#", "/", $str);
+			$str = str_replace("#BS#", "\\", $str);
+		}
 		return $str;
 	}
 

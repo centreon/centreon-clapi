@@ -303,14 +303,22 @@ class CentreonService {
 	}
 
 	protected function encode($str) {
-		$str = str_replace("/", "#S#", $str);
-		$str = str_replace("\\", "#BS#", $str);
+		global $version;
+		
+		if (!strncmp($version, "2.1", 3)) {
+			$str = str_replace("/", "#S#", $str);
+			$str = str_replace("\\", "#BS#", $str);
+		}
 		return $str;
 	}
 
 	protected function decode($str) {
-		$str = str_replace("#S#", "/", $str);
-		$str = str_replace("#BS#", "\\", $str);
+		global $version;
+		
+		if (!strncmp($version, "2.1", 3)) {
+			$str = str_replace("#S#", "/", $str);
+			$str = str_replace("#BS#", "\\", $str);
+		}
 		return $str;
 	}
 
@@ -558,8 +566,39 @@ class CentreonService {
 			if ($search_string != "") {
 				$search = " AND (service_description LIKE '%$search_string%' OR service_alias LIKE '%$search_string%') ";
 			}
-
-			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg, host_id, host_name FROM service s, host h, host_service_relation hr WHERE s.service_id = hr.service_service_id AND hr.host_host_id = h.host_id AND service_register = '".$this->register."' AND host_register = '1' $search ORDER BY host_name, service_description";
+			/*
+			$request = "SELECT " .
+						" service_id, service_description, service_alias, s.command_command_id, ". 
+					    " s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, " .
+						" service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, " .
+						" s.command_command_id_arg, host_id, host_name " . 
+						
+						" FROM service s" .
+						" JOIN (SELECT hsr.service_service_id FROM host_service_relation hsr" .
+						" JOIN host h" .
+						"     ON hsr.host_host_id = h.host_id" .
+						"     	WHERE h.host_name = '".$host_name."'" .
+						"     UNION" .
+						"    	 SELECT hsr.service_service_id FROM hostgroup_relation hgr" .
+						" JOIN host h" .
+						"     ON hgr.host_host_id = h.host_id" .
+						" JOIN host_service_relation hsr" .
+						"     ON hgr.hostgroup_hg_id = hsr.hostgroup_hg_id" .
+						"     	WHERE h.host_name = '".$host_name."' ) ghsrv" .
+						" ON s.service_id = ghsrv.service_service_id" .
+						" WHERE s.service_description = '".$svc_desc."' LIMIT 1";
+			*/
+			$request =  " SELECT " .
+					    " service_id, service_description, service_alias, s.command_command_id, ". 
+					    " s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, " .
+						" service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, " .
+						" s.command_command_id_arg, host_id, host_name " . 
+						" FROM service s, host h, host_service_relation hr ".
+						" WHERE s.service_id = hr.service_service_id " . 
+						" AND hr.host_host_id = h.host_id ".
+						" AND service_register = '".$this->register."' ". 
+						" AND host_register = '1' $search ".
+						" ORDER BY host_name, service_description";
 			$DBRESULT = $this->DB->query($request);
 			$i = 0;
 			while ($data = $DBRESULT->fetchRow()) {

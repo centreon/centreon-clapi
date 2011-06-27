@@ -73,10 +73,13 @@ class CentreonAPI {
 	public $debug;
 	public $variables;
 	public $centreon_path;
+	public $optGen;
 	private $return_code;
 	private $relationObject;
 
 	public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
+		global $version;
+		
 		/**
 		 * Set variables
 		 */
@@ -135,6 +138,11 @@ class CentreonAPI {
 		$this->relationObject["TIMEPERIOD"] = "TimePeriod";
 		$this->relationObject["TP"] = "TimePeriod";
 
+		/*
+		 * Manage version 
+		 */
+		$this->optGen = $this->getOptGen();
+		$version = $this->optGen["version"];
 	}
 
 	/**
@@ -165,6 +173,18 @@ class CentreonAPI {
 		 */
 		require_once "./class/centreonTimePeriod.class.php";
 		require_once "./class/centreonACLResources.class.php";
+	}
+	
+	/**
+	 * Get General option of Centreon
+	 */
+	private function getOptGen() {
+		$DBRESULT =& $this->DB->query("SELECT * FROM options");
+		while ($row =& $DBRESULT->fetchRow()) {
+			$this->optGen[$row["key"]] = $row["value"];
+		}
+		$DBRESULT->free();
+		unset($row);
 	}
 
 	/**

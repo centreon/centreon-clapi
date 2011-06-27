@@ -40,6 +40,8 @@
 	
 	ini_set("display_errors", "Off");
 
+	global $version;
+
 	/**
 	 * Declare Options 
 	 */
@@ -53,9 +55,10 @@
 	$shortopts .= "V"; /** Version */
 	
 	$options = getopt($shortopts);
-	if ($debug)
+	if ($debug) {
 		print_r($options);
-
+	}
+	
 	if (!file_exists("../etc/api.conf.php")) {
 		chdir(dirname(__FILE__));
 	}
