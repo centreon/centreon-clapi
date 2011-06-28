@@ -67,7 +67,7 @@
 	/**
 	 * Create Centreon API object
 	 */
-	$api = new CentreonAPI((isset($options["u"]) ? $options["u"] : "") , (isset($options["p"]) ? $options["p"] : ""), $options["a"], $centreon_path, $options);
+	$api = new CentreonAPI((isset($options["u"]) ? $options["u"] : "") , (isset($options["p"]) ? $options["p"] : ""), (isset($options["a"]) ? $options["a"] : ""), $centreon_path, $options);
 
 	if (isset($options["h"]))
 		$api->printHelp();
