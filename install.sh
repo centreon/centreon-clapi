@@ -36,7 +36,7 @@
 # 
 
 # List of files containing macros
-MACRO_FILES="www/modules/centreon-clapi/core/class/centreon.Config.Poller.class.php"
+MACRO_FILES="www/modules/centreon-clapi/core/class/centreon.Config.Poller.class.php www/modules/centreon-clapi/etc/api.conf.php"
 
 # Define Centreon Config Books version
 NAME="centreon-clapi"
@@ -176,7 +176,6 @@ function install_module() {
 		/bin/chmod -R 755 $INSTALL_DIR_MODULE >> $LOG_FILE 2>> $LOG_FILE	
 	fi
 
-
 	chmod +x $TEMP_D/www/modules/centreon-clapi/core/centreon >> $LOG_FILE 2>> $LOG_FILE
 	dos2unix $TEMP_D/www/modules/centreon-clapi/core/centreon >> $LOG_FILE 2>> $LOG_FILE
 
@@ -188,7 +187,6 @@ function install_module() {
 
 	echo_success "\nThe $LOG_VERSION is finished" "$ok"
 	echo -e  "See README and the log file for more details."
-	
 }
 
 ### Main
