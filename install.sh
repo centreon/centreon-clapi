@@ -40,7 +40,7 @@ MACRO_FILES="www/modules/centreon-clapi/core/class/centreon.Config.Poller.class.
 
 # Define Centreon Config Books version
 NAME="centreon-clapi"
-VERSION="1.1"
+VERSION="1.2"
 MODULE=$NAME.$VERSION
 LOG_VERSION="$MODULE installation"
 FILE_CONF="instCentWeb.conf"
