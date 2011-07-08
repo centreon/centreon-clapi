@@ -36,7 +36,8 @@
 # 
 
 # List of files containing macros
-MACRO_FILES="www/modules/centreon-clapi/core/class/centreon.Config.Poller.class.php www/modules/centreon-clapi/etc/api.conf.php"
+MACRO_FILES="www/modules/centreon-clapi/core/class/centreon.Config.Poller.class.php"
+MACRO_FILE_CONF="www/modules/centreon-clapi/etc/api.conf.php"
 
 # Define Centreon Config Books version
 NAME="centreon-clapi"
@@ -148,6 +149,7 @@ function install_module() {
 
 	echo_success "Replacing macros" "$ok"
 	replace_macro $TEMP_D/$MACRO_FILES
+	replace_macro $TEMP_D/$MACRO_FILE_CONF
 
 	echo_success "Setting right" "$ok"
 	chmod -R 755 $TEMP_D/* >> $LOG_FILE 2>> $LOG_FILE
