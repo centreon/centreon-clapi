@@ -704,7 +704,6 @@ function replace_macro() {
 		-e 's|@LOG_DIR_CENTREON@|'"$LOG_DIR_CENTREON"'|g' \
 		-e 's|@DB_PASSWORD@|'"$DB_PASSWORD"'|g' \
 		-e 's|@CENTREON_ETC@|'"$CENTREON_CONF"'|g' \
-		-e 's|\s||g' \
 	    "$1" > "${1}2"`
 	    `mv ${1}2 $1`
 }

@@ -87,9 +87,8 @@ function get_centreon_parameters() {
 	CENTREON_CONF=`cat $CENTREON_CONF/$FILE_CONF | grep "CENTREON_ETC" | cut -d '=' -f2`;
 	NAGIOS_PLUGIN=`cat $CENTREON_CONF/$FILE_CONF | grep "NAGIOS_PLUGIN" | cut -d '=' -f2`;
 	NAGIOS_VAR=`cat $CENTREON_CONF/$FILE_CONF | grep "NAGIOS_VAR" | cut -d '=' -f2`;
-	CENTREON_VARLIB=`cat $CENTREON_CONF/$FILE_CONF | grep "CENTREON_VARLIB" | cut -d '=' -f2`;
+	CENTREON_VARLIB=`cat $CENTREON_CONF/$FILE_CONF | grep "CENTREON_VARLIB" | cut -d '=' -f2 | sed -e 's|\s||g'`;
 	CENTREON_ETC=`cat $CENTREON_ETC/$FILE_CONF | grep "CENTREON_ETC" | cut -d '=' -f2`;
-	
 	if [ "$INSTALL_DIR_CENTREON" != "" ] && [ "$WEB_USER" != "" ] && [ "$WEB_GROUP" != "" ] ; then
 		return 1;
 	else
