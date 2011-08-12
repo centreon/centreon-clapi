@@ -36,6 +36,12 @@
  *
  */
 
+/**
+ *
+ * Centreon Host objects
+ * @author jmathis
+ *
+ */
 class CentreonHost {
 	private $DB;
 	private $host_name;
@@ -43,9 +49,16 @@ class CentreonHost {
 	private $register;
 	private $cg;
 	private $hg;
+	public $obj;
 
 	private $access;
 
+	/**
+	 *
+	 * Object Constructor
+	 * @param unknown_type $DB
+	 * @param unknown_type $objName
+	 */
 	public function __construct($DB, $objName) {
 		$this->DB = $DB;
 		$this->register = 1;
@@ -65,18 +78,26 @@ class CentreonHost {
 		require_once "./class/centreonContactGroup.class.php";
 		$this->cg = new CentreonContactGroup($this->DB, "CG");
 
+		$this->obj = strtoupper($objName);
 	}
 
+	/**
+	 *
+	 * Set var in order to known if object is a template or not.
+	 */
 	protected function setTemplateFlag() {
 		$this->register = 0;
 	}
 
 	/**
+	 *
 	 * Check host existance
+	 * @param unknown_type $name
 	 */
 	public function hostExists($name) {
-		if (!isset($name))
+		if (!isset($name)) {
 			return 0;
+		}
 
 		/**
 		 * Get informations
@@ -91,9 +112,15 @@ class CentreonHost {
 		}
 	}
 
+	/**
+	 *
+	 * check if host template exists
+	 * @param unknown_type $name
+	 */
 	public function _hostTemplateExists($name) {
-		if (!isset($name))
+		if (!isset($name)) {
 			return 0;
+		}
 
 		/**
 		 * Get informations
@@ -108,6 +135,13 @@ class CentreonHost {
 		}
 	}
 
+	/**
+	 *
+	 * Check parameters
+	 * if no options, return errors
+	 *
+	 * @param unknown_type $options
+	 */
 	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
 			print "No options defined.\n";
@@ -115,6 +149,11 @@ class CentreonHost {
 		}
 	}
 
+	/**
+	 *
+	 * Validate that all names are not using forbidden characters
+	 * @param unknown_type $name
+	 */
 	protected function validateName($name) {
 		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
 			return $this->checkNameformat($name);
@@ -124,6 +163,11 @@ class CentreonHost {
 		}
 	}
 
+	/**
+	 *
+	 * Verifie the lenght of the host name
+	 * @param unknown_type $name
+	 */
 	protected function checkNameformat($name) {
 		if (strlen($name) > 25) {
 			print "Warning: host name reduce to 25 caracters.\n";
@@ -132,7 +176,9 @@ class CentreonHost {
 	}
 
 	/**
+	 *
 	 * Get Poller id
+	 * @param $name
 	 */
 	protected function getPollerID($name) {
 		$request = "SELECT id FROM nagios_server WHERE name LIKE '".trim(htmlentities($name, ENT_QUOTES))."'";
@@ -147,7 +193,9 @@ class CentreonHost {
 	}
 
 	/**
+	 *
 	 * Get id of host
+	 * @param unknown_type $name
 	 */
 	public function getHostID($name) {
 		$request = "SELECT host_id FROM host WHERE host_name = '".trim($this->encode($name))."' AND host_register = '".$this->register."'";
@@ -163,7 +211,10 @@ class CentreonHost {
 	}
 
 	/**
+	 *
 	 * Get Name of an host
+	 * @param $host_id
+	 * @param $readable
 	 */
 	public function getHostName($host_id, $readable = NULL) {
 		$request = "SELECT host_name FROM host WHERE host_id = '$host_id'";
@@ -181,12 +232,14 @@ class CentreonHost {
 		}
 	}
 
-	/*
+	/**
+	 *
 	 * Encode String
+	 * @param $str
 	 */
 	protected function encode($str) {
 		global $version;
-		
+
 		if (!strncmp($version, "2.1", 3)) {
 			$str = str_replace("/", "#S#", $str);
 			$str = str_replace("\\", "#BS#", $str);
@@ -194,12 +247,14 @@ class CentreonHost {
 		return $str;
 	}
 
-	/*
+	/**
+	 *
 	 * Decode String
+	 * @param $str
 	 */
 	protected function decode($str) {
 		global $version;
-		
+
 		if (!strncmp($version, "2.1", 3)) {
 			$str = str_replace("#S#", "/", $str);
 			$str = str_replace("#BS#", "\\", $str);
@@ -210,6 +265,12 @@ class CentreonHost {
 
 	/** ***********************************
 	 * Add functions
+	 */
+
+	/**
+	 *
+	 * Add functions
+	 * @param unknown_type $options
 	 */
 	public function add($options) {
 
@@ -568,25 +629,65 @@ class CentreonHost {
 			$search = " AND (host_name like '%".htmlentities($host_name, ENT_QUOTES)."%' OR host_alias LIKE '%".htmlentities($host_name, ENT_QUOTES)."%') ";
 		}
 
-		$request = "SELECT host_id, host_address, host_name, host_alias, ns.name AS poller FROM host, nagios_server ns , ns_host_relation nhr WHERE host.host_id = nhr.host_host_id AND nhr.nagios_server_id AND ns.id = nhr.nagios_server_id AND host_register = '".$this->register."' $search ORDER BY host_name";
-		$DBRESULT =& $this->DB->query($request);
-		$i = 0;
-		while ($data =& $DBRESULT->fetchRow()) {
-			if ($i == 0) {
-				print "id;name;alias;address;poller;templates;hostgroups\n";
+		if ($this->register == 1) {
+			$request = "SELECT host_id, host_address, host_name, host_alias, ns.name AS poller FROM host, nagios_server ns , ns_host_relation nhr WHERE host.host_id = nhr.host_host_id AND nhr.nagios_server_id AND ns.id = nhr.nagios_server_id AND host_register = '".$this->register."' $search ORDER BY host_name";
+			$DBRESULT =& $this->DB->query($request);
+			$i = 0;
+			while ($data =& $DBRESULT->fetchRow()) {
+				if ($i == 0) {
+					print "id;name;alias;address;poller;templates;hostgroups\n";
+				}
+				print $this->decode($data["host_id"]).";".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].($this->register ? ";".$data["poller"].";".$this->getTemplateList($data["host_id"]).";".$this->getHostGroupList($data["host_id"]) : "")."\n";
+				$i++;
 			}
-			print $this->decode($data["host_id"]).";".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].($this->register ? ";".$data["poller"].";".$this->getTemplateList($data["host_id"]).";".$this->getHostGroupList($data["host_id"]) : "")."\n";
-			$i++;
+			$DBRESULT->free();
+		} else {
+			$request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '".$this->register."' $search ORDER BY host_name";
+			$DBRESULT =& $this->DB->query($request);
+			$i = 0;
+			while ($data =& $DBRESULT->fetchRow()) {
+				if ($i == 0) {
+					print "id;name;alias;address;templates\n";
+				}
+				print $this->decode($data["host_id"]).";".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].";".$this->getTemplateList($data["host_id"])."\n";
+				$i++;
+			}
+			$DBRESULT->free();
 		}
-		$DBRESULT->free();
 		unset($data);
 	}
+
+	/** ***********************************************
+	 * export all hosts or templates
+	 */
+
+	/**
+	 *
+	 * export all hosts or templates
+	 */
+	public function export() {
+		if ($this->register == 1) {
+			$request = "SELECT host_id, host_address, host_name, host_alias, ns.name AS poller FROM host, nagios_server ns , ns_host_relation nhr WHERE host.host_id = nhr.host_host_id AND nhr.nagios_server_id AND ns.id = nhr.nagios_server_id AND host_register = '".$this->register."' ORDER BY host_name";
+			$DBRESULT =& $this->DB->query($request);
+			while ($data =& $DBRESULT->fetchRow()) {
+				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].($this->register ? ";".$data["poller"].";".$this->getTemplateList($data["host_id"]).";".$this->getHostGroupList($data["host_id"]) : "")."\n";
+			}
+			$DBRESULT->free();
+		} else {
+			$request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '".$this->register."' ORDER BY host_name";
+			$DBRESULT =& $this->DB->query($request);
+			while ($data =& $DBRESULT->fetchRow()) {
+				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].";".$this->getTemplateList($data["host_id"])."\n";
+			}
+			$DBRESULT->free();
+		}
+	}
+
 
 	/** **********************************************
 	 * Get the list of all hostgroup for one host
 	 */
 	private function getHostGroupList($host_id) {
-
 		$request = "SELECT hg_name FROM hostgroup, hostgroup_relation hr WHERE hr.host_host_id = '$host_id' AND hostgroup.hg_id = hr.hostgroup_hg_id";
 		$DBRESULT =& $this->DB->query($request);
 		$list = '';

@@ -88,6 +88,16 @@ class CentreonTimePeriod
         return 0;
     }
 
+	 public function getTimeperiodName($id)
+    {
+        $query = "SELECT tp_name FROM timeperiod WHERE tp_id = '".htmlentities($id, ENT_QUOTES)."'";
+        $res = $this->_db->query($query);
+        while ($row = $res->fetchRow()) {
+            return $row['tp_name'];
+        }
+        return 0;
+    }
+
     /**
      * show list of timeperiods
      *

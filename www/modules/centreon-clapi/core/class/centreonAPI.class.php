@@ -77,9 +77,11 @@ class CentreonAPI {
 	private $return_code;
 	private $relationObject;
 
+	private $objectTable;
+
 	public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
 		global $version;
-		
+
 		/**
 		 * Set variables
 		 */
@@ -110,6 +112,8 @@ class CentreonAPI {
 			$this->object = "";
 		}
 
+		$this->objectTable = array();
+
 		/**
   		 * Centreon DB Connexion
 		 */
@@ -139,7 +143,7 @@ class CentreonAPI {
 		$this->relationObject["TP"] = "TimePeriod";
 
 		/*
-		 * Manage version 
+		 * Manage version
 		 */
 		$this->optGen = $this->getOptGen();
 		$version = $this->optGen["version"];
@@ -174,7 +178,7 @@ class CentreonAPI {
 		require_once "./class/centreonTimePeriod.class.php";
 		require_once "./class/centreonACLResources.class.php";
 	}
-	
+
 	/**
 	 * Get General option of Centreon
 	 */
@@ -371,6 +375,82 @@ class CentreonAPI {
 			}
 		}
 		exit($this->return_code);
+	}
+
+	/**
+	 * Import Scenario file
+	 */
+	public function import($filename) {
+		$this->fileExists($filename);
+
+		/*
+		 * Open File in order to read it.
+		 */
+		$handle = fopen($filename, 'r');
+		if ($handle) {
+			while ($string = fgets($handle)) {
+				$tab = preg_split('/;/', $string);
+				$this->object = trim($tab[0]);
+				$this->action = trim($tab[1]);
+				$this->variables = substr($string, strlen($tab[0].";".$tab[1].";"));
+				$this->launchAction();
+			}
+			fclose($handle);
+		}
+	}
+
+	/**
+	 * Export All configuration
+	 */
+	public function export() {
+		$this->initAllObjects();
+		$this->objectTable['CMD']->export();
+		$this->objectTable['HG']->export();
+		$this->objectTable['SG']->export();
+		$this->objectTable['CONTACT']->export();
+		$this->objectTable['CG']->export();
+		$this->objectTable['HTPL']->export();
+		//$this->objectTable['HOST']->export();
+	}
+
+	/**
+	 *
+	 * Init an object
+	 * @param unknown_type $DB
+	 * @param unknown_type $objname
+	 */
+	private function iniObject($objname) {
+		$className = 'centreon'.$this->relationObject[$objname];
+		$this->requireLibs($objname);
+		$this->objectTable[$objname] = new $className($this->DB, $objname);
+	}
+
+	/**
+	 * Init All object instance in order to export all informations
+	 */
+	private function initAllObjects() {
+		$this->iniObject('TP');
+		$this->iniObject('CMD');
+		$this->iniObject('HOST');
+		$this->iniObject('SERVICE');
+		$this->iniObject('HG');
+		$this->iniObject('HC');
+		$this->iniObject('SG');
+		$this->iniObject('SC');
+		$this->iniObject('CONTACT');
+		$this->iniObject('CG');
+		$this->iniObject('HTPL');
+		$this->iniObject('STPL');
+	}
+
+	/**
+	 * Check if file exists
+	 */
+	private function fileExists($filename) {
+		if (!file_exists($filename)) {
+			print "$filename : File doesn't exists\n";
+			exit(1);
+		}
 	}
 
 	/**

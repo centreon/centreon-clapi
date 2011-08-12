@@ -35,18 +35,31 @@
  * SVN : $Id: centreonHost.class.php 25 2010-03-30 05:52:19Z jmathis $
  *
  */
- 
+
+/**
+ *
+ * Centreon Command Class
+ * @author jmathis
+ *
+ */
 class CentreonCommand {
 	private $DB;
 	private $maxLen;
 	private $type;
 	private $params;
-	
+	private $graphTemplates;
+
+	/**
+	 *
+	 * Centreon command Constructor
+	 * @param unknown_type $DB
+	 */
 	public function __construct($DB) {
 		$this->DB = $DB;
 		$this->maxLen = 50;
 		$this->type = array("notif" => 1, "check" => 2, "misc" => 3, 1 => "notif", 2 => "check", 3 => "misc");
 		$this->params = array("name" => 1, "line" => 1, "example" => 1, "type" => 1, "template" => 1);
+		$this->graphTemplates = array('id' => array(0 => "", NULL => ""), 'name' => array(0 => "", NULL => ""));
 	}
 
 	/**
@@ -55,7 +68,7 @@ class CentreonCommand {
 	public function commandExists($name) {
 		if (!isset($name))
 			return 0;
-		
+
 		/**
 		 * Get informations
 		 */
@@ -68,22 +81,32 @@ class CentreonCommand {
 			return 0;
 		}
 	}
-	
+
+	/**
+	 *
+	 * Decode a specific string
+	 * @param unknown_type $str
+	 */
 	protected function decode($str) {
 		global $version;
-		
+
 		if (!strncmp($version, "2.1", 3)) {
 			$str = str_replace("#S#", "/", $str);
 			$str = str_replace("#BS#", "\\", $str);
 			$str = str_replace("#BR#", "\n", $str);
 			$str = str_replace("#R#", "\t", $str);
 		}
-		return $str;	
+		return $str;
 	}
 
+	/**
+	 *
+	 * Encode a specific string
+	 * @param unknown_type $name
+	 */
 	protected function encode($name) {
 		global $version;
-		
+
 		if (!strncmp($version, "2.1", 3)) {
 			$name = str_replace("$", "\$", $name);
 			$name = str_replace("/", "#S#", htmlentities($name, ENT_QUOTES));
@@ -93,57 +116,67 @@ class CentreonCommand {
 		}
 		return $name;
 	}
-	
+
 	public function getCommandID($command_name = NULL) {
 		if (!isset($command_name))
 			return 0;
-			
+
 		$request = "SELECT command_id FROM command WHERE command_name LIKE '$command_name'";
 		$DBRESULT =& $this->DB->query($request);
 		$data =& $DBRESULT->fetchRow();
 		return $data["command_id"];
 	}
-	
+
+	public function getCommandName($command_id = NULL) {
+		if (!isset($command_id))
+			return 0;
+
+		$request = "SELECT command_name FROM command WHERE command_id = '$command_id'";
+		$DBRESULT =& $this->DB->query($request);
+		$data =& $DBRESULT->fetchRow();
+		return $data["command_name"];
+	}
+
 	private function checkParameters($options) {
 		if (!isset($options) || (isset($options) && $options == "")) {
 			print "No options defined.\n";
 			return 1;
 		}
 	}
-	
+
 	private function validateName($name) {
 		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches)) {
 			return $this->checkNameformat($name);
 		} else {
 			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);	
+			exit (1);
 		}
 	}
-	
+
 	private function checkNameformat($name) {
 		if (strlen($name) > $this->maxLen) {
 			print "Warning: host name reduce to ".$this->maxLen." caracters.\n";
 		}
 		return sprintf("%.".$this->maxLen."s", $name);
 	}
-	
+
 	private function setDefaultType($information) {
 		if (!isset($information["command_type"]) || $information["command_type"] == "") {
 			$information["command_type"] = 2;
 		}
 		return $information;
 	}
-	
+
 	/** *****************************************
 	 * Delete
 	 */
 	public function del($name) {
-		
+
 		$check = $this->checkParameters($name);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$request = "DELETE FROM command WHERE command_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
@@ -158,7 +191,7 @@ class CentreonCommand {
 		if (isset($search) && $search != "") {
 			$searchStr = " WHERE command_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
 		}
-		
+
 		$request = "SELECT command_id, command_name, command_type, command_line FROM command $searchStr ORDER BY command_name";
 		$DBRESULT =& $this->DB->query($request);
 		$i = 0;
@@ -173,22 +206,55 @@ class CentreonCommand {
 		return 0;
 	}
 
+	/** *****************************************
+	 * exoirt all commands
+	 */
+	public function export() {
+
+		$this->getTemplateGraph();
+
+		$request = "SELECT command_name, command_type, command_line, command_example, graph_id FROM command ORDER BY command_name";
+		$DBRESULT =& $this->DB->query($request);
+		$i = 0;
+		while ($data =& $DBRESULT->fetchRow()) {
+			print "CMD;ADD;".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".$this->type[html_entity_decode($data["command_type"], ENT_QUOTES)].";".html_entity_decode($this->decode($data["command_line"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_example"]), ENT_QUOTES).";".html_entity_decode($this->decode($this->graphTemplates['id'][$data["graph_id"]]), ENT_QUOTES)."\n";
+			$i++;
+		}
+		$DBRESULT->free();
+		return 0;
+	}
+
+	/**
+	 *
+	 * Get the full list of graph templates
+	 */
+	private function getTemplateGraph() {
+		$request = "SELECT name, graph_id FROM giv_graphs_template";
+		$DBRESULT =& $this->DB->query($request);
+		while ($data =& $DBRESULT->fetchRow()) {
+			$this->graphTemplates["id"][$data["graph_id"]] = $data['name'];
+			$this->graphTemplates["name"][$data["name"]] = $data['graph_id'];
+		}
+		$DBRESULT->free();
+		return 0;
+	}
+
 	/** ******************************
 	 * add a command
 	 */
 	public function add($options) {
-		
+
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$info = split(";", $options);
 		$info[0] = $this->validateName($info[0]);
-		
+
 		if (!$this->commandExists($info[0])) {
-			
-			$convertionTable = array(0 => "command_name", 1 => "command_line", 2 => "command_type");
+
+			$convertionTable = array(0 => "command_name", 1 => "command_line", 2 => "command_type", 3 => "command_example", 4 => "graph_template");
 			$informations = array();
 			foreach ($info as $key => $value) {
 				if ($key != 2) {
@@ -204,23 +270,44 @@ class CentreonCommand {
 			return;
 		}
 	}
-	
+
+	/**
+	 *
+	 * Add a command
+	 * @param unknown_type $information
+	 */
 	private function addCommand($information) {
 		if (!isset($information["command_name"])) {
 			return 0;
 		} else {
 			$information = $this->setDefaultType($information);
-			
-			$information["command_name"] = $this->encode($information["command_name"]);
-			$information["command_line"] = $this->encode($information["command_line"]);
 
-			$request = 	"INSERT INTO command " .
-						"(command_name, command_line, command_type) VALUES " .
-						"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".$information["command_line"]."'" .
-						", '".htmlentities($information["command_type"], ENT_QUOTES)."')";
-			
-			$DBRESULT =& $this->DB->query($request);	
-			$command_id = $this->getCommandID($information["command_name"]);
+			if (count($information) == 3) {
+				$information["command_name"] = $this->encode($information["command_name"]);
+				$information["command_line"] = $this->encode($information["command_line"]);
+
+				$request = 	"INSERT INTO command " .
+							"(command_name, command_line, command_type) VALUES " .
+							"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".$information["command_line"]."'" .
+							", '".htmlentities($information["command_type"], ENT_QUOTES)."')";
+
+				$DBRESULT =& $this->DB->query($request);
+				$command_id = $this->getCommandID($information["command_name"]);
+			} else if (count($information) == 5) {
+				$information["command_name"] = $this->encode($information["command_name"]);
+				$information["command_line"] = $this->encode($information["command_line"]);
+				$information["command_example"] = $this->encode($information["command_example"]);
+				$information["graph_id"] = $this->encode($information["graph_id"]);
+
+				$request = 	"INSERT INTO command " .
+							"(command_name, command_line, command_type, command_example, graph_id) VALUES " .
+							"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".$information["command_line"]."'" .
+							", '".htmlentities($information["command_type"], ENT_QUOTES)."', '".htmlentities($information["command_example"], ENT_QUOTES)."'" .
+							", '".htmlentities($this->graphTemplates['name'][$information["graph_id"]], ENT_QUOTES)."' )";
+
+				$DBRESULT =& $this->DB->query($request);
+				$command_id = $this->getCommandID($information["command_name"]);
+			}
 			return $command_id;
 		}
 	}
@@ -229,25 +316,25 @@ class CentreonCommand {
 	 * Set parameters
 	 */
 	public function setParam($options) {
-		
+
 		$check = $this->checkParameters($options);
 		if ($check) {
 			return $check;
 		}
-		
+
 		$info = split(";", $options);
 		if ($this->commandExists($info[0])) {
 			if ($info[1] != "template" && $info[1] != "type") {
 				$request = "UPDATE command SET command_".$info[1]." = '".$info[2]."' WHERE command_name LIKE '".$info[0]."'";
-				$DBRESULT =& $this->DB->query($request);	
+				$DBRESULT =& $this->DB->query($request);
 				return 0;
 			} else if ($info[1] == "type") {
 				$request = "UPDATE command SET command_".$info[1]." = '".$this->type[$info[2]]."' WHERE command_name LIKE '".$info[0]."'";
-				$DBRESULT =& $this->DB->query($request);	
+				$DBRESULT =& $this->DB->query($request);
 				return 0;
 			} else {
 				$request = "UPDATE command SET graph_id = (SELECT graph_id FROM giv_graphs_template WHERE name LIKE '".htmlentities($info[2], ENT_QUOTES)."') WHERE command_name = '".htmlentities($info[0], ENT_QUOTES)."'";
-				$DBRESULT =& $this->DB->query($request);	
+				$DBRESULT =& $this->DB->query($request);
 				return 0;
 			}
 		} else {

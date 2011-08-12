@@ -53,6 +53,9 @@
 	$shortopts .= "v:"; /** Action */
 	$shortopts .= "h"; /** Help */
 	$shortopts .= "V"; /** Version */
+	$shortopts .= "a:"; /** Action */
+	$shortopts .= "i:"; /** Import Massive data */
+	$shortopts .= "e"; /** Export all configuration */
 	
 	$options = getopt($shortopts);
 	if ($debug) {
@@ -72,8 +75,9 @@
 	 */
 	$api = new CentreonAPI((isset($options["u"]) ? $options["u"] : "") , (isset($options["p"]) ? $options["p"] : ""), (isset($options["a"]) ? $options["a"] : ""), $centreon_path, $options);
 
-	if (isset($options["h"]))
+	if (isset($options["h"])) {
 		$api->printHelp();
+	}
 
 	if (isset($options["V"])) {
 		$api->printVersion();
@@ -83,7 +87,7 @@
 	/**
 	 * Now works
 	 */
-	if ($api->login == "" || $api->password == "" || $api->action == "") {
+	if ($api->login == "" || $api->password == "") {
 		if (file_exists($_SERVER["HOME"]."/.centreonApi")) {
 			$uid = posix_getpwuid (fileowner($_SERVER["HOME"]."/.centreonApi"));
 			$perms = substr(sprintf('%o', fileperms($_SERVER["HOME"]."/.centreonApi")), -3);
@@ -106,13 +110,25 @@
 				$api->printHelp();
 			}
 		} else {
+	 	   print "ok\n";
 	 	   $api->printHelp();
 		}
 	} else {
+	  	
 	  	if (!isset($api->options["V"]) && !isset($api->options["h"])) {
 			$api->checkUser();
 		}
-	  	$api->launchAction();
+		
+		/*
+		 * Check action to do
+		 */
+		if (isset($api->options["e"])) {
+			$api->export();
+		} else if (isset($api->options["i"])) {
+			$api->import($api->options["i"]);
+		} else if (isset($api->options["a"])) {
+	  		$api->launchAction();
+	  	}
 	}
 	$api->close();
 ?>

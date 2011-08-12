@@ -68,8 +68,10 @@ class CentreonContact {
 		$this->_timeperiod = new CentreonTimePeriod($this->DB);
 	}
 
-	/*
+	/**
+	 *
 	 * Check host existance
+	 * @param unknown_type $name
 	 */
 	public function contactExists($name) {
 		if (!isset($name))
@@ -88,6 +90,11 @@ class CentreonContact {
 		}
 	}
 
+	/**
+	 *
+	 * Get contact ID
+	 * @param unknown_type $contact_name
+	 */
 	public function getContactID($contact_name = NULL) {
 		if (!isset($contact_name))
 			return;
@@ -98,6 +105,11 @@ class CentreonContact {
 		return $data["contact_id"];
 	}
 
+	/**
+	 *
+	 * Check if contact is admin user
+	 * @param unknown_type $contact_name
+	 */
 	public function iscontactAdmin($contact_name = NULL) {
 		if (!isset($contact_name))
 			return;
@@ -108,6 +120,11 @@ class CentreonContact {
 		return $data["contact_admin"];
 	}
 
+	/**
+	 *
+	 * Check that parameters is ok
+	 * @param unknown_type $options
+	 */
 	protected function checkParameters($options) {
 		if (!isset($options) || $options == "") {
 			print "No options defined.\n";
@@ -116,6 +133,11 @@ class CentreonContact {
 		}
 	}
 
+	/**
+	 *
+	 * Validate Name format
+	 * @param unknown_type $name
+	 */
 	protected function validateName($name) {
 		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
 			return $this->checkNameformat($name);
@@ -125,6 +147,11 @@ class CentreonContact {
 		}
 	}
 
+	/**
+	 *
+	 * Check name lengh
+	 * @param unknown_type $name
+	 */
 	protected function checkNameformat($name) {
 		if (strlen($name) > 40) {
 			print "Warning: host name reduce to 40 caracters.\n";
@@ -132,10 +159,11 @@ class CentreonContact {
 		return sprintf("%.40s", $name);
 	}
 
-	/* **************************************
+	/**
+	 *
 	 * Delete action
+	 * @param $name
 	 */
-
 	public function del($name) {
 		$this->checkParameters($name);
 
@@ -145,10 +173,11 @@ class CentreonContact {
 		return 0;
 	}
 
-	/* **************************************
+	/**
+	 *
 	 * Display all contact
+	 * @param unknown_type $search
 	 */
-
 	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
@@ -168,8 +197,53 @@ class CentreonContact {
 		return 0;
 	}
 
-	/* **************************************
-	 * Add
+	/**
+	 *
+	 * Export all contacts
+	 */
+	public function export() {
+		$request = "SELECT contact_id, contact_name, contact_alias, contact_email, contact_passwd, contact_admin, contact_oreon, contact_lang, contact_auth_type, contact_host_notification_options, contact_service_notification_options, timeperiod_tp_id, timeperiod_tp_id2 FROM contact ORDER BY contact_name";
+		$DBRESULT =& $this->DB->query($request);
+		while ($data =& $DBRESULT->fetchRow()) {
+			print "CONTACT;ADD;".html_entity_decode($data["contact_name"], ENT_QUOTES).";".html_entity_decode($data["contact_alias"], ENT_QUOTES).";".html_entity_decode($data["contact_email"], ENT_QUOTES).";{MD5}".html_entity_decode($data["contact_passwd"], ENT_QUOTES).";".html_entity_decode($data["contact_admin"], ENT_QUOTES).";".html_entity_decode($data["contact_oreon"], ENT_QUOTES).";".html_entity_decode($data["contact_lang"], ENT_QUOTES).";".html_entity_decode($data["contact_auth_type"], ENT_QUOTES)."\n";
+
+			if (isset($data["timeperiod_tp_id"]))
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";hostnotifperiod;".html_entity_decode($this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id"]), ENT_QUOTES)."\n";
+			if (isset($data["timeperiod_tp_id2"]))
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";servicenotifperiod;".html_entity_decode($this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id2"]), ENT_QUOTES)."\n";
+			if (isset($data["contact_host_notification_options"]))
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";hostnotifoptions;".html_entity_decode($data["contact_host_notification_options"], ENT_QUOTES)."\n";
+			if (isset($data["contact_host_notification_options"]))
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";servicenotifoptions;".html_entity_decode($data["contact_host_notification_options"], ENT_QUOTES)."\n";
+
+			/*
+			 * Host Command
+			 */
+			$request2 = "SELECT command_command_id FROM contact_hostcommands_relation WHERE contact_contact_id = '".$data["contact_id"]."'";
+			$DBRESULT2 =& $this->DB->query($request2);
+			while ($dataCMD =& $DBRESULT2->fetchRow()) {
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";hostnotifcmd;".html_entity_decode($this->_cmd->getCommandName($dataCMD["command_command_id"], ENT_QUOTES))."\n";
+			}
+			$DBRESULT2->free();
+			/*
+			 * Service Command
+			 */
+			$request2 = "SELECT command_command_id FROM contact_servicecommands_relation WHERE contact_contact_id = '".$data["contact_id"]."'";
+			$DBRESULT2 =& $this->DB->query($request2);
+			while ($dataCMD =& $DBRESULT2->fetchRow()) {
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";servicenotifcmd;".html_entity_decode($this->_cmd->getCommandName($dataCMD["command_command_id"], ENT_QUOTES))."\n";
+			}
+			$DBRESULT2->free();
+
+		}
+		$DBRESULT->free();
+		return 0;
+	}
+
+	/**
+	 *
+	 * Add a contact
+	 * @param $options
 	 */
 	public function add($options) {
 

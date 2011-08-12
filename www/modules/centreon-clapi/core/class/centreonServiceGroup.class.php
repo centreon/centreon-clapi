@@ -120,7 +120,7 @@ class CentreonServiceGroup {
 		return 0;
 	}
 
-	/* ****************************************
+	/** ****************************************
 	 * Dislay all SG
 	 */
 	public function show($search = NULL) {
@@ -166,6 +166,38 @@ class CentreonServiceGroup {
 			$DBRESULT2->free();
 			print "\n";
 			$i++;
+		}
+		$DBRESULT->free();
+
+	}
+
+	/** ****************************************
+	 * Export all SG
+	 */
+	public function export() {
+
+		/*
+		 * Get Child informations
+		 */
+		require_once "./class/centreonHost.class.php";
+		require_once "./class/centreonService.class.php";
+		$host = new CentreonHost($this->DB, "HOST");
+		$svc = new CentreonService($this->DB, "SERVICE");
+
+		$request = "SELECT sg_id, sg_name, sg_alias FROM servicegroup ORDER BY sg_name";
+		$DBRESULT =& $this->DB->query($request);
+		while ($data =& $DBRESULT->fetchRow()) {
+			print "SG;ADD;".html_entity_decode($data["sg_name"], ENT_QUOTES).";".html_entity_decode($data["sg_alias"], ENT_QUOTES)."\n";
+
+			/*
+			 * Get Childs informations
+			 */
+			$request = "SELECT host_host_id, service_service_id FROM servicegroup_relation WHERE servicegroup_sg_id = '".$data["sg_id"]."'";
+			$DBRESULT2 =& $this->DB->query($request);
+			while ($m =& $DBRESULT2->fetchRow()) {
+				print "SG;ADDCHILD;".html_entity_decode($data["sg_name"], ENT_QUOTES).";".$host->getHostName($m["host_host_id"]).",".$svc->getServiceName($m["service_service_id"], 1)."\n";
+			}
+			$DBRESULT2->free();
 		}
 		$DBRESULT->free();
 
