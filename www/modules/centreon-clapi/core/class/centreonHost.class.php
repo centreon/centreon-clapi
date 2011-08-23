@@ -49,6 +49,8 @@ class CentreonHost {
 	private $register;
 	private $cg;
 	private $hg;
+	private $_timeperiod;
+	private $_cmd;
 	public $obj;
 
 	private $access;
@@ -79,6 +81,9 @@ class CentreonHost {
 		$this->cg = new CentreonContactGroup($this->DB, "CG");
 
 		$this->obj = strtoupper($objName);
+
+		$this->_timeperiod = new CentreonTimePeriod($this->DB);
+		$this->_cmd = new CentreonCommand($this->DB);
 	}
 
 	/**
@@ -666,22 +671,244 @@ class CentreonHost {
 	 * export all hosts or templates
 	 */
 	public function export() {
-		if ($this->register == 1) {
-			$request = "SELECT host_id, host_address, host_name, host_alias, ns.name AS poller FROM host, nagios_server ns , ns_host_relation nhr WHERE host.host_id = nhr.host_host_id AND nhr.nagios_server_id AND ns.id = nhr.nagios_server_id AND host_register = '".$this->register."' ORDER BY host_name";
-			$DBRESULT =& $this->DB->query($request);
-			while ($data =& $DBRESULT->fetchRow()) {
-				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].($this->register ? ";".$data["poller"].";".$this->getTemplateList($data["host_id"]).";".$this->getHostGroupList($data["host_id"]) : "")."\n";
-			}
-			$DBRESULT->free();
-		} else {
-			$request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '".$this->register."' ORDER BY host_name";
-			$DBRESULT =& $this->DB->query($request);
-			while ($data =& $DBRESULT->fetchRow()) {
-				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].";".$this->getTemplateList($data["host_id"])."\n";
-			}
-			$DBRESULT->free();
-		}
-	}
+        if ($this->register == 1) {
+            $request = "SELECT host_id, host_address, host_name, host_alias, ns.name AS poller FROM host, nagios_server ns , ns_host_relation nhr WHERE host.host_id = nhr.host_host_id AND nhr.nagios_server_id AND ns.id = nhr.nagios_server_id AND host_register = '".$this->register."' ORDER BY host_name";
+            $DBRESULT =& $this->DB->query($request);
+            while ($data =& $DBRESULT->fetchRow()) {
+                print $this->obj.";ADD;".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].($this->register ? ";".$data["poller"].";".$this->getTemplateList($data["host_id"]).";".$this->getHostGroupList($data["host_id"]) : "")."\n";
+                $this->exportParents($data["host_id"]);
+                $this->exportMacros($data["host_id"]);
+                $this->exportNotes($data["host_id"]);
+                $this->exportProperties($data["host_id"]);
+                $this->exportContactGroup($data["host_id"]);
+            }
+            $DBRESULT->free();
+        } else {
+            $request = "SELECT host_id, host_address, host_name, host_alias FROM host WHERE host_register = '".$this->register."' ORDER BY host_name";
+            $DBRESULT =& $this->DB->query($request);
+            while ($data =& $DBRESULT->fetchRow()) {
+                print $this->obj.";ADD;".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].";".$this->getTemplateList($data["host_id"])."\n";
+                $this->exportMacros($data["host_id"]);
+                $this->exportProperties($data["host_id"]);
+                $this->exportContactGroup($data["host_id"]);
+            }
+            $DBRESULT->free();
+        }
+    }
+
+	/**
+	 *
+	 * Export parent hosts list
+	 * @param unknown_type $host_id
+	 */
+	private function exportParents($host_id) {
+        $str = "";
+        $request = "SELECT host_name FROM host, host_hostparent_relation WHERE host_id = host_parent_hp_id AND host_host_id = '".$host_id."'";
+        $DBRESULT =& $this->DB->query($request);
+        while ($data = $DBRESULT->fetchRow()) {
+        	if ($str != "") {
+                $str .= ",";
+            }
+            $str .= $data["host_name"];
+        }
+        $DBRESULT->free();
+        if ($str != "") {
+        	print $this->obj.";SETPARENT;" . $this->getHostName($host_id) . ";" . $str . "\n";
+        }
+    }
+
+    /**
+     *
+     * Export macro of host and templates
+     * @param $host_id
+     */
+	private function exportMacros($host_id) {
+        $request = "SELECT host_macro_name, host_macro_value FROM on_demand_macro_host WHERE host_host_id = '$host_id'";
+        $DBRESULT =& $this->DB->query($request);
+        while ($data =& $DBRESULT->fetchRow()) {
+        	print $this->obj.";SETMACRO;" . $this->getHostName($host_id) . ";".$data["host_macro_name"].";".$data["host_macro_value"]."\n";
+        }
+        $DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export all generic properties of an host
+     * @param $host_id
+     */
+    private function exportProperties($host_id) {
+		$this->exportHostProperties($host_id, "check_interval");
+		$this->exportHostProperties($host_id, "retry_check_interval");
+		$this->exportHostProperties($host_id, "max_check_attempts");
+		$this->exportURL($host_id);
+		$this->exportURLAction($host_id);
+		$this->exportSNMPCommunity($host_id);
+		$this->exportSNMPVersion($host_id);
+		$this->exportTP($host_id, "");
+		$this->exportTP($host_id, 2);
+		$this->exportCMD($host_id);
+		$this->exportCMDArgs($host_id);
+    }
+
+    /**
+     *
+     * Export host properties stored in host table
+     * @param $host_id
+     * @param $properties
+     */
+	private function exportHostProperties($host_id, $properties) {
+		$request = "SELECT host_".$properties." FROM `host` WHERE host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["host_".$properties]) && $data["host_".$properties] != "") {
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";$properties;".$data["host_".$properties]."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export URL
+     * @param $host_id
+     */
+    private function exportURL($host_id) {
+		$request = "SELECT ehi_notes_url FROM `extended_host_information` WHERE host_host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["ehi_notes_url"]) && $data["ehi_notes_url"] != "") {
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";url;".$data["ehi_notes_url"]."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export Notes
+     * @param $host_id
+     */
+	private function exportNotes($host_id) {
+		$request = "SELECT ehi_notes FROM `extended_host_information` WHERE host_host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["ehi_notes"]) && $data["ehi_notes"] != "") {
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";note;".$data["ehi_notes"]."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export Action URL
+     * @param $host_id
+     */
+    private function exportURLAction($host_id) {
+		$request = "SELECT ehi_action_url FROM `extended_host_information` WHERE host_host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+        	if (isset($data["ehi_action_url"]) && $data["ehi_action_url"] != "") {
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";actionurl;".$data["ehi_action_url"]."\n";
+        	}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export SNMP community
+     * @param $host_id
+     */
+    private function exportSNMPCommunity($host_id) {
+		$request = "SELECT host_snmp_community FROM `host` WHERE host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["host_snmp_community"]) && $data["host_snmp_community"] != "") {
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";community;".$data["host_snmp_community"]."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export SNMP version
+     * @param $host_id
+     */
+    private function exportSNMPVersion($host_id) {
+		$request = "SELECT host_snmp_version FROM `host` WHERE host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["host_snmp_community"]) && $data["host_snmp_community"] != 0) {
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";version;".$data["host_snmp_version"]."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export Host timeperiod
+     * @param $host_id
+     * @param $type
+     */
+    private function exportTP($host_id, $type) {
+		$request = "SELECT timeperiod_tp_id$type FROM `host` WHERE host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["timeperiod_tp_id$type"]) && $data["timeperiod_tp_id$type"] != 0) {
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";tpcheck;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export Host command
+     * @param $host_id
+     */
+	private function exportCMD($host_id) {
+		$request = "SELECT command_command_id FROM `host` WHERE host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["command_command_id"]) && $data["command_command_id"] != 0) {
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";check_command;".$this->_cmd->getCommandName($data["command_command_id"])."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export Host commands Args
+     * @param unknown_type $host_id
+     */
+	private function exportCMDArgs($host_id) {
+		$request = "SELECT command_command_id_arg1 FROM `host` WHERE host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["command_command_id_arg1"]) && $data["command_command_id_arg1"] != 0) {
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";check_command_args;".$this->_cmd->getCommandName($data["command_command_id_arg1"])."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export contactgroup of an host
+     * @param unknown_type $host_id
+     */
+    private function exportContactGroup($host_id) {
+		$request = "SELECT cg_name FROM contactgroup_host_relation, contactgroup WHERE host_host_id = '$host_id' AND cg_id = contactgroup_cg_id";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+			print $this->obj.";SETCG;" . $this->getHostName($host_id) . ";".$data["cg_name"]."\n";
+ 		}
+ 		$DBRESULT->free();
+    }
 
 
 	/** **********************************************
