@@ -54,11 +54,15 @@ class CentreonService {
 
 	private $_cmd;
 	private $_timeperiod;
-	
+
+	public $obj;
+
 	public function __construct($DB, $objName) {
 		$this->DB = $DB;
 		$this->register = 1;
 		$this->object = $objName;
+
+		$this->obj = strtoupper($objName);
 
 		/**
 		 * Enable Access Object
@@ -87,7 +91,7 @@ class CentreonService {
 
 		$this->_timeperiod = new CentreonTimePeriod($this->DB);
 		$this->_cmd = new CentreonCommand($this->DB);
-		
+
 		/*
 		 * Change buffers
 		 */
@@ -117,6 +121,7 @@ class CentreonService {
 		$this->parameters["passive_checks_enabled"] = "service_passive_checks_enabled";
 
 		$this->parameters["notif_options"] = "service_notification_options";
+		$this->parameters["notification_options"] = "service_notification_options";
 
 		$this->parameters["check_period"] = "timeperiod_tp_id";
 		$this->parameters["notif_period"] = "timeperiod_tp_id2";
@@ -144,6 +149,7 @@ class CentreonService {
 		$this->paramTable["passive_checks_enabled"] = "service";
 
 		$this->paramTable["notif_options"] = "service";
+		$this->paramTable["notification_options"] = "service";
 
 		$this->paramTable["check_period"] = "service";
 		$this->paramTable["notif_period"] = "service";
@@ -310,7 +316,7 @@ class CentreonService {
 
 	protected function encode($str) {
 		global $version;
-		
+
 		if (!strncmp($version, "2.1", 3)) {
 			$str = str_replace("/", "#S#", $str);
 			$str = str_replace("\\", "#BS#", $str);
@@ -320,7 +326,7 @@ class CentreonService {
 
 	protected function decode($str) {
 		global $version;
-		
+
 		if (!strncmp($version, "2.1", 3)) {
 			$str = str_replace("#S#", "/", $str);
 			$str = str_replace("#BS#", "\\", $str);
@@ -503,6 +509,9 @@ class CentreonService {
 	}
 
 	public function addService($information) {
+
+		$information["template"] = trim($information["template"]);
+
 		if (!isset($information["service_description"]) || !isset($information["host"]) || !isset($information["template"])) {
 			return 0;
 		} else {
@@ -574,11 +583,11 @@ class CentreonService {
 			}
 			/*
 			$request = "SELECT " .
-						" service_id, service_description, service_alias, s.command_command_id, ". 
+						" service_id, service_description, service_alias, s.command_command_id, ".
 					    " s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, " .
 						" service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, " .
-						" s.command_command_id_arg, host_id, host_name " . 
-						
+						" s.command_command_id_arg, host_id, host_name " .
+
 						" FROM service s" .
 						" JOIN (SELECT hsr.service_service_id FROM host_service_relation hsr" .
 						" JOIN host h" .
@@ -595,14 +604,14 @@ class CentreonService {
 						" WHERE s.service_description = '".$svc_desc."' LIMIT 1";
 			*/
 			$request =  " SELECT " .
-					    " service_id, service_description, service_alias, s.command_command_id, ". 
+					    " service_id, service_description, service_alias, s.command_command_id, ".
 					    " s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, " .
 						" service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, " .
-						" s.command_command_id_arg, host_id, host_name " . 
+						" s.command_command_id_arg, host_id, host_name " .
 						" FROM service s, host h, host_service_relation hr ".
-						" WHERE s.service_id = hr.service_service_id " . 
+						" WHERE s.service_id = hr.service_service_id " .
 						" AND hr.host_host_id = h.host_id ".
-						" AND service_register = '".$this->register."' ". 
+						" AND service_register = '".$this->register."' ".
 						" AND host_register = '1' $search ".
 						" ORDER BY host_name, service_description";
 			$DBRESULT = $this->DB->query($request);
@@ -619,7 +628,6 @@ class CentreonService {
 			}
 			$DBRESULT->free();
 		} else {
-
 			$search = "";
 			if ($search_string != "") {
 				$search = " AND (service_description LIKE '%$search_string%' OR service_alias LIKE '%$search_string%') ";
@@ -649,14 +657,12 @@ class CentreonService {
 
 		if ($this->register) {
 			$request =  " SELECT " .
-					    " service_id, service_description, service_alias, s.command_command_id, ". 
-					    " s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, " .
-						" service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, " .
-						" s.command_command_id_arg, host_id, host_name " . 
+					    " service_id, service_description, service_alias, service_template_model_stm_id, ".
+					    " host_id, host_name " .
 						" FROM service s, host h, host_service_relation hr ".
-						" WHERE s.service_id = hr.service_service_id " . 
+						" WHERE s.service_id = hr.service_service_id " .
 						" AND hr.host_host_id = h.host_id ".
-						" AND service_register = '".$this->register."' ". 
+						" AND service_register = '".$this->register."' ".
 						" AND host_register = '1'".
 						" ORDER BY host_name, service_description";
 			$DBRESULT = $this->DB->query($request);
@@ -664,7 +670,7 @@ class CentreonService {
 				if (!isset($data["command_name"])) {
 					$data["command_name"] = "";
 				}
-				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].";".$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
+				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->getServiceAlias($data["service_template_model_stm_id"], ENT_QUOTES) : "")."\n";
 				$this->exportMacros($data["service_id"], $data["host_id"]);
 				$this->exportProperties($data["service_id"], $data["host_id"]);
 			}
@@ -676,65 +682,119 @@ class CentreonService {
 				if (!isset($data["command_name"])) {
 					$data["command_name"] = "";
 				}
-				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["service_alias"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
+				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->getServiceName($data["service_template_model_stm_id"], ENT_QUOTES) : "")."\n";
+				$this->exportMacros($data["service_id"]);
+				$this->exportProperties($data["service_id"]);
 			}
 			$DBRESULT->free();
 		}
 	}
 
-	private function exportProperties($service_id, $host_id) {
-		$this->exportTP($service_id, "");
-		$this->exportTP($service_id, 2);
-		$this->exportExtInfos($service_id, $host_id, "notes_url", "url");
-		$this->exportExtInfos($service_id, $host_id, "action_url", "urlaction");
-		$this->exportExtInfos($service_id, $host_id, "notes", "notes");
-		$this->exportServiceProperty($service_id, "notification_options");
-		$this->exportCGLinks($host_id, $service_id);
-		$this->exportCctLinks($host_id, $service_id);
+	/**
+	 *
+	 * Export all properties
+	 * @param unknown_type $service_id
+	 * @param unknown_type $host_id
+	 */
+	private function exportProperties($service_id, $host_id = NULL) {
+		$this->exportTP($service_id, "", "check_period", $host_id);
+		$this->exportTP($service_id, 2, "notif_period", $host_id);
+		$this->exportExtInfos($service_id, "notes_url", "url", $host_id);
+		$this->exportExtInfos($service_id, "action_url", "urlaction", $host_id);
+		$this->exportExtInfos($service_id, "notes", "notes", $host_id);
+		$this->exportServiceProperty($service_id, "notification_options", $host_id);
+		$this->exportServiceProperty($service_id, "max_check_attempts", $host_id);
+		$this->exportServiceProperty($service_id, "normal_check_interval", $host_id);
+		$this->exportServiceProperty($service_id, "retry_check_interval", $host_id);
+		$this->exportServiceProperty($service_id, "active_checks_enabled", $host_id);
+		$this->exportServiceProperty($service_id, "passive_checks_enabled", $host_id);
+		$this->exportCGLinks($service_id, $host_id);
+		$this->exportCctLinks($service_id, $host_id);
 	}
-	
+
     /**
      *
      * Export macro of service and templates
      * @param $service_id
      */
-	private function exportMacros($service_id, $host_id) {
+	private function exportMacros($service_id, $host_id = NULL) {
         $request = "SELECT svc_macro_name, svc_macro_value FROM on_demand_macro_service WHERE svc_svc_id = '$service_id'";
         $DBRESULT =& $this->DB->query($request);
         while ($data =& $DBRESULT->fetchRow()) {
-        	print $this->obj.";SETMACRO;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["svc_macro_name"].";".$data["svc_macro_value"]."\n";
+        	$data["svc_macro_name"] = str_replace("\$", '', $data["svc_macro_name"]);
+        	$data["svc_macro_name"] = preg_replace("/\_SERVICE/", '', $data["svc_macro_name"], 1);
+        	if (isset($host_id)) {
+        		print $this->obj.";SETMACRO;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["svc_macro_name"].";".$data["svc_macro_value"]."\n";
+        	} else {
+        		print $this->obj.";SETMACRO;".$this->getServiceName($service_id).";".$data["svc_macro_name"].";".$data["svc_macro_value"]."\n";
+        	}
         }
         $DBRESULT->free();
     }
-	
-   	private function exportServiceProperties($host_id, $properties) {
-		$request = "SELECT service_".$properties." FROM `service` WHERE service_id = '$host_id'";
+
+    /**
+     *
+     * Export service or template property
+     * @param $service_id
+     * @param $properties
+     * @param $host_id
+     */
+   	private function exportServiceProperty($service_id, $properties, $host_id = NULL) {
+		$request = "SELECT service_".$properties." FROM `service` WHERE service_id = '$service_id'";
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($data["service_".$properties]) && $data["service_".$properties] != "") {
- 				print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";$properties;".$data["host_".$properties]."\n";
+ 				if (isset($host_id)) {
+					print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";$properties;".$data["service_".$properties]."\n";
+ 				} else {
+					print $this->obj.";SETPARAM;".$this->getServiceName($service_id).";$properties;".$data["service_".$properties]."\n";
+ 				}
  			}
  		}
  		$DBRESULT->free();
     }
-    
-	private function exportExtInfos($service_id, $host_id, $property, $property_name) {
+
+    /**
+     *
+     * Export extended informations
+     * @param $service_id
+     * @param $property
+     * @param $property_name
+     * @param $host_id
+     */
+	private function exportExtInfos($service_id, $property, $property_name, $host_id = NULL) {
 		$request = "SELECT esi_$property FROM `extended_service_information` WHERE service_service_id = '$host_id'";
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($data["esi_$property"]) && $data["esi_$property"] != "") {
- 				print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";$property_name;".$data["esi_$property"]."\n";
+ 				if (isset($host_id)) {
+ 					print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";$property_name;".$data["esi_$property"]."\n";
+ 				} else {
+ 					print $this->obj.";SETPARAM;;".$this->getServiceName($service_id).";$property_name;".$data["esi_$property"]."\n";
+ 				}
  			}
  		}
  		$DBRESULT->free();
     }
-    
-	private function exportTP($service_id, $type) {
+
+    /**
+     *
+     * Export TP informations
+     * @param unknown_type $service_id
+     * @param unknown_type $type
+     * @param unknown_type $property_name
+     * @param unknown_type $host_id
+     */
+    private function exportTP($service_id, $type, $property_name, $host_id = NULL) {
 		$request = "SELECT timeperiod_tp_id$type FROM `service` WHERE service_id = '$service_id'";
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($data["timeperiod_tp_id$type"]) && $data["timeperiod_tp_id$type"] != 0) {
- 				print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";tpcheck;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
+ 				if (isset($host_id)) {
+					print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";$property_name;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
+ 				} else {
+					print $this->obj.";SETPARAM;".$this->getServiceName($service_id).";$property_name;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
+ 				}
  			}
  		}
  		$DBRESULT->free();
@@ -746,11 +806,15 @@ class CentreonService {
      * @param unknown_type $host_id
      * @param unknown_type $service_id
      */
-    private function exportContactGroup($host_id, $service_id) {
+    private function exportCGLinks($service_id, $host_id = NULL) {
 		$request = "SELECT cg_name FROM contactgroup_service_relation, contactgroup WHERE service_service_id = '$service_id' AND cg_id = contactgroup_cg_id";
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
-			print $this->obj.";SETCG;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["cg_name"]."\n";
+ 			if (isset($host_id)) {
+ 				print $this->obj.";SETCG;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["cg_name"]."\n";
+ 			} else {
+				print $this->obj.";SETCG;".$this->getServiceName($service_id).";".$data["cg_name"]."\n";
+ 			}
  		}
  		$DBRESULT->free();
     }
@@ -761,16 +825,20 @@ class CentreonService {
      * @param unknown_type $host_id
      * @param unknown_type $service_id
      */
-    private function exportContact($host_id, $service_id) {
+    private function exportCctLinks($service_id, $host_id = NULL) {
 		$request = "SELECT contact_name FROM contact_service_relation, contact WHERE service_service_id = '$service_id' AND contact_service_relation.contact_id = contact.contact_id";
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
-			print $this->obj.";SETCCT;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["contact_name"]."\n";
+ 			if (isset($host_id)) {
+ 				print $this->obj.";SETCONTACT;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["contact_name"]."\n";
+ 			} else {
+				print $this->obj.";SETCONTACT;".$this->getServiceName($service_id).";".$data["contact_name"]."\n";
+ 			}
  		}
  		$DBRESULT->free();
     }
-    
-    
+
+
 	/* ***************************************
 	 * Delete a service
 	 */
@@ -939,7 +1007,7 @@ class CentreonService {
 		}
 
 		$info = split(";", $informations);
-		
+
 		if ($this->register) {
 			$return_code = $this->setParamService($info[0], $info[1], $info[2], $info[3]);
 		} else {
@@ -948,7 +1016,18 @@ class CentreonService {
 		return $return_code;
 	}
 
+	/**
+	 *
+	 * add service parameters in DB
+	 * @param unknown_type $host_name
+	 * @param unknown_type $service_description
+	 * @param unknown_type $param
+	 * @param unknown_type $value
+	 */
 	protected function setParamService($host_name, $service_description, $param, $value) {
+
+		$value = trim($value);
+
 		if (isset($this->parameters[$param]) && isset($this->paramTable[$param])) {
 			if ($this->register) {
 				$host_id = $this->host->getHostID(htmlentities($host_name, ENT_QUOTES));
@@ -1028,8 +1107,6 @@ class CentreonService {
 			$contact_id = $this->contact->getContactID($info[1]);
 		}
 
-		print $contact_id;
-		
 		/*
 		 * Check contact IS
 		 */
