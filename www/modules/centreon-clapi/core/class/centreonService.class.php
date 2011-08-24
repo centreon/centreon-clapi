@@ -685,6 +685,7 @@ class CentreonService {
 				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->getServiceName($data["service_template_model_stm_id"], ENT_QUOTES) : "")."\n";
 				$this->exportMacros($data["service_id"]);
 				$this->exportProperties($data["service_id"]);
+				$this->exportTemplateLink($data["service_id"]);
 			}
 			$DBRESULT->free();
 		}
@@ -712,10 +713,25 @@ class CentreonService {
 		$this->exportCctLinks($service_id, $host_id);
 	}
 
+	/**
+	 *
+	 * Export host temmplate links
+	 * @param integer $service_id
+	 */
+	private function exportTemplateLink($service_id) {
+		$request = "SELECT host_host_id, host_name FROM host_service_relation, host WHERE host_host_id = host_id AND service_service_id = '".$service_id."'";
+		$DBRESULT = $this->DB->query($request);
+        while ($data = $DBRESULT->fetchRow()) {
+			print $this->obj.";SETHOST;".$this->getServiceName($service_id).";".$data["host_name"]."\n";
+        }
+        $DBRESULT->free();
+	}
+
     /**
      *
      * Export macro of service and templates
      * @param $service_id
+     * @param $host_id
      */
 	private function exportMacros($service_id, $host_id = NULL) {
         $request = "SELECT svc_macro_name, svc_macro_value FROM on_demand_macro_service WHERE svc_svc_id = '$service_id'";

@@ -460,9 +460,9 @@ class CentreonAPI {
 	public function export() {
 		$this->initAllObjects();
 		$this->objectTable['CMD']->export();
-		$this->objectTable['HG']->export();
 		$this->objectTable['CONTACT']->export();
 		$this->objectTable['CG']->export();
+		$this->objectTable['HG']->export();
 		$this->objectTable['HTPL']->export();
 		$this->objectTable['HOST']->export();
 		$this->objectTable['STPL']->export();
