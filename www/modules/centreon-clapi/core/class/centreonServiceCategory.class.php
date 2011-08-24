@@ -39,6 +39,9 @@
 class CentreonServiceCategory {
 	private $DB;
 	private $access;
+	private $obj;
+	private $svc;
+	private $host;
 
 	public function __construct($DB) {
 		$this->DB = $DB;
@@ -48,6 +51,9 @@ class CentreonServiceCategory {
 		 */
 		$this->access = new CentreonACLResources($this->DB);
 
+		$this->obj = "SC";
+		$this->host = new CentreonHost($this->DB, "HOST");
+		$this->svc = new CentreonService($this->DB, "SERVICE");
 	}
 
 	/*
@@ -190,6 +196,38 @@ class CentreonServiceCategory {
 			$DBRESULT->free();
 		}
 	}
+
+	/**
+	 *
+	 * Export Service categories informations.
+	 */
+	public function export() {
+		$request = "SELECT * FROM service_categories ORDER BY sc_name";
+		$DBRESULT = $this->DB->query($request);
+		while ($data = $DBRESULT->fetchRow()) {
+			print $this->obj.";ADD;".$data["sc_name"].";".$data["sc_description"]."\n";
+			$this->exportChild($data["sc_id"]);
+		}
+		$DBRESULT->free();
+	}
+
+	/**
+	 *
+	 * export child links
+	 * @param $sc_id
+	 */
+	private function exportChild($sc_id) {
+		$request = "SELECT service_service_id FROM `service_categories_relation`, service WHERE sc_id = '".$sc_id."' AND service_service_id = service_id AND service_register = '1'";
+		$DBRESULT = $this->DB->query($request);
+		while ($data = $DBRESULT->fetchRow()) {
+			$hostList = $this->svc->getServiceHosts($data["service_service_id"]);
+			foreach ($hostList as $host_id) {
+				print $this->obj.";ADDCHILD;".$this->host->getHostName($host_id).",".$this->svc->getServiceName($data["service_service_id"], 1)."\n";
+			}
+		}
+		$DBRESULT->free();
+	}
+
 
 	/* ****************************************
 	 * Add Action
