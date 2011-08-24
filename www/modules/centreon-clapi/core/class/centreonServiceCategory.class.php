@@ -217,12 +217,16 @@ class CentreonServiceCategory {
 	 * @param $sc_id
 	 */
 	private function exportChild($sc_id) {
-		$request = "SELECT service_service_id FROM `service_categories_relation`, service WHERE sc_id = '".$sc_id."' AND service_service_id = service_id AND service_register = '1'";
+		$request = "SELECT service_service_id, service_register FROM `service_categories_relation`, service WHERE sc_id = '".$sc_id."' AND service_service_id = service_id";
 		$DBRESULT = $this->DB->query($request);
 		while ($data = $DBRESULT->fetchRow()) {
 			$hostList = $this->svc->getServiceHosts($data["service_service_id"]);
 			foreach ($hostList as $host_id) {
-				print $this->obj.";ADDCHILD;".$this->host->getHostName($host_id).",".$this->svc->getServiceName($data["service_service_id"], 1)."\n";
+				if (isset($data["service_register"]) && $data["service_register"] == 1) {
+					print $this->obj.";ADDCHILD;".$this->host->getHostName($host_id).";".$this->svc->getServiceName($data["service_service_id"], 1)."\n";
+				} else {
+					print $this->obj.";ADDCHILD;".$this->svc->getServiceName($data["service_service_id"], 1)."\n";
+				}
 			}
 		}
 		$DBRESULT->free();
