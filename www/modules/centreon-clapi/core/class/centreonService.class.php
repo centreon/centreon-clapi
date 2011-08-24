@@ -52,6 +52,9 @@ class CentreonService {
 	var $parameters;
 	var $paramTable;
 
+	private $_cmd;
+	private $_timeperiod;
+	
 	public function __construct($DB, $objName) {
 		$this->DB = $DB;
 		$this->register = 1;
@@ -82,6 +85,9 @@ class CentreonService {
 		require_once "./class/centreonContactGroup.class.php";
 		$this->cg = new CentreonContactGroup($this->DB, "CG");
 
+		$this->_timeperiod = new CentreonTimePeriod($this->DB);
+		$this->_cmd = new CentreonCommand($this->DB);
+		
 		/*
 		 * Change buffers
 		 */
@@ -634,9 +640,137 @@ class CentreonService {
 			}
 			$DBRESULT->free();
 		}
-
 	}
 
+	/* ***************************************
+	 * Export all services
+	 */
+	public function export() {
+
+		if ($this->register) {
+			$request =  " SELECT " .
+					    " service_id, service_description, service_alias, s.command_command_id, ". 
+					    " s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, " .
+						" service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, " .
+						" s.command_command_id_arg, host_id, host_name " . 
+						" FROM service s, host h, host_service_relation hr ".
+						" WHERE s.service_id = hr.service_service_id " . 
+						" AND hr.host_host_id = h.host_id ".
+						" AND service_register = '".$this->register."' ". 
+						" AND host_register = '1'".
+						" ORDER BY host_name, service_description";
+			$DBRESULT = $this->DB->query($request);
+			while ($data = $DBRESULT->fetchRow()) {
+				if (!isset($data["command_name"])) {
+					$data["command_name"] = "";
+				}
+				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].";".$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
+				$this->exportMacros($data["service_id"], $data["host_id"]);
+				$this->exportProperties($data["service_id"], $data["host_id"]);
+			}
+			$DBRESULT->free();
+		} else {
+			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg FROM service s WHERE service_register = '".$this->register."' ORDER BY service_description, service_alias";
+			$DBRESULT = $this->DB->query($request);
+			while ($data = $DBRESULT->fetchRow()) {
+				if (!isset($data["command_name"])) {
+					$data["command_name"] = "";
+				}
+				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["service_alias"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
+			}
+			$DBRESULT->free();
+		}
+	}
+
+	private function exportProperties($service_id, $host_id) {
+		$this->exportTP($service_id, "");
+		$this->exportTP($service_id, 2);
+		$this->exportExtInfos($service_id, $host_id, "notes_url", "url");
+		$this->exportExtInfos($service_id, $host_id, "action_url", "urlaction");
+		$this->exportExtInfos($service_id, $host_id, "notes", "notes");
+		$this->exportServiceProperty($service_id, "notification_options");
+		$this->exportCGLinks($host_id, $service_id);
+		$this->exportCctLinks($host_id, $service_id);
+	}
+	
+    /**
+     *
+     * Export macro of service and templates
+     * @param $service_id
+     */
+	private function exportMacros($service_id, $host_id) {
+        $request = "SELECT svc_macro_name, svc_macro_value FROM on_demand_macro_service WHERE svc_svc_id = '$service_id'";
+        $DBRESULT =& $this->DB->query($request);
+        while ($data =& $DBRESULT->fetchRow()) {
+        	print $this->obj.";SETMACRO;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["svc_macro_name"].";".$data["svc_macro_value"]."\n";
+        }
+        $DBRESULT->free();
+    }
+	
+   	private function exportServiceProperties($host_id, $properties) {
+		$request = "SELECT service_".$properties." FROM `service` WHERE service_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["service_".$properties]) && $data["service_".$properties] != "") {
+ 				print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";$properties;".$data["host_".$properties]."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+    
+	private function exportExtInfos($service_id, $host_id, $property, $property_name) {
+		$request = "SELECT esi_$property FROM `extended_service_information` WHERE service_service_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["esi_$property"]) && $data["esi_$property"] != "") {
+ 				print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";$property_name;".$data["esi_$property"]."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+    
+	private function exportTP($service_id, $type) {
+		$request = "SELECT timeperiod_tp_id$type FROM `service` WHERE service_id = '$service_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["timeperiod_tp_id$type"]) && $data["timeperiod_tp_id$type"] != 0) {
+ 				print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";tpcheck;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+ 	/**
+     *
+     * Export contactgroup of an particular service
+     * @param unknown_type $host_id
+     * @param unknown_type $service_id
+     */
+    private function exportContactGroup($host_id, $service_id) {
+		$request = "SELECT cg_name FROM contactgroup_service_relation, contactgroup WHERE service_service_id = '$service_id' AND cg_id = contactgroup_cg_id";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+			print $this->obj.";SETCG;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["cg_name"]."\n";
+ 		}
+ 		$DBRESULT->free();
+    }
+
+   	/**
+     *
+     * Export contactlist of an particular service
+     * @param unknown_type $host_id
+     * @param unknown_type $service_id
+     */
+    private function exportContact($host_id, $service_id) {
+		$request = "SELECT contact_name FROM contact_service_relation, contact WHERE service_service_id = '$service_id' AND contact_service_relation.contact_id = contact.contact_id";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+			print $this->obj.";SETCCT;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["contact_name"]."\n";
+ 		}
+ 		$DBRESULT->free();
+    }
+    
+    
 	/* ***************************************
 	 * Delete a service
 	 */
