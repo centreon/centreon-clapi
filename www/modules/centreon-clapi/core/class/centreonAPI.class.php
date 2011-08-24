@@ -381,6 +381,7 @@ class CentreonAPI {
 	 * Import Scenario file
 	 */
 	public function import($filename) {
+
 		$this->fileExists($filename);
 
 		/*
@@ -390,12 +391,66 @@ class CentreonAPI {
 		if ($handle) {
 			while ($string = fgets($handle)) {
 				$tab = preg_split('/;/', $string);
-				$this->object = trim($tab[0]);
-				$this->action = trim($tab[1]);
-				$this->variables = substr($string, strlen($tab[0].";".$tab[1].";"));
-				$this->launchAction();
+				if (strlen(trim($string)) != 0) {
+					$this->object = trim($tab[0]);
+					$this->action = trim($tab[1]);
+					$this->variables = trim(substr($string, strlen($tab[0].";".$tab[1].";")));
+					if ($this->debug == 1) {
+						print "Object : ".$this->object."\n";
+						print "Action : ".$this->action."\n";
+						print "VARIABLES : ".$this->variables."\n\n";
+					}
+					$this->launchActionForImport();
+				}
 			}
 			fclose($handle);
+		}
+	}
+
+	public function launchActionForImport() {
+		$action = strtoupper($this->action);
+ 		/**
+ 		 * Debug
+ 		 */
+ 		if ($this->debug) {
+ 			print "DEBUG : $action\n";
+ 		}
+
+ 		/**
+ 		 * Check method availability before using it.
+ 		 */
+ 		if ($this->object) {
+			/**
+			 * Require needed class
+			 */
+			$this->requireLibs($this->object);
+
+			/**
+			 * Check class declaration
+			 */
+			if (isset($this->relationObject[$this->object])) {
+           		$objName = "centreon".$this->relationObject[$this->object];
+			} else {
+            	$objName = "";
+            }
+            if (!isset($this->relationObject[$this->object]) || !class_exists($objName)) {
+            	print "Object not found in Centreon API.\n";
+           		return 1;
+            }
+			$obj = new $objName($this->DB, $this->object);
+			if (method_exists($obj, $action)) {
+				$this->return_code = $obj->$action($this->variables);
+			} else {
+				print "Method not implemented into Centreon API.\n";
+				return 1;
+			}
+		} else {
+			if (method_exists($this, $action)) {
+				$this->return_code = $this->$action();
+			} else {
+				print "Method not implemented into Centreon API.\n";
+				$this->return_code = 1;
+			}
 		}
 	}
 
@@ -409,10 +464,10 @@ class CentreonAPI {
 		$this->objectTable['SG']->export();
 		$this->objectTable['CONTACT']->export();
 		$this->objectTable['CG']->export();*/
-		$this->objectTable['HTPL']->export();
-		$this->objectTable['HOST']->export();
+		//$this->objectTable['HTPL']->export();
+		//$this->objectTable['HOST']->export();
 		//$this->objectTable['STPL']->export();
-		//$this->objectTable['SVC']->export();
+		$this->objectTable['SERVICE']->export();
 	}
 
 	/**
