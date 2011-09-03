@@ -87,6 +87,17 @@ class CentreonHost {
 	}
 
 	/**
+	 * 
+	 * Get Version of Centreon 
+	 */
+	protected function getVersion() {
+		$request = "SELECT * FROM informations";
+		$DBRESULT = $this->DB->query($request);
+		$info = $DBRESULT->fetchRow();
+		return $info["value"]; 
+	}
+	
+	/**
 	 *
 	 * Set var in order to known if object is a template or not.
 	 */
@@ -738,7 +749,9 @@ class CentreonHost {
      */
     private function exportProperties($host_id) {
 		$this->exportHostProperties($host_id, "check_interval");
-		$this->exportHostProperties($host_id, "retry_check_interval");
+		if (strncmp($this->getVersion(), "2.1", 3)) {
+			$this->exportHostProperties($host_id, "retry_check_interval");
+		}
 		$this->exportHostProperties($host_id, "max_check_attempts");
 		$this->exportURL($host_id);
 		$this->exportURLAction($host_id);
