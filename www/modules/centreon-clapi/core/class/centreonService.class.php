@@ -40,7 +40,8 @@ class CentreonService {
 
 	var $DB;
 	private $access;
-
+	private $version;
+	
 	var $register;
 	var $flag;
 	var $object;
@@ -54,10 +55,10 @@ class CentreonService {
 
 	private $_cmd;
 	private $_timeperiod;
-
+	
 	public $obj;
 
-	public function __construct($DB, $objName) {
+	public function __construct($DB, $objName, $version = null) {
 		$this->DB = $DB;
 		$this->register = 1;
 		$this->object = $objName;
@@ -98,8 +99,25 @@ class CentreonService {
 		$this->setParametersList();
 		$this->setParametersTable();
 		$this->setFlags();
+		
+		if ($version == null) {
+			$this->version = $this->getVersion();
+		} else {
+			$this->version = $version;
+		}		
 	}
 
+	/**
+	 * 
+	 * Get Version of Centreon 
+	 */
+	protected function getVersion() {
+		$request = "SELECT * FROM informations";
+		$DBRESULT = $this->DB->query($request);
+		$info = $DBRESULT->fetchRow();
+		return $info["value"]; 
+	}
+	
 	protected function setFlags() {
 		$this->flag = array(0 => "No", 1 => "Yes", 2 => "Default");
 	}
@@ -315,9 +333,7 @@ class CentreonService {
 	}
 
 	protected function encode($str) {
-		global $version;
-
-		if (!strncmp($version, "2.1", 3)) {
+		if (!strncmp($this->version, "2.1", 3)) {
 			$str = str_replace("/", "#S#", $str);
 			$str = str_replace("\\", "#BS#", $str);
 		}
@@ -325,9 +341,7 @@ class CentreonService {
 	}
 
 	protected function decode($str) {
-		global $version;
-
-		if (!strncmp($version, "2.1", 3)) {
+		if (!strncmp($this->version, "2.1", 3)) {
 			$str = str_replace("#S#", "/", $str);
 			$str = str_replace("#BS#", "\\", $str);
 		}
@@ -670,19 +684,19 @@ class CentreonService {
 				if (!isset($data["command_name"])) {
 					$data["command_name"] = "";
 				}
-				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->getServiceAlias($data["service_template_model_stm_id"], ENT_QUOTES) : "")."\n";
+				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceAlias($data["service_template_model_stm_id"], ENT_QUOTES)) : "")."\n";
 				$this->exportMacros($data["service_id"], $data["host_id"]);
 				$this->exportProperties($data["service_id"], $data["host_id"]);
 			}
 			$DBRESULT->free();
 		} else {
-			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg FROM service s WHERE service_register = '".$this->register."' ORDER BY service_description, service_alias";
+			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg, s.service_template_model_stm_id FROM service s WHERE service_register = '".$this->register."' ORDER BY service_description, service_alias";
 			$DBRESULT = $this->DB->query($request);
 			while ($data = $DBRESULT->fetchRow()) {
 				if (!isset($data["command_name"])) {
 					$data["command_name"] = "";
 				}
-				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->getServiceName($data["service_template_model_stm_id"], ENT_QUOTES) : "")."\n";
+				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceName($data["service_template_model_stm_id"], ENT_QUOTES)) : "")."\n";
 				$this->exportMacros($data["service_id"]);
 				$this->exportProperties($data["service_id"]);
 				$this->exportTemplateLink($data["service_id"]);
@@ -722,7 +736,7 @@ class CentreonService {
 		$request = "SELECT host_host_id, host_name FROM host_service_relation, host WHERE host_host_id = host_id AND service_service_id = '".$service_id."'";
 		$DBRESULT = $this->DB->query($request);
         while ($data = $DBRESULT->fetchRow()) {
-			print $this->obj.";SETHOST;".$this->getServiceName($service_id).";".$data["host_name"]."\n";
+			print $this->obj.";SETHOST;".$this->decode($this->getServiceName($service_id)).";".$this->decode($data["host_name"])."\n";
         }
         $DBRESULT->free();
 	}
@@ -740,9 +754,9 @@ class CentreonService {
         	$data["svc_macro_name"] = str_replace("\$", '', $data["svc_macro_name"]);
         	$data["svc_macro_name"] = preg_replace("/\_SERVICE/", '', $data["svc_macro_name"], 1);
         	if (isset($host_id)) {
-        		print $this->obj.";SETMACRO;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["svc_macro_name"].";".$data["svc_macro_value"]."\n";
+        		print $this->obj.";SETMACRO;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";".$data["svc_macro_name"].";".$data["svc_macro_value"]."\n";
         	} else {
-        		print $this->obj.";SETMACRO;".$this->getServiceName($service_id).";".$data["svc_macro_name"].";".$data["svc_macro_value"]."\n";
+        		print $this->obj.";SETMACRO;".$this->decode($this->getServiceName($service_id)).";".$data["svc_macro_name"].";".$data["svc_macro_value"]."\n";
         	}
         }
         $DBRESULT->free();
@@ -761,9 +775,9 @@ class CentreonService {
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($data["service_".$properties]) && $data["service_".$properties] != "") {
  				if (isset($host_id)) {
-					print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";$properties;".$data["service_".$properties]."\n";
+					print $this->obj.";SETPARAM;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";$properties;".$data["service_".$properties]."\n";
  				} else {
-					print $this->obj.";SETPARAM;".$this->getServiceName($service_id).";$properties;".$data["service_".$properties]."\n";
+					print $this->obj.";SETPARAM;".$this->decode($this->getServiceName($service_id)).";$properties;".$data["service_".$properties]."\n";
  				}
  			}
  		}
@@ -784,9 +798,9 @@ class CentreonService {
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($data["esi_$property"]) && $data["esi_$property"] != "") {
  				if (isset($host_id)) {
- 					print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";$property_name;".$data["esi_$property"]."\n";
+ 					print $this->obj.";SETPARAM;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";$property_name;".$data["esi_$property"]."\n";
  				} else {
- 					print $this->obj.";SETPARAM;;".$this->getServiceName($service_id).";$property_name;".$data["esi_$property"]."\n";
+ 					print $this->obj.";SETPARAM;;".$this->decode($this->getServiceName($service_id)).";$property_name;".$data["esi_$property"]."\n";
  				}
  			}
  		}
@@ -807,9 +821,9 @@ class CentreonService {
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($data["timeperiod_tp_id$type"]) && $data["timeperiod_tp_id$type"] != 0) {
  				if (isset($host_id)) {
-					print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";$property_name;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
+					print $this->obj.";SETPARAM;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";$property_name;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
  				} else {
-					print $this->obj.";SETPARAM;".$this->getServiceName($service_id).";$property_name;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
+					print $this->obj.";SETPARAM;".$this->decode($this->getServiceName($service_id)).";$property_name;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
  				}
  			}
  		}
@@ -827,9 +841,9 @@ class CentreonService {
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($host_id)) {
- 				print $this->obj.";SETCG;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["cg_name"]."\n";
+ 				print $this->obj.";SETCG;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";".$data["cg_name"]."\n";
  			} else {
-				print $this->obj.";SETCG;".$this->getServiceName($service_id).";".$data["cg_name"]."\n";
+				print $this->obj.";SETCG;".$this->decode($this->getServiceName($service_id)).";".$data["cg_name"]."\n";
  			}
  		}
  		$DBRESULT->free();
@@ -846,9 +860,9 @@ class CentreonService {
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($host_id)) {
- 				print $this->obj.";SETCONTACT;" . $this->host->getHostName($host_id) . ";".$this->getServiceName($service_id).";".$data["contact_name"]."\n";
+ 				print $this->obj.";SETCONTACT;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";".$data["contact_name"]."\n";
  			} else {
-				print $this->obj.";SETCONTACT;".$this->getServiceName($service_id).";".$data["contact_name"]."\n";
+				print $this->obj.";SETCONTACT;".$this->decode($this->getServiceName($service_id)).";".$data["contact_name"]."\n";
  			}
  		}
  		$DBRESULT->free();
