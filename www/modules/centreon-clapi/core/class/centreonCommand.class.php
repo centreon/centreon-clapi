@@ -48,6 +48,7 @@ class CentreonCommand {
 	private $type;
 	private $params;
 	private $graphTemplates;
+	private $version;
 
 	/**
 	 *
@@ -60,8 +61,20 @@ class CentreonCommand {
 		$this->type = array("notif" => 1, "check" => 2, "misc" => 3, 1 => "notif", 2 => "check", 3 => "misc");
 		$this->params = array("name" => 1, "line" => 1, "example" => 1, "type" => 1, "template" => 1);
 		$this->graphTemplates = array('id' => array(0 => "", NULL => ""), 'name' => array(0 => "", NULL => ""));
+		$this->version = $this->getVersion();
 	}
 
+	/**
+	 * 
+	 * Get Version of Centreon 
+	 */
+	protected function getVersion() {
+		$request = "SELECT * FROM informations";
+		$DBRESULT = $this->DB->query($request);
+		$info = $DBRESULT->fetchRow();
+		return $info["value"]; 
+	}
+	
 	/**
 	 * Check command existance
 	 */
@@ -88,9 +101,7 @@ class CentreonCommand {
 	 * @param unknown_type $str
 	 */
 	protected function decode($str) {
-		global $version;
-
-		if (!strncmp($version, "2.1", 3)) {
+		if (!strncmp($this->version, "2.1", 3)) {
 			$str = str_replace("#S#", "/", $str);
 			$str = str_replace("#BS#", "\\", $str);
 			$str = str_replace("#BR#", "\n", $str);
@@ -105,9 +116,7 @@ class CentreonCommand {
 	 * @param unknown_type $name
 	 */
 	protected function encode($name) {
-		global $version;
-
-		if (!strncmp($version, "2.1", 3)) {
+		if (!strncmp($this->version, "2.1", 3)) {
 			$name = str_replace("$", "\$", $name);
 			$name = str_replace("/", "#S#", htmlentities($name, ENT_QUOTES));
 			$name = str_replace("\\", "#BS#", $name);
