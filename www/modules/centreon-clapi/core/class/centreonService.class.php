@@ -179,9 +179,9 @@ class CentreonService {
 
 	protected function checkNameformat($name) {
 		if ($this->register) {
-			$len = 40;
+			$len = 45;
 		} else {
-			$len = 50;
+			$len = 55;
 		}
 
 		if (strlen($name) > $len) {
