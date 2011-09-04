@@ -532,7 +532,7 @@ class CentreonService {
 			if (preg_match("/^[0-9]*$/", $information["template"], $matches)) {
 				$template = $information["template"];
 			} else {
-				$request = "SELECT service_id FROM service WHERE service_description LIKE '".$information["template"]."' LIMIT 1";
+				$request = "SELECT service_id FROM service WHERE service_description LIKE '".$information["template"]."' AND service_register = '".$this->register."' LIMIT 1";
 				$DBRESULT = $this->DB->query($request);
 				$data = $DBRESULT->fetchRow();
 				$template = $data["service_id"];
