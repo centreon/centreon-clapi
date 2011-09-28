@@ -195,7 +195,7 @@ class CentreonServiceGroup {
 			$request = "SELECT host_host_id, service_service_id FROM servicegroup_relation WHERE servicegroup_sg_id = '".$data["sg_id"]."'";
 			$DBRESULT2 =& $this->DB->query($request);
 			while ($m =& $DBRESULT2->fetchRow()) {
-				print "SG;ADDCHILD;".html_entity_decode($data["sg_name"], ENT_QUOTES).";".$host->getHostName($m["host_host_id"]).",".$svc->getServiceName($m["service_service_id"], 1)."\n";
+				print "SG;ADDCHILD;".html_entity_decode($data["sg_name"], ENT_QUOTES).";".$host->getHostName($m["host_host_id"]).";".$svc->getServiceName($m["service_service_id"], 1)."\n";
 			}
 			$DBRESULT2->free();
 		}
@@ -302,6 +302,9 @@ class CentreonServiceGroup {
 		}
 
 		$elem = split(";", $options);
+		if (!isset($elem[2])) {
+			$elem[2] = "";
+		}
 		return $this->addChildServiceGroup($elem[0], $elem[1], $elem[2]);
 	}
 

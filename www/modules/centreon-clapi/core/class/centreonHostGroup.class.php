@@ -183,12 +183,14 @@ class CentreonHostGroup {
 		while ($data =& $DBRESULT->fetchRow()) {
 			print "HG;ADD;".html_entity_decode($data["hg_name"], ENT_QUOTES).";".html_entity_decode($data["hg_alias"], ENT_QUOTES)."\n";
 			$members = "";
+			/**
 			$request = "SELECT host_name FROM host, hostgroup_relation WHERE hostgroup_hg_id = '".$data["hg_id"]."' AND host_host_id = host_id ORDER BY host_name";
 			$DBRESULT2 =& $this->DB->query($request);
 			while ($m =& $DBRESULT2->fetchRow()) {
 				print "HG;ADDCHILD;".html_entity_decode($data["hg_name"], ENT_QUOTES).";".html_entity_decode($m["host_name"], ENT_QUOTES)."\n";
 			}
 			$DBRESULT2->free();
+			*/
 			$i++;
 		}
 		$DBRESULT->free();

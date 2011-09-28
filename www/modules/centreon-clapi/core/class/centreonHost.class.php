@@ -87,16 +87,16 @@ class CentreonHost {
 	}
 
 	/**
-	 * 
-	 * Get Version of Centreon 
+	 *
+	 * Get Version of Centreon
 	 */
 	protected function getVersion() {
 		$request = "SELECT * FROM informations";
 		$DBRESULT = $this->DB->query($request);
 		$info = $DBRESULT->fetchRow();
-		return $info["value"]; 
+		return $info["value"];
 	}
-	
+
 	/**
 	 *
 	 * Set var in order to known if object is a template or not.
@@ -686,7 +686,7 @@ class CentreonHost {
             $request = "SELECT host_id, host_address, host_name, host_alias, ns.name AS poller FROM host, nagios_server ns , ns_host_relation nhr WHERE host.host_id = nhr.host_host_id AND nhr.nagios_server_id AND ns.id = nhr.nagios_server_id AND host_register = '".$this->register."' ORDER BY host_name";
             $DBRESULT =& $this->DB->query($request);
             while ($data =& $DBRESULT->fetchRow()) {
-                print $this->obj.";ADD;".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].($this->register ? ";".$data["poller"].";".$this->getTemplateList($data["host_id"]).";".$this->getHostGroupList($data["host_id"]) : "")."\n";
+                print $this->obj.";ADD;".$this->decode($data["host_name"]).";".$data["host_alias"].";".$data["host_address"].";".$this->getTemplateList($data["host_id"]).";".$data["poller"].";".$this->getHostGroupList($data["host_id"])."\n";
                 $this->exportParents($data["host_id"]);
                 $this->exportMacros($data["host_id"]);
                 $this->exportNotes($data["host_id"]);
@@ -761,6 +761,11 @@ class CentreonHost {
 		$this->exportTP($host_id, 2);
 		$this->exportCMD($host_id);
 		$this->exportCMDArgs($host_id);
+		$this->exportHostProperties($host_id, "notification_interval");
+		$this->exportHostProperties($host_id, "notification_options");
+    	$this->exportHostProperties($host_id, "notifications_enabled");
+    	$this->exportHostProperties($host_id, "active_checks_enabled");
+    	$this->exportHostProperties($host_id, "passive_checks_enabled");
     }
 
     /**
@@ -871,7 +876,7 @@ class CentreonHost {
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($data["timeperiod_tp_id$type"]) && $data["timeperiod_tp_id$type"] != 0) {
- 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";tpcheck;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";".($type == '' ? "tpcheck" : "notifcheck").";".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
  			}
  		}
  		$DBRESULT->free();
@@ -902,9 +907,7 @@ class CentreonHost {
 		$request = "SELECT command_command_id_arg1 FROM `host` WHERE host_id = '$host_id'";
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
- 			if (isset($data["command_command_id_arg1"]) && $data["command_command_id_arg1"] != 0) {
- 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";check_command_args;".$this->_cmd->getCommandName($data["command_command_id_arg1"])."\n";
- 			}
+			print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";check_command_args;".$data["command_command_id_arg1"]."\n";
  		}
  		$DBRESULT->free();
     }
@@ -1094,6 +1097,17 @@ class CentreonHost {
 			"community" => "host",
 			"version" => "host",
 			"tpcheck" => "host",
+			"notifcheck" => "host",
+			"check_command" => "host",
+			"check_command_args" => "host",
+			"max_check_attempts" => "host",
+			"check_interval" => "host",
+			"retry_check_interval" => "host",
+			"notification_interval" => "host",
+			"notification_options" => "host",
+			"notifications_enabled" => "host",
+			"active_checks_enabled" => "host",
+			"passive_checks_enabled" => "host",
 			"url" => "extended_host_information",
 			"actionurl" => "extended_host_information",
 		);
@@ -1108,6 +1122,17 @@ class CentreonHost {
 			"community" => "host_snmp_community",
 			"version" => "host_snmp_version",
 			"tpcheck" => "timeperiod_tp_id",
+			"notifcheck" => "timeperiod_tp_id2",
+			"check_command" => "command_command_id",
+			"check_command_args" => "command_command_id_arg1",
+			"max_check_attempts" => "host_max_check_attempts",
+			"check_interval" => "host_check_interval",
+			"retry_check_interval" => "host_retry_check_interval",
+			"notification_interval" => "host_notification_interval",
+			"notification_options" => "host_notification_options",
+			"notifications_enabled" => "host_notifications_enabled",
+			"active_checks_enabled" => "host_active_checks_enabled",
+			"passive_checks_enabled" => "host_passive_checks_enabled",
 			"url" => "ehi_notes_url",
 			"actionurl" => "ehi_action_url",
 		);
@@ -1117,14 +1142,14 @@ class CentreonHost {
 		 */
 		$host_id_field = array("host" => "host_id", "extended_host_information" => "host_host_id");
 		if (!isset($tabName[$parameter])) {
-			print "Unknown parameter for host.\n";
+			print "Unknown parameter '$parameter' for host.\n";
 			return 1;
 		}
 
 		/**
 		 * Check timeperiod case
 		 */
-		if ($parameter == "tpcheck") {
+		if ($parameter == "tpcheck" || $parameter == "notifcheck") {
 			$request = "SELECT tp_id FROM timeperiod WHERE tp_name LIKE '".htmlentities($value, ENT_QUOTES)."'";
 			$DBRESULT =& $this->DB->query($request);
 			$data = $DBRESULT->fetchRow();
@@ -1141,6 +1166,16 @@ class CentreonHost {
 			$DBRESULT =& $this->DB->query($request);
 			$data = $DBRESULT->fetchRow();
 			return $this->setPoller($host_id, $data["id"]);
+		}
+
+		/**
+		 * Check command case
+		 */
+		if ($parameter == "check_command") {
+			$request = "SELECT command_id FROM command WHERE command_name LIKE '".htmlentities($value, ENT_QUOTES)."'";
+			$DBRESULT =& $this->DB->query($request);
+			$data = $DBRESULT->fetchRow();
+			$value = $data["command_id"];
 		}
 
 		if ($parameter == "name") {

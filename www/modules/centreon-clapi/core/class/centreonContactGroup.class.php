@@ -102,7 +102,7 @@ class CentreonContactGroup {
 	}
 
 	protected function checkRequestStatus() {
-		if (PEAR::isError($this->privatePearDB)) {
+		if (PEAR::isError($this->DB)) {
 			return 1;
 		} else {
 			return 0;

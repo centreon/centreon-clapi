@@ -202,7 +202,7 @@ class CentreonContact {
 	 * Export all contacts
 	 */
 	public function export() {
-		$request = "SELECT contact_id, contact_name, contact_alias, contact_email, contact_passwd, contact_admin, contact_oreon, contact_lang, contact_auth_type, contact_host_notification_options, contact_service_notification_options, timeperiod_tp_id, timeperiod_tp_id2 FROM contact ORDER BY contact_name";
+		$request = "SELECT contact_id, contact_name, contact_activate, contact_alias, contact_email, contact_passwd, contact_admin, contact_oreon, contact_lang, contact_auth_type, contact_host_notification_options, contact_service_notification_options, timeperiod_tp_id, timeperiod_tp_id2 FROM contact ORDER BY contact_name";
 		$DBRESULT =& $this->DB->query($request);
 		while ($data =& $DBRESULT->fetchRow()) {
 			print "CONTACT;ADD;".html_entity_decode($data["contact_name"], ENT_QUOTES).";".html_entity_decode($data["contact_alias"], ENT_QUOTES).";".html_entity_decode($data["contact_email"], ENT_QUOTES).";{MD5}".html_entity_decode($data["contact_passwd"], ENT_QUOTES).";".html_entity_decode($data["contact_admin"], ENT_QUOTES).";".html_entity_decode($data["contact_oreon"], ENT_QUOTES).";".html_entity_decode($data["contact_lang"], ENT_QUOTES).";".html_entity_decode($data["contact_auth_type"], ENT_QUOTES)."\n";
@@ -212,9 +212,12 @@ class CentreonContact {
 			if (isset($data["timeperiod_tp_id2"]))
 				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";servicenotifperiod;".html_entity_decode($this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id2"]), ENT_QUOTES)."\n";
 			if (isset($data["contact_host_notification_options"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";hostnotifoptions;".html_entity_decode($data["contact_host_notification_options"], ENT_QUOTES)."\n";
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";hostnotifopt;".html_entity_decode($data["contact_host_notification_options"], ENT_QUOTES)."\n";
 			if (isset($data["contact_host_notification_options"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";servicenotifoptions;".html_entity_decode($data["contact_host_notification_options"], ENT_QUOTES)."\n";
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";servicenotifopt;".html_entity_decode($data["contact_host_notification_options"], ENT_QUOTES)."\n";
+
+			if (isset($data["contact_activate"]))
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";enable;".html_entity_decode($data["contact_activate"], ENT_QUOTES)."\n";
 
 			/*
 			 * Host Command
@@ -441,9 +444,14 @@ class CentreonContact {
         $conversionTable["language"] = "contact_language";
         $conversionTable["admin"] = "contact_admin";
         $conversionTable["authtype"] = "contact_auth_type";
+        $conversionTable["enable"] = "contact_activate";
 
         $conversionTable["hostnotifopt"] = "contact_host_notification_options";
+ 		$conversionTable["hostnotifoptions"] = "contact_host_notification_options";
         $conversionTable["servicenotifopt"] = "contact_service_notification_options";
+        $conversionTable["servicenotifoptions"] = "contact_service_notification_options";
+        $conversionTable["svcnotifopt"] = "contact_service_notification_options";
+        $conversionTable["svcnotifoptions"] = "contact_service_notification_options";
 
         if ($data[1] == "password") {
         	$data[2] = md5($data[2]);
@@ -453,8 +461,7 @@ class CentreonContact {
          * Update
          */
         $query = "UPDATE contact SET ".htmlentities($conversionTable[$data[1]], ENT_QUOTES)." = '".htmlentities($data[2], ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
-		print $query;
-        $this->DB->query($query);
+		$this->DB->query($query);
         return 0;
 	}
 
@@ -501,10 +508,25 @@ class CentreonContact {
                 case "authtype":
                     return $this->_setParamCommand($options);
                     break;
+                case "enable":
+                    return $this->_setParamCommand($options);
+                    break;
                 case "hostnotifopt":
                     return $this->_setParamCommand($options);
                     break;
+                case "hostnotifoptions":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "svcnotifopt":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "svcnotifoptions":
+                    return $this->_setParamCommand($options);
+                    break;
                 case "servicenotifopt":
+                    return $this->_setParamCommand($options);
+                    break;
+                case "servicenotifoptions":
                     return $this->_setParamCommand($options);
                     break;
                 case "hostnotifcmd":
@@ -513,10 +535,16 @@ class CentreonContact {
                 case "svcnotifcmd":
                      return $this->_setServiceNotificationCommand($options);
                     break;
+                case "servicenotifcmd":
+                     return $this->_setServiceNotificationCommand($options);
+                    break;
                 case "hostnotifperiod":
                     return $this->_setHostNotificationPeriod($options);
                     break;
                 case "svcnotifperiod":
+                    return  $this->_setServiceNotificationPeriod($options);
+                    break;
+                case "servicenotifperiod":
                     return  $this->_setServiceNotificationPeriod($options);
                     break;
                 default:

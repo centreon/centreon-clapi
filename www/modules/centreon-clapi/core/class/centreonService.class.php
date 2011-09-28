@@ -41,7 +41,7 @@ class CentreonService {
 	var $DB;
 	private $access;
 	private $version;
-	
+
 	var $register;
 	var $flag;
 	var $object;
@@ -55,7 +55,7 @@ class CentreonService {
 
 	private $_cmd;
 	private $_timeperiod;
-	
+
 	public $obj;
 
 	public function __construct($DB, $objName, $version = null) {
@@ -99,25 +99,25 @@ class CentreonService {
 		$this->setParametersList();
 		$this->setParametersTable();
 		$this->setFlags();
-		
+
 		if ($version == null) {
 			$this->version = $this->getVersion();
 		} else {
 			$this->version = $version;
-		}		
+		}
 	}
 
 	/**
-	 * 
-	 * Get Version of Centreon 
+	 *
+	 * Get Version of Centreon
 	 */
 	protected function getVersion() {
 		$request = "SELECT * FROM informations";
 		$DBRESULT = $this->DB->query($request);
 		$info = $DBRESULT->fetchRow();
-		return $info["value"]; 
+		return $info["value"];
 	}
-	
+
 	protected function setFlags() {
 		$this->flag = array(0 => "No", 1 => "Yes", 2 => "Default");
 	}
@@ -140,9 +140,14 @@ class CentreonService {
 
 		$this->parameters["notif_options"] = "service_notification_options";
 		$this->parameters["notification_options"] = "service_notification_options";
+		$this->parameters["notification_interval"] = "service_notification_interval";
+		$this->parameters["notifications_enabled"] = "service_notifications_enabled";
 
 		$this->parameters["check_period"] = "timeperiod_tp_id";
 		$this->parameters["notif_period"] = "timeperiod_tp_id2";
+
+		$this->parameters["check_command"] = "command_command_id";
+		$this->parameters["check_command_args"] = "command_command_id_arg";
 
 		$this->parameters["activate"] = "service_activate";
 
@@ -168,11 +173,16 @@ class CentreonService {
 
 		$this->paramTable["notif_options"] = "service";
 		$this->paramTable["notification_options"] = "service";
+		$this->paramTable["notification_interval"] = "service";
+		$this->paramTable["notifications_enabled"] = "service";
 
 		$this->paramTable["check_period"] = "service";
 		$this->paramTable["notif_period"] = "service";
 
-		$this->parameters["activate"] = "service";
+		$this->paramTable["check_command"] = "service";
+		$this->paramTable["check_command_args"] = "service";
+
+		$this->paramTable["activate"] = "service";
 
 		$this->paramTable["url"] = "extended_service_information";
 	}
@@ -684,7 +694,7 @@ class CentreonService {
 				if (!isset($data["command_name"])) {
 					$data["command_name"] = "";
 				}
-				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceAlias($data["service_template_model_stm_id"], ENT_QUOTES)) : "")."\n";
+				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceName($data["service_template_model_stm_id"], ENT_QUOTES)) : "")."\n";
 				$this->exportMacros($data["service_id"], $data["host_id"]);
 				$this->exportProperties($data["service_id"], $data["host_id"]);
 			}
@@ -723,8 +733,12 @@ class CentreonService {
 		$this->exportServiceProperty($service_id, "retry_check_interval", $host_id);
 		$this->exportServiceProperty($service_id, "active_checks_enabled", $host_id);
 		$this->exportServiceProperty($service_id, "passive_checks_enabled", $host_id);
+		$this->exportServiceProperty($service_id, "notification_interval", $host_id);
+		$this->exportServiceProperty($service_id, "notifications_enabled", $host_id);
 		$this->exportCGLinks($service_id, $host_id);
 		$this->exportCctLinks($service_id, $host_id);
+		$this->exportCMD($service_id, $host_id);
+		$this->exportCMDArgs($service_id, $host_id);
 	}
 
 	/**
@@ -779,6 +793,44 @@ class CentreonService {
  				} else {
 					print $this->obj.";SETPARAM;".$this->decode($this->getServiceName($service_id)).";$properties;".$data["service_".$properties]."\n";
  				}
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+	/**
+     *
+     * Export Host command
+     * @param $host_id
+     */
+	private function exportCMD($service_id, $host_id = NULL) {
+		$request = "SELECT command_command_id FROM `service` WHERE service_id = '$service_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["command_command_id"]) && $data["command_command_id"] != 0) {
+ 				if (isset($host_id)) {
+ 					print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->decode($this->getServiceName($service_id)).";check_command;".$this->_cmd->getCommandName($data["command_command_id"])."\n";
+ 				} else {
+ 					print $this->obj.";SETPARAM;" . $this->decode($this->getServiceName($service_id)).";check_command;".$this->_cmd->getCommandName($data["command_command_id"])."\n";
+ 				}
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+    /**
+     *
+     * Export Host commands Args
+     * @param unknown_type $host_id
+     */
+	private function exportCMDArgs($service_id, $host_id = NULL) {
+		$request = "SELECT command_command_id_arg FROM `service` WHERE service_id = '$service_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($host_id)) {
+ 				print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->decode($this->getServiceName($service_id)).";check_command_args;".$data["command_command_id_arg"]."\n";
+ 			} else {
+ 				print $this->obj.";SETPARAM;" . $this->decode($this->getServiceName($service_id)).";check_command_args;".$data["command_command_id_arg"]."\n";
  			}
  		}
  		$DBRESULT->free();
@@ -1071,7 +1123,7 @@ class CentreonService {
 					$value = $this->getServiceTplID($value);
 				}
 
-				if ($param == "command") {
+				if ($param == "check_command") {
 					require_once "./class/centreonCommand.class.php";
 					$cmd = new CentreonCommand($this->DB);
 					$value = $cmd->getCommandID($value);
@@ -1097,7 +1149,7 @@ class CentreonService {
 					$value = $this->getServiceTplID($value);
 				}
 
-				if ($param == "command") {
+				if ($param == "check_command") {
 					require_once "./class/centreonCommand.class.php";
 					$cmd = new CentreonCommand($this->DB);
 					$value = $cmd->getCommandID($value);
@@ -1114,7 +1166,7 @@ class CentreonService {
 				$this->DB->query($request);
 			}
 		} else {
-			print "Unknown parameters for a service.\n";
+			print "Unknown parameter '$param' for a service.\n";
 			return 1;
 		}
 		return 0;

@@ -49,6 +49,7 @@ class CentreonCommand {
 	private $params;
 	private $graphTemplates;
 	private $version;
+	private $debug;
 
 	/**
 	 *
@@ -62,19 +63,20 @@ class CentreonCommand {
 		$this->params = array("name" => 1, "line" => 1, "example" => 1, "type" => 1, "template" => 1);
 		$this->graphTemplates = array('id' => array(0 => "", NULL => ""), 'name' => array(0 => "", NULL => ""));
 		$this->version = $this->getVersion();
+		$this->debug = 0;
 	}
 
 	/**
-	 * 
-	 * Get Version of Centreon 
+	 *
+	 * Get Version of Centreon
 	 */
 	protected function getVersion() {
 		$request = "SELECT * FROM informations";
 		$DBRESULT = $this->DB->query($request);
 		$info = $DBRESULT->fetchRow();
-		return $info["value"]; 
+		return $info["value"];
 	}
-	
+
 	/**
 	 * Check command existance
 	 */
@@ -261,12 +263,22 @@ class CentreonCommand {
 		$info = split(";", $options);
 		$info[0] = $this->validateName($info[0]);
 
+		if ($this->debug) {
+			print "INFO : ".$options."\n";
+		}
+
+		$this->getTemplateGraph();
+
 		if (!$this->commandExists($info[0])) {
 
-			$convertionTable = array(0 => "command_name", 1 => "command_line", 2 => "command_type", 3 => "command_example", 4 => "graph_template");
+			$convertionTable = array(0 => "command_name", 1 => "command_type", 2 => "command_line", 3 => "command_example", 4 => "graph_template");
 			$informations = array();
 			foreach ($info as $key => $value) {
-				if ($key != 2) {
+				if ($this->debug) {
+					print "VALUES : ".$key. "=>" . $value . "\n";
+				}
+
+				if ($key != 1) {
 					$informations[$convertionTable[$key]] = $value;
 				} else {
 					$informations[$convertionTable[$key]] = $this->type[$value];
@@ -306,14 +318,13 @@ class CentreonCommand {
 				$information["command_name"] = $this->encode($information["command_name"]);
 				$information["command_line"] = $this->encode($information["command_line"]);
 				$information["command_example"] = $this->encode($information["command_example"]);
-				$information["graph_id"] = $this->encode($information["graph_id"]);
+				$information["graph_id"] = $this->encode($information["graph_template"]);
 
 				$request = 	"INSERT INTO command " .
 							"(command_name, command_line, command_type, command_example, graph_id) VALUES " .
 							"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".$information["command_line"]."'" .
 							", '".htmlentities($information["command_type"], ENT_QUOTES)."', '".htmlentities($information["command_example"], ENT_QUOTES)."'" .
-							", '".htmlentities($this->graphTemplates['name'][$information["graph_id"]], ENT_QUOTES)."' )";
-
+							", '".htmlentities($this->graphTemplates['name'][$information["graph_template"]], ENT_QUOTES)."' )";
 				$DBRESULT =& $this->DB->query($request);
 				$command_id = $this->getCommandID($information["command_name"]);
 			}
