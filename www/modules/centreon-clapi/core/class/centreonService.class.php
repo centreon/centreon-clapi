@@ -850,7 +850,6 @@ class CentreonService {
      */
 	private function exportExtInfos($service_id, $property, $property_name, $host_id = NULL) {
 		$request = "SELECT esi_$property FROM `extended_service_information` WHERE service_service_id = '$service_id'";
-		print $request . "\n";
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($data["esi_$property"]) && $data["esi_$property"] != "") {
