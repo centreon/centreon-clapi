@@ -858,7 +858,7 @@ class CentreonHost {
 		$request = "SELECT host_snmp_version FROM `host` WHERE host_id = '$host_id'";
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
- 			if (isset($data["host_snmp_community"]) && $data["host_snmp_community"] != 0) {
+ 			if (isset($data["host_snmp_version"]) && $data["host_snmp_version"] != 0) {
  				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";version;".$data["host_snmp_version"]."\n";
  			}
  		}
