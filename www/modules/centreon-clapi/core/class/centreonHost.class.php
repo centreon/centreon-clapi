@@ -754,6 +754,7 @@ class CentreonHost {
 		}
 		$this->exportHostProperties($host_id, "max_check_attempts");
 		$this->exportURL($host_id);
+		$this->exportNote($host_id);
 		$this->exportURLAction($host_id);
 		$this->exportSNMPCommunity($host_id);
 		$this->exportSNMPVersion($host_id);
@@ -796,6 +797,22 @@ class CentreonHost {
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($data["ehi_notes_url"]) && $data["ehi_notes_url"] != "") {
  				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";url;".$data["ehi_notes_url"]."\n";
+ 			}
+ 		}
+ 		$DBRESULT->free();
+    }
+
+ 	/**
+     *
+     * Export Note
+     * @param $host_id
+     */
+    private function exportNote($host_id) {
+		$request = "SELECT ehi_notes FROM `extended_host_information` WHERE host_host_id = '$host_id'";
+		$DBRESULT =& $this->DB->query($request);
+ 		while ($data =& $DBRESULT->fetchRow()) {
+ 			if (isset($data["ehi_notes"]) && $data["ehi_notes"] != "") {
+ 				print $this->obj.";SETPARAM;" . $this->getHostName($host_id) . ";notes;".$data["ehi_notes"]."\n";
  			}
  		}
  		$DBRESULT->free();
@@ -1109,6 +1126,7 @@ class CentreonHost {
 			"active_checks_enabled" => "host",
 			"passive_checks_enabled" => "host",
 			"url" => "extended_host_information",
+			"notes" => "extended_host_information",
 			"actionurl" => "extended_host_information",
 		);
 
@@ -1134,6 +1152,7 @@ class CentreonHost {
 			"active_checks_enabled" => "host_active_checks_enabled",
 			"passive_checks_enabled" => "host_passive_checks_enabled",
 			"url" => "ehi_notes_url",
+			"notes" => "ehi_notes",
 			"actionurl" => "ehi_action_url",
 		);
 
