@@ -152,6 +152,8 @@ class CentreonService {
 		$this->parameters["activate"] = "service_activate";
 
 		$this->parameters["url"] = "esi_notes_url";
+		$this->parameters["notes"] = "esi_notes";
+		$this->parameters["action_url"] = "esi_action_url";
 	}
 
 	protected function setParametersTable() {
@@ -185,6 +187,8 @@ class CentreonService {
 		$this->paramTable["activate"] = "service";
 
 		$this->paramTable["url"] = "extended_service_information";
+		$this->paramTable["notes"] = "extended_service_information";
+		$this->paramTable["action_url"] = "extended_service_information";
 	}
 
 	protected function checkNameformat($name) {
@@ -725,7 +729,7 @@ class CentreonService {
 		$this->exportTP($service_id, "", "check_period", $host_id);
 		$this->exportTP($service_id, 2, "notif_period", $host_id);
 		$this->exportExtInfos($service_id, "notes_url", "url", $host_id);
-		$this->exportExtInfos($service_id, "action_url", "urlaction", $host_id);
+		$this->exportExtInfos($service_id, "action_url", "action_url", $host_id);
 		$this->exportExtInfos($service_id, "notes", "notes", $host_id);
 		$this->exportServiceProperty($service_id, "notification_options", $host_id);
 		$this->exportServiceProperty($service_id, "max_check_attempts", $host_id);
@@ -845,14 +849,15 @@ class CentreonService {
      * @param $host_id
      */
 	private function exportExtInfos($service_id, $property, $property_name, $host_id = NULL) {
-		$request = "SELECT esi_$property FROM `extended_service_information` WHERE service_service_id = '$host_id'";
+		$request = "SELECT esi_$property FROM `extended_service_information` WHERE service_service_id = '$service_id'";
+		print $request . "\n";
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($data["esi_$property"]) && $data["esi_$property"] != "") {
  				if (isset($host_id)) {
  					print $this->obj.";SETPARAM;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";$property_name;".$data["esi_$property"]."\n";
  				} else {
- 					print $this->obj.";SETPARAM;;".$this->decode($this->getServiceName($service_id)).";$property_name;".$data["esi_$property"]."\n";
+ 					print $this->obj.";SETPARAM;".$this->decode($this->getServiceName($service_id)).";$property_name;".$data["esi_$property"]."\n";
  				}
  			}
  		}
