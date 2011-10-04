@@ -106,7 +106,7 @@ class CentreonCommand {
 		if (!strncmp($this->version, "2.1", 3)) {
 			$str = str_replace("#S#", "/", $str);
 			$str = str_replace("#BS#", "\\", $str);
-			$str = str_replace("#BR#", "\n", $str);
+			//$str = str_replace("#BR#", "\n", $str);
 			$str = str_replace("#R#", "\t", $str);
 		}
 		return $str;
@@ -122,7 +122,7 @@ class CentreonCommand {
 			$name = str_replace("$", "\$", $name);
 			$name = str_replace("/", "#S#", htmlentities($name, ENT_QUOTES));
 			$name = str_replace("\\", "#BS#", $name);
-			$name = str_replace("\n", "#BR#", $name);
+			//$name = str_replace("\n", "#BR#", $name);
 			$name = str_replace("\t", "#R#", $name);
 		}
 		return $name;
@@ -228,7 +228,7 @@ class CentreonCommand {
 		$DBRESULT =& $this->DB->query($request);
 		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
-			print "CMD;ADD;".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".$this->type[html_entity_decode($data["command_type"], ENT_QUOTES)].";".html_entity_decode($this->decode(str_replace("\n", "#BR#", $data["command_line"])), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_example"]), ENT_QUOTES).";".html_entity_decode($this->decode($this->graphTemplates['id'][$data["graph_id"]]), ENT_QUOTES)."\n";
+			print "CMD;ADD;".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".$this->type[html_entity_decode($data["command_type"], ENT_QUOTES)].";".html_entity_decode($this->decode($data["command_line"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_example"]), ENT_QUOTES).";".html_entity_decode($this->decode($this->graphTemplates['id'][$data["graph_id"]]), ENT_QUOTES)."\n";
 			$i++;
 		}
 		$DBRESULT->free();
@@ -276,10 +276,6 @@ class CentreonCommand {
 			foreach ($info as $key => $value) {
 				if ($this->debug) {
 					print "VALUES : ".$key. "=>" . $value . "\n";
-				}
-
-				if ($key == 2) {
-					$value = str_replace("#BR#", "\n", $value);
 				}
 
 				if ($key != 1) {
