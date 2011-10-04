@@ -710,7 +710,7 @@ class CentreonService {
 				if (!isset($data["command_name"])) {
 					$data["command_name"] = "";
 				}
-				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceName($data["service_template_model_stm_id"], ENT_QUOTES)) : "")."\n";
+				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["service_alias"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceName($data["service_template_model_stm_id"], ENT_QUOTES)) : "")."\n";
 				$this->exportMacros($data["service_id"]);
 				$this->exportProperties($data["service_id"]);
 				$this->exportTemplateLink($data["service_id"]);
@@ -832,7 +832,7 @@ class CentreonService {
 		$DBRESULT =& $this->DB->query($request);
  		while ($data =& $DBRESULT->fetchRow()) {
  			if (isset($host_id)) {
- 				print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->decode($this->getServiceName($service_id)).";check_command_args;".$data["command_command_id_arg"]."\n";
+ 				print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->decode($this->getServiceName($service_id)).";check_command_args;".html_entity_decode($data["command_command_id_arg"])."\n";
  			} else {
  				print $this->obj.";SETPARAM;" . $this->decode($this->getServiceName($service_id)).";check_command_args;".$data["command_command_id_arg"]."\n";
  			}
@@ -1014,8 +1014,10 @@ class CentreonService {
 		$info = split(";", $informations);
 		if (count($info) == 4) {
 			$return_code = $this->setMacroService($info[0], $info[1], $info[2], $info[3]);
+		} else if (count($info) == 3) {
+			$return_code = $this->setMacroService("", $info[0], $info[1], $info[1]);
 		} else {
-			print "Not enought arguments.\n";
+			print "Not enought arguments for setting macros.\n";
 			$return_code = 1;
 		}
 		return $return_code;
@@ -1029,25 +1031,47 @@ class CentreonService {
 
 		$macro_name = strtoupper($macro_name);
 
-		$host_id = $this->host->getHostID(htmlentities($host_name, ENT_QUOTES));
-		$service_id = $this->getServiceID($host_id, $service_description);
+		if ($host_name != "") {
+			$host_id = $this->host->getHostID(htmlentities($host_name, ENT_QUOTES));
+			$service_id = $this->getServiceID($host_id, $service_description);
 
-		if ($service_id != 0) {
-			$request = "SELECT COUNT(*) FROM on_demand_macro_service WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$'";
-			$DBRESULT =& $this->DB->query($request);
-			$data =& $DBRESULT->fetchRow();
-			if ($data["COUNT(*)"]) {
-				$request = "UPDATE on_demand_macro_service SET svc_macro_value = '".htmlentities($macro_value, ENT_QUOTES)."' WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$' LIMIT 1";
+			if ($service_id != 0) {
+				$request = "SELECT COUNT(*) FROM on_demand_macro_service WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$'";
 				$DBRESULT =& $this->DB->query($request);
-				return 0;
+				$data =& $DBRESULT->fetchRow();
+				if ($data["COUNT(*)"]) {
+					$request = "UPDATE on_demand_macro_service SET svc_macro_value = '".htmlentities($macro_value, ENT_QUOTES)."' WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$' LIMIT 1";
+					$DBRESULT =& $this->DB->query($request);
+					return 0;
+				} else {
+					$request = "INSERT INTO on_demand_macro_service (svc_svc_id, svc_macro_value, svc_macro_name) VALUES ('".htmlentities($service_id, ENT_QUOTES)."', '".htmlentities($macro_value, ENT_QUOTES)."', '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$')";
+					$DBRESULT =& $this->DB->query($request);
+					return 0;
+				}
 			} else {
-				$request = "INSERT INTO on_demand_macro_service (svc_svc_id, svc_macro_value, svc_macro_name) VALUES ('".htmlentities($service_id, ENT_QUOTES)."', '".htmlentities($macro_value, ENT_QUOTES)."', '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$')";
-				$DBRESULT =& $this->DB->query($request);
-				return 0;
+				print "Cannot find service ID.\n";
+				return 1;
 			}
 		} else {
-			print "Cannot find service ID.\n";
-			return 1;
+			$service_id = $this->getServiceTplID($service_description);
+
+			if ($service_id != 0) {
+				$request = "SELECT COUNT(*) FROM on_demand_macro_service WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$'";
+				$DBRESULT =& $this->DB->query($request);
+				$data =& $DBRESULT->fetchRow();
+				if ($data["COUNT(*)"]) {
+					$request = "UPDATE on_demand_macro_service SET svc_macro_value = '".htmlentities($macro_value, ENT_QUOTES)."' WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$' LIMIT 1";
+					$DBRESULT =& $this->DB->query($request);
+					return 0;
+				} else {
+					$request = "INSERT INTO on_demand_macro_service (svc_svc_id, svc_macro_value, svc_macro_name) VALUES ('".htmlentities($service_id, ENT_QUOTES)."', '".htmlentities($macro_value, ENT_QUOTES)."', '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$')";
+					$DBRESULT =& $this->DB->query($request);
+					return 0;
+				}
+			} else {
+				print "Cannot find template service ID.\n";
+				return 1;
+			}
 		}
 	}
 
@@ -1186,11 +1210,14 @@ class CentreonService {
 			return $check;
 		}
 
+		$conatct_name;
 		$info = split(";", $informations);
 		if ($this->register) {
 			$contact_id = $this->contact->getContactID($info[2]);
+			$contact_name = $info[2];
 		} else {
 			$contact_id = $this->contact->getContactID($info[1]);
+			$contact_name = $info[1];
 		}
 
 		/*
@@ -1217,7 +1244,7 @@ class CentreonService {
 			$this->DB->query($request);
 			return 0;
 		} else {
-			print "Cannot find user : '".$info[2]."'.\n";
+			print "Cannot find user : '".$contact_name."'.";
 			return 1;
 		}
 	}
