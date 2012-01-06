@@ -312,6 +312,11 @@ class CentreonHost {
 				}
 				$host_id = $this->addHost($informations);
 				$this->deployServiceTemplates($host_id, $svc);
+				if ($host_id) {
+					return 0;
+				} else {
+					return $host_id;
+				}
 			} else {
 				$convertionTable = array(0 => "host_name", 1 => "host_alias", 2 => "host_address", 3 => "host_template");
 				$informations = array();
@@ -319,6 +324,11 @@ class CentreonHost {
 					$informations[$convertionTable[$key]] = $value;
 				}
 				$host_id = $this->addHostTemplate($informations);
+				if ($host_id) {
+					return 0;
+				} else {
+					return $host_id;
+				}
 			}
 		} else {
 			if ($this->register) {
@@ -565,6 +575,7 @@ class CentreonHost {
 		 */
 		$this->access->updateACL();
 
+		return 1;
 	}
 
 	/** *************************************
@@ -634,6 +645,7 @@ class CentreonHost {
 			}
 			$DBRESULT->free();
 		}
+		return 1;
 	}
 
 	/** ***********************************************
@@ -1213,6 +1225,7 @@ class CentreonHost {
 				$request = "UPDATE ".$tabName[$parameter]." SET ".$realNameField[$parameter]." = ".$value." WHERE ".$host_id_field[$tabName[$parameter]]." = (SELECT host_id FROM host WHERE host_name LIKE '$host_name')";
 			}
 			$DBRESULT =& $this->DB->query($request);
+			return 1;
 		} else {
 			print "Unknown host : $host_name.\n";
 			return 1;

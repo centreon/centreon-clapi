@@ -272,7 +272,12 @@ class CentreonContact {
 			foreach ($info as $key => $value) {
 				$informations[$convertionTable[$key]] = $value;
 			}
-			$this->addContact($informations);
+			$ret = $this->addContact($informations);
+			if ($ret) {
+				return 0;
+			} else {
+				return $ret;
+			}
 		} else {
 			print "Contact ".$info[0]." already exists.\n";
 			$this->return_code = 1;
@@ -326,7 +331,7 @@ class CentreonContact {
 	{
         if (count($data) < 3) {
             print "Invalid options.\n";
-            return false;
+            return 1;
         }
         return true;
 	}
@@ -343,11 +348,11 @@ class CentreonContact {
         $data = split(';', $options);
 	    if (!($contactId = $this->contactExists($data[PARAM_NOTIF_CONTACT]))) {
             print "Contact does not exist.\n";
-            return null;
+            return 1;
         }
 	    if (!($cmdId = $this->_cmd->commandExists($data[PARAM_NOTIF_COMMAND]))) {
             print "Command does not exist.\n";
-            return null;
+            return 1;
         }
         $query = "DELETE FROM contact_hostcommands_relation WHERE contact_contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
         $this->DB->query($query);
@@ -367,11 +372,11 @@ class CentreonContact {
 	    $data = split(';', $options);
 	    if (!($contactId = $this->contactExists($data[PARAM_NOTIF_CONTACT]))) {
             print "Contact does not exist.\n";
-            return null;
+            return 1;
         }
         if (!($cmdId = $this->_cmd->commandExists($data[PARAM_NOTIF_COMMAND]))) {
             print "Command does not exist.\n";
-            return null;
+            return 1;
         }
         $query = "DELETE FROM contact_servicecommands_relation WHERE contact_contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
         $this->DB->query($query);
@@ -391,11 +396,11 @@ class CentreonContact {
 	    $data = split(';', $options);
 	    if (!($contactId = $this->contactExists($data[PARAM_NOTIF_CONTACT]))) {
             print "Contact does not exist.\n";
-            return null;
+            return 1;
         }
         if (!($timeperiodId = $this->_timeperiod->getTimeperiodId($data[PARAM_NOTIF_PERIOD]))) {
             print "Timeperiod does not exist.\n";
-            return null;
+            return 1;
         }
         $query = "UPDATE contact SET timeperiod_tp_id = '".htmlentities($timeperiodId, ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
         $this->DB->query($query);
@@ -412,11 +417,11 @@ class CentreonContact {
 	    $data = split(';', $options);
 	    if (!($contactId = $this->contactExists($data[PARAM_NOTIF_CONTACT]))) {
             print "Contact does not exist.\n";
-            return null;
+            return 1;
         }
         if (!($timeperiodId = $this->_timeperiod->getTimeperiodId($data[PARAM_NOTIF_PERIOD]))) {
             print "Timeperiod does not exist.\n";
-            return null;
+            return 1;
         }
         $query = "UPDATE contact SET timeperiod_tp_id2 = '".htmlentities($timeperiodId, ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
         $this->DB->query($query);
@@ -481,7 +486,7 @@ class CentreonContact {
 	    $data = split(';', $options);
 	    if (isset($data[PARAM])) {
     	    if (!$this->_checkNotifOptions($data)) {
-                return null;
+                return 1;
             }
             switch (strtolower($data[PARAM])) {
                 case "name":

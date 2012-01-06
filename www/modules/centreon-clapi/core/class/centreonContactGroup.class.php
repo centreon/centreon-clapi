@@ -117,7 +117,7 @@ class CentreonContactGroup {
 		$request = "DELETE FROM contactgroup WHERE cg_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
-		return;
+		return 0;
 	}
 
 	/* *********************************************
@@ -172,7 +172,6 @@ class CentreonContactGroup {
 			$DBRESULT2->free();
 		}
 		$DBRESULT->free();
-
 	}
 
 	/* *********************************************
@@ -196,11 +195,16 @@ class CentreonContactGroup {
 			foreach ($info as $key => $value) {
 				$informations[$convertionTable[$key]] = $value;
 			}
-			$this->addContactGroup($informations);
+			$ret = $this->addContactGroup($informations);
+			if ($ret) {
+				return 0;
+			} else {
+				return $ret;
+			}
 		} else {
 			print "Contactgroup ".$info[0]." already exists.\n";
 			$this->return_code = 1;
-			return;
+			return 1;
 		}
 	}
 

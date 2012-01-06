@@ -381,6 +381,7 @@ class CentreonAPI {
 	 * Import Scenario file
 	 */
 	public function import($filename) {
+		$globalReturn = 0;
 
 		$this->fileExists($filename);
 
@@ -401,10 +402,15 @@ class CentreonAPI {
 						print "VARIABLES : ".$this->variables."\n\n";
 					}
 					$this->launchActionForImport();
+					print "RETURN : ".$this->return_code."\n";
+					if ($this->return_code) {
+						$globalReturn = 1;
+					}
 				}
 			}
 			fclose($handle);
 		}
+		return $globalReturn;
 	}
 
 	public function launchActionForImport() {
@@ -440,6 +446,7 @@ class CentreonAPI {
 			$obj = new $objName($this->DB, $this->object);
 			if (method_exists($obj, $action)) {
 				$this->return_code = $obj->$action($this->variables);
+				print "TEST : ".$this->return_code."\n";
 			} else {
 				print "Method not implemented into Centreon API.\n";
 				return 1;

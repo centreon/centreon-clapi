@@ -81,8 +81,9 @@ class CentreonCommand {
 	 * Check command existance
 	 */
 	public function commandExists($name) {
-		if (!isset($name))
+		if (!isset($name)) {
 			return 0;
+		}
 
 		/**
 		 * Get informations
@@ -106,7 +107,6 @@ class CentreonCommand {
 		if (!strncmp($this->version, "2.1", 3)) {
 			$str = str_replace("#S#", "/", $str);
 			$str = str_replace("#BS#", "\\", $str);
-			//$str = str_replace("#BR#", "\n", $str);
 			$str = str_replace("#R#", "\t", $str);
 		}
 		return $str;
@@ -122,15 +122,20 @@ class CentreonCommand {
 			$name = str_replace("$", "\$", $name);
 			$name = str_replace("/", "#S#", htmlentities($name, ENT_QUOTES));
 			$name = str_replace("\\", "#BS#", $name);
-			//$name = str_replace("\n", "#BR#", $name);
 			$name = str_replace("\t", "#R#", $name);
 		}
 		return $name;
 	}
 
+	/**
+	 *
+	 * Get command id
+	 * @param unknown_type $command_name
+	 */
 	public function getCommandID($command_name = NULL) {
-		if (!isset($command_name))
+		if (!isset($command_name)) {
 			return 0;
+		}
 
 		$request = "SELECT command_id FROM command WHERE command_name LIKE '$command_name'";
 		$DBRESULT =& $this->DB->query($request);
@@ -138,9 +143,15 @@ class CentreonCommand {
 		return $data["command_id"];
 	}
 
+	/**
+	 *
+	 * Get Command name
+	 * @param unknown_type $command_id
+	 */
 	public function getCommandName($command_id = NULL) {
-		if (!isset($command_id))
+		if (!isset($command_id)) {
 			return 0;
+		}
 
 		$request = "SELECT command_name FROM command WHERE command_id = '$command_id'";
 		$DBRESULT =& $this->DB->query($request);
@@ -148,6 +159,11 @@ class CentreonCommand {
 		return $data["command_name"];
 	}
 
+    /**
+     *
+     * Check parameters
+     * @param $options
+     */
 	private function checkParameters($options) {
 		if (!isset($options) || (isset($options) && $options == "")) {
 			print "No options defined.\n";
@@ -155,6 +171,11 @@ class CentreonCommand {
 		}
 	}
 
+	/**
+	 *
+	 * Check the validity of the name format
+	 * @param unknown_type $name
+	 */
 	private function validateName($name) {
 		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches)) {
 			return $this->checkNameformat($name);
@@ -164,6 +185,11 @@ class CentreonCommand {
 		}
 	}
 
+	/**
+	 *
+	 * Check the validity of the name format
+	 * @param unknown_type $name
+	 */
 	private function checkNameformat($name) {
 		if (strlen($name) > $this->maxLen) {
 			print "Warning: host name reduce to ".$this->maxLen." caracters.\n";
@@ -171,6 +197,11 @@ class CentreonCommand {
 		return sprintf("%.".$this->maxLen."s", $name);
 	}
 
+	/**
+	 *
+	 * Check return a defautl type of a command if the type is not defined.
+	 * @param unknown_type $information
+	 */
 	private function setDefaultType($information) {
 		if (!isset($information["command_type"]) || $information["command_type"] == "") {
 			$information["command_type"] = 2;
@@ -178,8 +209,10 @@ class CentreonCommand {
 		return $information;
 	}
 
-	/** *****************************************
-	 * Delete
+	/**
+	 *
+	 * Delete in DB the current command
+	 * @param unknown_type $name
 	 */
 	public function del($name) {
 
@@ -194,9 +227,11 @@ class CentreonCommand {
 		return 0;
 	}
 
-	/** *****************************************
-	 * display all commands
-	 */
+    /**
+     *
+     * display all commands
+     * @param $search
+     */
 	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
@@ -217,9 +252,10 @@ class CentreonCommand {
 		return 0;
 	}
 
-	/** *****************************************
-	 * exoirt all commands
-	 */
+    /**
+     *
+     * export all commands
+     */
 	public function export() {
 
 		$this->getTemplateGraph();
@@ -250,8 +286,10 @@ class CentreonCommand {
 		return 0;
 	}
 
-	/** ******************************
-	 * add a command
+	/**
+	 *
+	 * Add a command
+	 * @param $options
 	 */
 	public function add($options) {
 
@@ -281,14 +319,23 @@ class CentreonCommand {
 				if ($key != 1) {
 					$informations[$convertionTable[$key]] = $value;
 				} else {
-					$informations[$convertionTable[$key]] = $this->type[$value];
+					if (isset($this->type[$value])) {
+						$informations[$convertionTable[$key]] = $this->type[$value];
+					} else {
+						$informations[$convertionTable[$key]] = 2;
+					}
 				}
 			}
-			$this->addCommand($informations);
+			$ret = $this->addCommand($informations);
+			if ($ret) {
+				return 0;
+			} else {
+				return $ret;
+			}
 		} else {
 			print "Command ".$info[0]." already exists.\n";
 			$this->return_code = 1;
-			return;
+			return 1;
 		}
 	}
 
@@ -332,8 +379,10 @@ class CentreonCommand {
 		}
 	}
 
-	/** ****************************************
+	/**
+	 *
 	 * Set parameters
+	 * @param $options
 	 */
 	public function setParam($options) {
 
