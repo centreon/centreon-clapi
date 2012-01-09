@@ -143,9 +143,9 @@ class CentreonConfigPoller {
 
 		$msg_restart = "";
 		if (isset($host['localhost']) && $host['localhost'] == 1) {
-			$msg_restart = exec(escapeshellcmd("sudo " . $nagios_init_script . " reload"), $stdout, $retuen_code);
+			$msg_restart = exec("sudo " . $nagios_init_script . " reload", $stdout, $return_code);
 		} else {
-			exec(escapeshellcmd("echo 'RELOAD:".$host["id"]."' >> ". $this->centcore_pipe), $stdout, $retuen_code);
+			exec("echo 'RELOAD:".$host["id"]."' >> ". $this->centcore_pipe, $stdout, $return_code);
 			$msg_restart .= _("OK: A reload signal has been sent to ".$host["name"]);
 		}
 		print $msg_restart;
