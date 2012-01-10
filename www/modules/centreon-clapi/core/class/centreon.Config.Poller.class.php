@@ -37,7 +37,7 @@
  */
 
 /**
- * 
+ *
  * @author Julien Mathis
  *
  */
@@ -216,7 +216,7 @@ class CentreonConfigPoller {
 		 * Launch test command
 		 */
 		exec(escapeshellcmd("sudo ".$nagios_bin["nagios_bin"] . " -v ".$this->nagiosCFGPath.$variables."/nagiosCFG.DEBUG"), $lines, $return_code);
-		
+
 		$msg_debug = "";
 		foreach ($lines as $line) {
 			if (strncmp($line, "Processing object config file", strlen("Processing object config file"))
@@ -344,6 +344,9 @@ class CentreonConfigPoller {
 		require $path."genTimeperiods.php";
 		require $path."genCommands.php";
 		require $path."genContacts.php";
+		if (file_exists($path."genContactTemplates.php";)) {
+            require $path."genContactTemplates.php";
+		}
 		require $path."genContactGroups.php";
 		require $path."genHosts.php";
 		require $path."genHostTemplates.php";
@@ -405,7 +408,7 @@ class CentreonConfigPoller {
 		}
 
 		$return = 0;
-		
+
 		/**
 		 * Check poller existance
 		 */
