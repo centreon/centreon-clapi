@@ -280,7 +280,7 @@ class CentreonAPI {
 		print "       - POLLERRELOAD: Reload a poller (poller id in -v parameters)\n";
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRELOAD -v 1 \n";
 		print "       - POLLERLIST: list all pollers\n";
-		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERRELOAD -v 1 \n";
+		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERLIST\n";
 		print "\n";
 		print "   For more information about configuration objects, please refer to CLAPI wiki:\n";
 		print "      - http://forge.centreon.com/wiki/centreon-clapi/Use \n";
