@@ -48,6 +48,7 @@ class CentreonHost {
 	private $host_id;
 	private $register;
 	private $cg;
+	private $cct;
 	private $hg;
 	private $_timeperiod;
 	private $_cmd;
@@ -79,6 +80,13 @@ class CentreonHost {
 		 */
 		require_once "./class/centreonContactGroup.class.php";
 		$this->cg = new CentreonContactGroup($this->DB, "CG");
+
+		/*
+		 * Create Contact object
+		 */
+	    require_once "./class/centreonCommand.class.php";
+	    require_once "./class/centreonContact.class.php";
+    	$this->cct = new CentreonContact($this->DB, "CONTACT");
 
 		$this->obj = strtoupper($objName);
 
@@ -1115,8 +1123,10 @@ class CentreonHost {
 		}
 	}
 
-	/** ***********************************************
-	 * Parameters management
+	/**
+	 *
+	 * Intro function in order to manage parameter for an host
+	 * @param $options
 	 */
 	public function setParam($options) {
 
@@ -1129,7 +1139,11 @@ class CentreonHost {
 
 
 	/**
+	 *
 	 * Set Parameters
+	 * @param $host_name
+	 * @param $parameter
+	 * @param $value
 	 */
 	protected function setParameterHost($host_name, $parameter, $value) {
 		/**
@@ -1249,8 +1263,10 @@ class CentreonHost {
 		}
 	}
 
-	/** **************************************
-	 * Add host template
+	/**
+	 *
+	 * Add a host template link for an host
+	 * @param unknown_type $information
 	 */
 	public function addTemplate($information) {
 		$check = $this->checkParameters($information);
@@ -1274,6 +1290,13 @@ class CentreonHost {
 		return $exitcode;
 	}
 
+	/**
+	 *
+	 * Add a host template link for an host in database
+	 * @param unknown_type $host_name
+	 * @param unknown_type $template
+	 * @param unknown_type $order
+	 */
 	protected function addTemplateHost($host_name, $template, $order = null) {
 		if (isset($host_name) && $host_name != "" && isset($template) && $template != "") {
 
@@ -1321,8 +1344,10 @@ class CentreonHost {
 		}
 	}
 
-	/** *******************************
-	 * Delete host template
+	/**
+	 *
+	 * Delete a host template link for an host
+	 * @param $information
 	 */
 	public function delTemplate($information) {
 		$svc = new CentreonService($this->DB, "Service");
@@ -1348,6 +1373,12 @@ class CentreonHost {
 		return $exitcode;
 	}
 
+	/**
+	 *
+	 * Delete a host template link for an host in database
+	 * @param unknown_type $host_name
+	 * @param unknown_type $template
+	 */
 	protected function delTemplateHost($host_name, $template) {
 		if (isset($host_name) && $host_name != "" && isset($template) && $template != "") {
 
@@ -1384,7 +1415,11 @@ class CentreonHost {
 	}
 
 	/**
+	 *
 	 * Set host macro
+	 * @param $host_name
+	 * @param $macro_name
+	 * @param $macro_value
 	 */
 	protected function setMacroHost($host_name, $macro_name, $macro_value) {
 		if (!isset($host_name) || !isset($macro_name)) {
@@ -1410,7 +1445,10 @@ class CentreonHost {
 	}
 
 	/**
+	 *
 	 * Delete host macro
+	 * @param $host_name
+	 * @param $macro_name
 	 */
 	protected function delMacroHost($host_name, $macro_name) {
 		if (!isset($host_name) || !isset($macro_name)) {
@@ -1427,7 +1465,10 @@ class CentreonHost {
 	}
 
 	/**
+	 *
 	 * Set Poller link for an host
+	 * @param $host_id
+	 * @param $poller_id
 	 */
 	protected function setPoller($host_id, $poller_id) {
 		if ($this->register == 0) {
@@ -1444,7 +1485,9 @@ class CentreonHost {
 	}
 
 	/**
+	 *
 	 * Free Poller link
+	 * @param $host_id
 	 */
 	protected function unsetPoller($host_id) {
 		if ($this->register == 0) {
@@ -1461,8 +1504,10 @@ class CentreonHost {
 		}
 	}
 
-	/** *************************************
+	/**
+	 *
 	 * Enable Disable Host
+	 * @param unknown_type $options
 	 */
 	public function enable($options) {
 
@@ -1482,6 +1527,11 @@ class CentreonHost {
 		}
 	}
 
+	/**
+	 *
+	 * Disable host
+	 * @param unknown_type $options
+	 */
 	public function disable($options) {
 
 		$check = $this->checkParameters($options);
@@ -1500,8 +1550,10 @@ class CentreonHost {
 		}
 	}
 
-	/** ***************************************
+	/**
+	 *
 	 * Set ContactGroup link for notification
+	 * @param $options
 	 */
 	public function setCG($options) {
 
@@ -1538,8 +1590,10 @@ class CentreonHost {
 		}
 	}
 
-	/** ***************************************
+	/**
+	 *
 	 * UN-Set ContactGroup link for notification
+	 * @param $options
 	 */
 	public function unsetCG($options) {
 		$check = $this->checkParameters($options);
@@ -1568,5 +1622,80 @@ class CentreonHost {
 			return 1;
 		}
 	}
+
+    /**
+     *
+     * Set Contact link for notification
+     * @param unknown_type $options
+     */
+	public function setContact($options) {
+
+ 		$check = $this->checkParameters($options);
+ 		if ($check) {
+ 			return 1;
+ 		}
+ 		$info = split(";", $options);
+
+ 		$contact_id = $this->cct->getContactID($info[1]);
+
+ 		/**
+ 		 * Check contact ID
+ 		 */
+ 		if ($contact_id != 0) {
+
+ 			$host_id = $this->getHostID($info[0]);
+
+ 			/**
+ 			 * Clean all data
+ 			 */
+ 			$request = "DELETE FROM contact_host_relation WHERE contact_id = '$contact_id'  AND host_host_id = '$host_id'";
+ 			$this->DB->query($request);
+
+ 			/**
+ 			 * Insert new entry
+ 			 */
+ 			$request = "INSERT INTO contact_host_relation (contact_id, host_host_id) VALUES ('$contact_id', '$host_id')";
+ 			$this->DB->query($request);
+ 			return 0;
+ 		} else {
+ 			print "Cannot find user : '".$info[1]."'.\n";
+ 			return 1;
+ 		}
+ 	}
+
+  	/**
+  	 *
+  	 * UN-Set Contact link for notification
+  	 * @param $options
+  	 */
+ 	public function unsetContact($options) {
+
+ 	    $check = $this->checkParameters($options);
+ 		if ($check) {
+ 			return 1;
+ 		}
+
+ 		$info = split(";", $options);
+
+ 		$contact_id = $this->cct->getContactID($info[1]);
+
+ 		/**
+ 		 * Check contact ID
+ 		 */
+ 		if ($contact_id != 0) {
+ 			$host_id = $this->getHostID($info[0]);
+
+ 			/**
+ 			 * Clean all data
+ 			 */
+ 			$request = "DELETE FROM contact_host_relation WHERE contact_id = '$contact_id'  AND host_host_id = '$host_id'";
+ 			$this->DB->query($request);
+ 			return 0;
+ 		} else {
+ 			print "Cannot find user : '".$info[1]."'.\n";
+ 			return 1;
+ 		}
+ 	}
+
 }
 ?>

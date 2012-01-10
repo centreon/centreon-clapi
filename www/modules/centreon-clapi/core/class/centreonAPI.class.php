@@ -160,6 +160,8 @@ class CentreonAPI {
 			if (isset($this->relationObject[$object]) && $this->relationObject[$object] == "Host") {
 				require_once "./class/centreonService.class.php";
 				require_once "./class/centreonHostGroup.class.php";
+				require_once "./class/centreonContact.class.php";
+				require_once "./class/centreonContactGroup.class.php";
 			}
 			if (isset($this->relationObject[$object]) && $this->relationObject[$object] == "Service") {
 				require_once "./class/centreonHost.class.php";
