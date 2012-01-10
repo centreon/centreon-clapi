@@ -1274,7 +1274,7 @@ class CentreonHost {
 		return $exitcode;
 	}
 
-	protected function addTemplateHost($host_name, $template, $order) {
+	protected function addTemplateHost($host_name, $template, $order = null) {
 		if (isset($host_name) && $host_name != "" && isset($template) && $template != "") {
 
 			if (!isset($order)) {
