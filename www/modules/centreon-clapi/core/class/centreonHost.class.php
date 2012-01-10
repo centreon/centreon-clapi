@@ -585,8 +585,25 @@ class CentreonHost {
 
 		$this->checkParameters($options);
 
-		$request = "DELETE FROM host WHERE host_name LIKE '".htmlentities($this->decode($options), ENT_QUOTES)."'";
-		$DBRESULT =& $this->DB->query($request);
+		/*
+		 * Get Host
+		 */
+		$request = "SELECT host_id FROM host WHERE host_name = '".htmlentities($this->decode($options), ENT_QUOTES)."' LIMIT 1";
+		$DBRESULT = $this->DB->query($request);
+		$host_key = $DBRESULT->fetchRow();
+		$rq = "SELECT @nbr := (SELECT COUNT( * ) FROM host_service_relation WHERE service_service_id = hsr.service_service_id GROUP BY service_service_id) AS nbr, hsr.service_service_id FROM host_service_relation hsr, host WHERE hsr.host_host_id = '".$host_key["host_id"]."' AND host.host_id = hsr.host_host_id AND host.host_register = '1'";
+		$DBRESULT2 = $this->DB->query($rq);
+		while ($row = $DBRESULT2->fetchRow()) {
+			if ($row["nbr"] == 1) {
+				$DBRESULT3 = $this->DB->query("SELECT service_description FROM service WHERE service_id = '".$row["service_service_id"]."' LIMIT 1");
+				$svcname = $DBRESULT3->fetchRow();
+				$DBRESULT4 = $this->DB->query("DELETE FROM service WHERE service_id = '".$row["service_service_id"]."'");
+			}
+		}
+		$DBRESULT = $this->DB->query("DELETE FROM host WHERE host_id = '".$host_key["host_id"]."'");
+		$DBRESULT = $this->DB->query("DELETE FROM host_template_relation WHERE host_host_id = '".$host_key["host_id"]."'");
+		$DBRESULT = $this->DB->query("DELETE FROM on_demand_macro_host WHERE host_host_id = '".$host_key["host_id"]."'");
+		$DBRESULT = $this->DB->query("DELETE FROM contact_host_relation WHERE host_host_id = '".$host_key["host_id"]."'");
 		$this->return_code = 0;
 		return;
 	}
