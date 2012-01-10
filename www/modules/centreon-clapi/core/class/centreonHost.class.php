@@ -1125,6 +1125,46 @@ class CentreonHost {
 
 	/**
 	 *
+	 * Unset All parent
+	 * @param unknown_type $options
+	 */
+	public function unsetAllParent($options) {
+
+ 		$check = $this->checkParameters("Cannot unset parents for host.");
+ 		if ($check) {
+ 			return $check;
+ 		}
+ 		$exitcode = $this->unsetAllParentHost($options);
+ 		return $exitcode;
+ 	}
+
+ 	/**
+ 	 *
+ 	 * Unset All parent in Database
+ 	 * @param unknown_type $child_name
+ 	 */
+ 	protected function unsetAllParentHost($child_name) {
+ 		if ($this->register == 0) {
+ 			return ;
+ 		}
+
+ 		$request = "SELECT host_id FROM host WHERE host_name = '$child_name'";
+ 		$DBRESULT =& $this->DB->query($request);
+ 		if ($DBRESULT->numRows() == 1) {
+ 			/*
+ 			 * Insert all data
+ 			 */
+ 			$request = 	"DELETE FROM host_hostparent_relation WHERE host_host_id IN (SELECT host_id FROM host WHERE host_name LIKE '$child_name') ";
+ 			$DBRESULT =& $this->DB->query($request);
+ 			return 0;
+ 		} else {
+ 			print "Child host unknown.\n";
+ 			return 1;
+ 		}
+ 	}
+
+	/**
+	 *
 	 * Intro function in order to manage parameter for an host
 	 * @param $options
 	 */
