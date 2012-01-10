@@ -186,9 +186,9 @@ class CentreonHost {
 	 */
 	protected function checkNameformat($name) {
 		if (strlen($name) > 40) {
-			print "Warning: host name reduce to 25 caracters.\n";
+			print "Warning: host name reduce to 40 caracters.\n";
 		}
-		return sprintf("%.25s", $name);
+		return sprintf("%.40s", $name);
 	}
 
 	/**
