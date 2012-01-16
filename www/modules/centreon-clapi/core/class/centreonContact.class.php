@@ -62,10 +62,36 @@ class CentreonContact {
 	 */
 	protected $_timeperiod;
 
+	protected $version;
+
 	public function __construct($db) {
 		$this->DB = $db;
 		$this->_cmd = new CentreonCommand($this->DB);
 		$this->_timeperiod = new CentreonTimePeriod($this->DB);
+		$this->version = $this->getVersion();
+	}
+
+	/**
+	 *
+	 * Get Version of Centreon
+	 */
+	protected function getVersion() {
+		$request = "SELECT * FROM informations";
+		$DBRESULT = $this->DB->query($request);
+		$info = $DBRESULT->fetchRow();
+		return $info["value"];
+	}
+
+	/**
+	 *
+	 * encode with htmlentities a string
+	 * @param unknown_type $string
+	 */
+	protected function encodeInHTML($string) {
+	    if (!strncmp($this->version, "2.1", 3)) {
+            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
+	    }
+	    return $string;
 	}
 
 	/**
@@ -74,13 +100,14 @@ class CentreonContact {
 	 * @param unknown_type $name
 	 */
 	public function contactExists($name) {
-		if (!isset($name))
+		if (!isset($name)) {
 			return 0;
+		}
 
 		/*
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT contact_name, contact_id FROM contact WHERE contact_name = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT contact_name, contact_id FROM contact WHERE contact_name = '".$this->encodeInHTML($name)."'");
 		if ($DBRESULT->numRows() >= 1) {
 			$sg = $DBRESULT->fetchRow();
 			$DBRESULT->free();
@@ -167,7 +194,7 @@ class CentreonContact {
 	public function del($name) {
 		$this->checkParameters($name);
 
-		$request = "DELETE FROM contact WHERE contact_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
+		$request = "DELETE FROM contact WHERE contact_name LIKE '".$this->encodeInHTML($name)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return 0;
@@ -181,7 +208,7 @@ class CentreonContact {
 	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
-			$searchStr = " WHERE contact_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' OR contact_alias LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
+			$searchStr = " WHERE contact_name LIKE '%".$this->encodeInHTML($search)."%' OR contact_alias LIKE '%".$this->encodeInHTML($search)."%' ";
 		}
 		$request = "SELECT contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_activate FROM contact $searchStr ORDER BY contact_name";
 		$DBRESULT =& $this->DB->query($request);
@@ -191,7 +218,7 @@ class CentreonContact {
 				print "name;alias;email;reachInterface;isAdmin;enable\n";
 			}
 			$i++;
-			print html_entity_decode($data["contact_name"], ENT_QUOTES).";".html_entity_decode($data["contact_alias"], ENT_QUOTES).";".html_entity_decode($data["contact_email"], ENT_QUOTES).";".html_entity_decode($data["contact_oreon"], ENT_QUOTES).";".html_entity_decode($data["contact_admin"], ENT_QUOTES).";".html_entity_decode($data["contact_activate"], ENT_QUOTES)."\n";
+			print html_entity_decode($data["contact_name"]).";".html_entity_decode($data["contact_alias"]).";".html_entity_decode($data["contact_email"]).";".html_entity_decode($data["contact_oreon"]).";".html_entity_decode($data["contact_admin"]).";".html_entity_decode($data["contact_activate"])."\n";
 		}
 		$DBRESULT->free();
 		return 0;
@@ -205,19 +232,19 @@ class CentreonContact {
 		$request = "SELECT contact_id, contact_name, contact_activate, contact_alias, contact_email, contact_passwd, contact_admin, contact_oreon, contact_lang, contact_auth_type, contact_host_notification_options, contact_service_notification_options, timeperiod_tp_id, timeperiod_tp_id2 FROM contact ORDER BY contact_name";
 		$DBRESULT =& $this->DB->query($request);
 		while ($data =& $DBRESULT->fetchRow()) {
-			print "CONTACT;ADD;".html_entity_decode($data["contact_name"], ENT_QUOTES).";".html_entity_decode($data["contact_alias"], ENT_QUOTES).";".html_entity_decode($data["contact_email"], ENT_QUOTES).";{MD5}".html_entity_decode($data["contact_passwd"], ENT_QUOTES).";".html_entity_decode($data["contact_admin"], ENT_QUOTES).";".html_entity_decode($data["contact_oreon"], ENT_QUOTES).";".html_entity_decode($data["contact_lang"], ENT_QUOTES).";".html_entity_decode($data["contact_auth_type"], ENT_QUOTES)."\n";
+			print "CONTACT;ADD;".html_entity_decode($data["contact_name"]).";".html_entity_decode($data["contact_alias"]).";".html_entity_decode($data["contact_email"]).";{MD5}".html_entity_decode($data["contact_passwd"]).";".html_entity_decode($data["contact_admin"]).";".html_entity_decode($data["contact_oreon"]).";".html_entity_decode($data["contact_lang"]).";".html_entity_decode($data["contact_auth_type"])."\n";
 
 			if (isset($data["timeperiod_tp_id"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";hostnotifperiod;".html_entity_decode($this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id"]), ENT_QUOTES)."\n";
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";hostnotifperiod;".html_entity_decode($this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id"]))."\n";
 			if (isset($data["timeperiod_tp_id2"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";servicenotifperiod;".html_entity_decode($this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id2"]), ENT_QUOTES)."\n";
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";servicenotifperiod;".html_entity_decode($this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id2"]))."\n";
 			if (isset($data["contact_host_notification_options"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";hostnotifopt;".html_entity_decode($data["contact_host_notification_options"], ENT_QUOTES)."\n";
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";hostnotifopt;".html_entity_decode($data["contact_host_notification_options"])."\n";
 			if (isset($data["contact_host_notification_options"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";servicenotifopt;".html_entity_decode($data["contact_host_notification_options"], ENT_QUOTES)."\n";
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";servicenotifopt;".html_entity_decode($data["contact_host_notification_options"])."\n";
 
 			if (isset($data["contact_activate"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";enable;".html_entity_decode($data["contact_activate"], ENT_QUOTES)."\n";
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";enable;".html_entity_decode($data["contact_activate"])."\n";
 
 			/*
 			 * Host Command
@@ -225,7 +252,7 @@ class CentreonContact {
 			$request2 = "SELECT command_command_id FROM contact_hostcommands_relation WHERE contact_contact_id = '".$data["contact_id"]."'";
 			$DBRESULT2 =& $this->DB->query($request2);
 			while ($dataCMD =& $DBRESULT2->fetchRow()) {
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";hostnotifcmd;".html_entity_decode($this->_cmd->getCommandName($dataCMD["command_command_id"], ENT_QUOTES))."\n";
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";hostnotifcmd;".html_entity_decode($this->_cmd->getCommandName($dataCMD["command_command_id"]))."\n";
 			}
 			$DBRESULT2->free();
 			/*
@@ -234,7 +261,7 @@ class CentreonContact {
 			$request2 = "SELECT command_command_id FROM contact_servicecommands_relation WHERE contact_contact_id = '".$data["contact_id"]."'";
 			$DBRESULT2 =& $this->DB->query($request2);
 			while ($dataCMD =& $DBRESULT2->fetchRow()) {
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"], ENT_QUOTES).";servicenotifcmd;".html_entity_decode($this->_cmd->getCommandName($dataCMD["command_command_id"], ENT_QUOTES))."\n";
+				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";servicenotifcmd;".html_entity_decode($this->_cmd->getCommandName($dataCMD["command_command_id"]))."\n";
 			}
 			$DBRESULT2->free();
 
@@ -311,9 +338,9 @@ class CentreonContact {
 
 			$request = 	"INSERT INTO contact " .
 						"(contact_name, contact_alias, contact_email, contact_oreon, contact_admin, contact_lang, contact_auth_type, contact_passwd, contact_activate) VALUES " .
-						"('".htmlentities($information["contact_name"], ENT_QUOTES)."', '".htmlentities($information["contact_alias"], ENT_QUOTES)."', '".htmlentities($information["contact_email"], ENT_QUOTES)."', " .
-						" '".htmlentities($information["contact_oreon"], ENT_QUOTES)."', '".htmlentities($information["contact_admin"], ENT_QUOTES)."', '".htmlentities($information["contact_lang"], ENT_QUOTES)."', " .
-						" '".htmlentities($information["contact_auth_type"], ENT_QUOTES)."', '".$password."', '1')";
+						"('".$this->encodeInHTML($information["contact_name"])."', '".$this->encodeInHTML($information["contact_alias"])."', '".$this->encodeInHTML($information["contact_email"])."', " .
+						" '".$this->encodeInHTML($information["contact_oreon"])."', '".$this->encodeInHTML($information["contact_admin"])."', '".$this->encodeInHTML($information["contact_lang"])."', " .
+						" '".$this->encodeInHTML($information["contact_auth_type"])."', '".$password."', '1')";
 			$DBRESULT = $this->DB->query($request);
 
 			$contact_id = $this->getContactID($information["contact_name"]);
@@ -354,10 +381,10 @@ class CentreonContact {
             print "Command does not exist.\n";
             return 1;
         }
-        $query = "DELETE FROM contact_hostcommands_relation WHERE contact_contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $query = "DELETE FROM contact_hostcommands_relation WHERE contact_contact_id = '".$this->encodeInHTML($contactId)."'";
         $this->DB->query($query);
         $query = "INSERT INTO contact_hostcommands_relation (contact_contact_id, command_command_id) " .
-        		"VALUES ('".htmlentities($contactId, ENT_QUOTES)."', '".htmlentities($cmdId, ENT_QUOTES)."')";
+        		"VALUES ('".$this->encodeInHTML($contactId)."', '".$this->encodeInHTML($cmdId)."')";
         $this->DB->query($query);
 	}
 
@@ -378,10 +405,10 @@ class CentreonContact {
             print "Command does not exist.\n";
             return 1;
         }
-        $query = "DELETE FROM contact_servicecommands_relation WHERE contact_contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $query = "DELETE FROM contact_servicecommands_relation WHERE contact_contact_id = '".$this->encodeInHTML($contactId)."'";
         $this->DB->query($query);
         $query = "INSERT INTO contact_servicecommands_relation (contact_contact_id, command_command_id) " .
-        		"VALUES ('".htmlentities($contactId, ENT_QUOTES)."', '".htmlentities($cmdId, ENT_QUOTES)."')";
+        		"VALUES ('".$this->encodeInHTML($contactId)."', '".$this->encodeInHTML($cmdId)."')";
         $this->DB->query($query);
 	}
 
@@ -402,7 +429,7 @@ class CentreonContact {
             print "Timeperiod does not exist.\n";
             return 1;
         }
-        $query = "UPDATE contact SET timeperiod_tp_id = '".htmlentities($timeperiodId, ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $query = "UPDATE contact SET timeperiod_tp_id = '".$this->encodeInHTML($timeperiodId)."' WHERE contact_id = '".$this->encodeInHTML($contactId)."'";
         $this->DB->query($query);
 	}
 
@@ -423,7 +450,7 @@ class CentreonContact {
             print "Timeperiod does not exist.\n";
             return 1;
         }
-        $query = "UPDATE contact SET timeperiod_tp_id2 = '".htmlentities($timeperiodId, ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $query = "UPDATE contact SET timeperiod_tp_id2 = '".$this->encodeInHTML($timeperiodId)."' WHERE contact_id = '".$this->encodeInHTML($contactId)."'";
         $this->DB->query($query);
 	}
 
@@ -465,7 +492,7 @@ class CentreonContact {
         /*
          * Update
          */
-        $query = "UPDATE contact SET ".htmlentities($conversionTable[$data[1]], ENT_QUOTES)." = '".htmlentities($data[2], ENT_QUOTES)."' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $query = "UPDATE contact SET ".$this->encodeInHTML($conversionTable[$data[1]])." = '".$this->encodeInHTML($data[2])."' WHERE contact_id = '".$this->encodeInHTML($contactId)."'";
 		$this->DB->query($query);
         return 0;
 	}
@@ -579,7 +606,7 @@ class CentreonContact {
         /*
          * enable user
          */
-        $query = "UPDATE contact SET contact_activate = '1' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $query = "UPDATE contact SET contact_activate = '1' WHERE contact_id = '".$this->encodeInHTML($contactId)."'";
         $this->DB->query($query);
 	}
 
@@ -603,7 +630,7 @@ class CentreonContact {
         /*
          * enable user
          */
-        $query = "UPDATE contact SET contact_activate = '0' WHERE contact_id = '".htmlentities($contactId, ENT_QUOTES)."'";
+        $query = "UPDATE contact SET contact_activate = '0' WHERE contact_id = '".$this->encodeInHTML($contactId)."'";
         $this->DB->query($query);
 	}
 

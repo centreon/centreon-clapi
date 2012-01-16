@@ -42,10 +42,35 @@ require_once "./class/centreonCommand.class.php";
 class CentreonContactGroup {
 	private $DB;
 	private $nameLen;
+	protected $version;
 
 	public function __construct($DB) {
 		$this->DB = $DB;
 		$this->nameLen = 40;
+		$this->version = $this->getVersion();
+	}
+
+	/**
+	 *
+	 * Get Version of Centreon
+	 */
+	protected function getVersion() {
+		$request = "SELECT * FROM informations";
+		$DBRESULT = $this->DB->query($request);
+		$info = $DBRESULT->fetchRow();
+		return $info["value"];
+	}
+
+	/**
+	 *
+	 * encode with $this->encodeInHTML a string
+	 * @param unknown_type $string
+	 */
+	protected function encodeInHTML($string) {
+	    if (!strncmp($this->version, "2.1", 3)) {
+            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
+	    }
+	    return $string;
 	}
 
 	/*
@@ -58,7 +83,7 @@ class CentreonContactGroup {
 		/*
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT cg_name, cg_id FROM contactgroup WHERE cg_name = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT cg_name, cg_id FROM contactgroup WHERE cg_name = '".$this->encodeInHTML($name)."'");
 		if ($DBRESULT->numRows() >= 1) {
 			$contact =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
@@ -114,7 +139,7 @@ class CentreonContactGroup {
 	 */
 
 	public function del($name) {
-		$request = "DELETE FROM contactgroup WHERE cg_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
+		$request = "DELETE FROM contactgroup WHERE cg_name LIKE '".$this->encodeInHTML($name)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return 0;
@@ -126,7 +151,7 @@ class CentreonContactGroup {
 	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
-			$searchStr = " WHERE cg_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' OR cg_alias LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
+			$searchStr = " WHERE cg_name LIKE '%".$this->encodeInHTML($search)."%' OR cg_alias LIKE '%".$this->encodeInHTML($search)."%' ";
 		}
 		$request = "SELECT cg_id, cg_name, cg_alias FROM contactgroup $searchStr ORDER BY cg_name";
 		$DBRESULT =& $this->DB->query($request);
@@ -135,7 +160,7 @@ class CentreonContactGroup {
 			if ($i == 0) {
 				print "id;name;alias;members\n";
 			}
-			print html_entity_decode($data["cg_name"], ENT_QUOTES).";".html_entity_decode($data["cg_alias"], ENT_QUOTES).";";
+			print html_entity_decode($data["cg_name"]).";".html_entity_decode($data["cg_alias"]).";";
 
 			$request = "SELECT contact_name FROM contact, contactgroup_contact_relation WHERE contactgroup_cg_id = '".$data["cg_id"]."' AND contact.contact_id = contactgroup_contact_relation.contact_contact_id";
 			$DBRESULT2 =& $this->DB->query($request);
@@ -147,7 +172,7 @@ class CentreonContactGroup {
 				$members .= $dataC["contact_name"];
 			}
 			$DBRESULT2->free();
-			print html_entity_decode($members, ENT_QUOTES)."\n";
+			print html_entity_decode($members)."\n";
 			$i++;
 		}
 		$DBRESULT->free();
@@ -162,12 +187,12 @@ class CentreonContactGroup {
 		$request = "SELECT cg_id, cg_name, cg_alias FROM contactgroup ORDER BY cg_name";
 		$DBRESULT =& $this->DB->query($request);
 		while ($data =& $DBRESULT->fetchRow()) {
-			print "CG;ADD;".html_entity_decode($data["cg_name"], ENT_QUOTES).";".html_entity_decode($data["cg_alias"], ENT_QUOTES)."\n";
+			print "CG;ADD;".html_entity_decode($data["cg_name"]).";".html_entity_decode($data["cg_alias"])."\n";
 
 			$request = "SELECT contact_name FROM contact, contactgroup_contact_relation WHERE contactgroup_cg_id = '".$data["cg_id"]."' AND contact.contact_id = contactgroup_contact_relation.contact_contact_id";
 			$DBRESULT2 =& $this->DB->query($request);
 			while ($dataC =& $DBRESULT2->fetchRow()) {
-				print "CG;SETCHILD;". html_entity_decode($data["cg_name"], ENT_QUOTES). ";" . $dataC["contact_name"] . "\n";
+				print "CG;SETCHILD;". html_entity_decode($data["cg_name"]). ";" . $dataC["contact_name"] . "\n";
 			}
 			$DBRESULT2->free();
 		}
@@ -215,7 +240,7 @@ class CentreonContactGroup {
 			if (!isset($information["cg_alias"]) || $information["cg_alias"] == "")
 				$information["cg_alias"] = $information["cg_name"];
 
-			$request = "INSERT INTO contactgroup (cg_name, cg_alias, cg_activate) VALUES ('".htmlentities($information["cg_name"], ENT_QUOTES)."', '".htmlentities($information["cg_alias"], ENT_QUOTES)."', '1')";
+			$request = "INSERT INTO contactgroup (cg_name, cg_alias, cg_activate) VALUES ('".$this->encodeInHTML($information["cg_name"])."', '".$this->encodeInHTML($information["cg_alias"])."', '1')";
 			$DBRESULT =& $this->DB->query($request);
 
 			$cg_id = $this->getContactGroupID($information["cg_name"]);

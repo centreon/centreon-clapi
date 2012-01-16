@@ -78,6 +78,18 @@ class CentreonCommand {
 	}
 
 	/**
+	 *
+	 * encode with htmlentities a string
+	 * @param unknown_type $string
+	 */
+	protected function encodeInHTML($string) {
+	    if (!strncmp($this->version, "2.1", 3)) {
+            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
+	    }
+	    return $string;
+	}
+
+	/**
 	 * Check command existance
 	 */
 	public function commandExists($name) {
@@ -88,7 +100,7 @@ class CentreonCommand {
 		/**
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT command_name, command_id FROM command WHERE command_name = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT command_name, command_id FROM command WHERE command_name = '".$this->encodeInHTML($name)."'");
 		if ($DBRESULT->numRows() >= 1) {
 			$sg =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
@@ -120,7 +132,7 @@ class CentreonCommand {
 	protected function encode($name) {
 		if (!strncmp($this->version, "2.1", 3)) {
 			$name = str_replace("$", "\$", $name);
-			$name = str_replace("/", "#S#", htmlentities($name, ENT_QUOTES));
+			$name = str_replace("/", "#S#", $this->encodeInHTML($name));
 			$name = str_replace("\\", "#BS#", $name);
 			$name = str_replace("\t", "#R#", $name);
 		}
@@ -221,7 +233,7 @@ class CentreonCommand {
 			return $check;
 		}
 
-		$request = "DELETE FROM command WHERE command_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
+		$request = "DELETE FROM command WHERE command_name LIKE '".$this->encodeInHTML($name)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return 0;
@@ -235,7 +247,7 @@ class CentreonCommand {
 	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
-			$searchStr = " WHERE command_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
+			$searchStr = " WHERE command_name LIKE '%".$this->encodeInHTML($search)."%' ";
 		}
 
 		$request = "SELECT command_id, command_name, command_type, command_line FROM command $searchStr ORDER BY command_name";
@@ -245,7 +257,7 @@ class CentreonCommand {
 			if ($i == 0) {
 				print "id;name;type;line\n";
 			}
-			print html_entity_decode($data["command_id"], ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".$this->type[html_entity_decode($data["command_type"], ENT_QUOTES)].";".html_entity_decode($this->decode($data["command_line"]), ENT_QUOTES)."\n";
+			print html_entity_decode($data["command_id"]).";".html_entity_decode($this->decode($data["command_name"])).";".$this->type[html_entity_decode($data["command_type"])].";".html_entity_decode($this->decode($data["command_line"]))."\n";
 			$i++;
 		}
 		$DBRESULT->free();
@@ -264,7 +276,7 @@ class CentreonCommand {
 		$DBRESULT =& $this->DB->query($request);
 		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
-			print "CMD;ADD;".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".$this->type[html_entity_decode($data["command_type"], ENT_QUOTES)].";".html_entity_decode($this->decode($data["command_line"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_example"]), ENT_QUOTES).";".html_entity_decode($this->decode($this->graphTemplates['id'][$data["graph_id"]]), ENT_QUOTES)."\n";
+			print "CMD;ADD;".html_entity_decode($this->decode($data["command_name"])).";".$this->type[html_entity_decode($data["command_type"])].";".html_entity_decode($this->decode($data["command_line"])).";".html_entity_decode($this->decode($data["command_example"])).";".html_entity_decode($this->decode($this->graphTemplates['id'][$data["graph_id"]]))."\n";
 			$i++;
 		}
 		$DBRESULT->free();
@@ -356,8 +368,8 @@ class CentreonCommand {
 
 				$request = 	"INSERT INTO command " .
 							"(command_name, command_line, command_type) VALUES " .
-							"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".$information["command_line"]."'" .
-							", '".htmlentities($information["command_type"], ENT_QUOTES)."')";
+							"('".$this->encodeInHTML($information["command_name"])."', '".$information["command_line"]."'" .
+							", '".$this->encodeInHTML($information["command_type"])."')";
 
 				$DBRESULT =& $this->DB->query($request);
 				$command_id = $this->getCommandID($information["command_name"]);
@@ -369,9 +381,9 @@ class CentreonCommand {
 
 				$request = 	"INSERT INTO command " .
 							"(command_name, command_line, command_type, command_example, graph_id) VALUES " .
-							"('".htmlentities($information["command_name"], ENT_QUOTES)."', '".$information["command_line"]."'" .
-							", '".htmlentities($information["command_type"], ENT_QUOTES)."', '".htmlentities($information["command_example"], ENT_QUOTES)."'" .
-							", '".htmlentities($this->graphTemplates['name'][$information["graph_template"]], ENT_QUOTES)."' )";
+							"('".$this->encodeInHTML($information["command_name"])."', '".$information["command_line"]."'" .
+							", '".$this->encodeInHTML($information["command_type"])."', '".$this->encodeInHTML($information["command_example"])."'" .
+							", '".$this->encodeInHTML($this->graphTemplates['name'][$information["graph_template"]])."' )";
 				$DBRESULT =& $this->DB->query($request);
 				$command_id = $this->getCommandID($information["command_name"]);
 			}
@@ -402,7 +414,7 @@ class CentreonCommand {
 				$DBRESULT =& $this->DB->query($request);
 				return 0;
 			} else {
-				$request = "UPDATE command SET graph_id = (SELECT graph_id FROM giv_graphs_template WHERE name LIKE '".htmlentities($info[2], ENT_QUOTES)."') WHERE command_name = '".htmlentities($info[0], ENT_QUOTES)."'";
+				$request = "UPDATE command SET graph_id = (SELECT graph_id FROM giv_graphs_template WHERE name LIKE '".$this->encodeInHTML($info[2])."') WHERE command_name = '".$this->encodeInHTML($info[0])."'";
 				$DBRESULT =& $this->DB->query($request);
 				return 0;
 			}
