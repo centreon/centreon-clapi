@@ -43,6 +43,8 @@ class CentreonServiceCategory {
 	private $svc;
 	private $host;
 
+	protected $version;
+	
 	public function __construct($DB) {
 		$this->DB = $DB;
 
@@ -56,6 +58,30 @@ class CentreonServiceCategory {
 		$this->svc = new CentreonService($this->DB, "SERVICE");
 	}
 
+	/**
+	 *
+	 * Get Version of Centreon
+	 */
+	protected function getVersion() {
+		$request = "SELECT * FROM informations";
+		$DBRESULT = $this->DB->query($request);
+		$info = $DBRESULT->fetchRow();
+		return $info["value"];
+	}
+
+	/**
+	 *
+	 * encode with htmlentities a string
+	 * @param unknown_type $string
+	 */
+	protected function encodeInHTML($string) {
+	    if (!strncmp($this->version, "2.1", 3)) {
+            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
+	    }
+	    return $string;
+	}
+	
+	
 	/*
 	 * Check host existance
 	 */
@@ -66,7 +92,7 @@ class CentreonServiceCategory {
 		/*
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT sc_name, sc_id FROM service_categories WHERE sc_name = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT sc_name, sc_id FROM service_categories WHERE sc_name = '".$this->encodeInHTML($name)."'");
 		if ($DBRESULT->numRows() >= 1) {
 			$sc =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
@@ -115,7 +141,7 @@ class CentreonServiceCategory {
 	 */
 
 	public function del($name) {
-		$request = "DELETE FROM service_categories WHERE sc_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
+		$request = "DELETE FROM service_categories WHERE sc_name LIKE '".$this->encodeInHTML($name)."'";
 		$DBRESULT =& $this->DB->query($request);
 
 		/**
@@ -135,7 +161,7 @@ class CentreonServiceCategory {
 		 */
 		$searchStr = "";
 		if (isset($search) && $search != "") {
-			$searchStr = " WHERE sc_name LIKE '%".htmlentities($search, ENT_QUOTES)."%' OR sc_description LIKE '%".htmlentities($search, ENT_QUOTES)."%'";
+			$searchStr = " WHERE sc_name LIKE '%".$this->encodeInHTML($search)."%' OR sc_description LIKE '%".$this->encodeInHTML($search)."%'";
 		}
 
 		/*
@@ -154,7 +180,7 @@ class CentreonServiceCategory {
 				if ($i == 0) {
 					print "Name;Alias;Members\n";
 				}
-				print html_entity_decode($data["sc_name"], ENT_QUOTES).";".html_entity_decode($data["sc_description"], ENT_QUOTES).";";
+				print html_entity_decode($data["sc_name"]).";".html_entity_decode($data["sc_description"]).";";
 
 				/*
 				 * Get Childs informations
@@ -268,7 +294,7 @@ class CentreonServiceCategory {
 			if (!isset($information["sc_description"]) || $information["sc_description"] == "")
 				$information["sc_description"] = $information["sc_name"];
 
-			$request = "INSERT INTO service_categories (sc_name, sc_description, sc_activate) VALUES ('".htmlentities($information["sc_name"], ENT_QUOTES)."', '".htmlentities($information["sc_description"], ENT_QUOTES)."', '1')";
+			$request = "INSERT INTO service_categories (sc_name, sc_description, sc_activate) VALUES ('".$this->encodeInHTML($information["sc_name"])."', '".$this->encodeInHTML($information["sc_description"])."', '1')";
 			$DBRESULT =& $this->DB->query($request);
 
 			$sc_id = $this->getServiceCategoryID($information["sc_name"]);
@@ -298,7 +324,7 @@ class CentreonServiceCategory {
 
 	protected function setParamServiceCategory($sc_name, $parameter, $value) {
 
-		$value = htmlentities($value, ENT_QUOTES);
+		$value = $this->encodeInHTML($value);
 
 		if ($parameter == "alias") {
 			$parameter = "description";
@@ -366,13 +392,13 @@ class CentreonServiceCategory {
 		 * Get host Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
+		$host_id = $host->getHostID($this->encodeInHTML($child_host));
 
 		/*
 		 * Get service Child information
 		 */
 		$service = new CentreonService($this->DB, "SERVICE");
-		$service_id = $service->getServiceID($host_id, htmlentities($child_service, ENT_QUOTES));
+		$service_id = $service->getServiceID($host_id, $this->encodeInHTML($child_service));
 
 		/*
 		 * Add link.
@@ -403,7 +429,7 @@ class CentreonServiceCategory {
 		 * Get service Child information
 		 */
 		$service = new CentreonService($this->DB, "STPL");
-		$service_id = $service->getServiceTplID(htmlentities($child_service, ENT_QUOTES));
+		$service_id = $service->getServiceTplID($this->encodeInHTML($child_service));
 
 		/*
 		 * Add link.
@@ -452,13 +478,13 @@ class CentreonServiceCategory {
 		 * Get host Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
+		$host_id = $host->getHostID($this->encodeInHTML($child_host));
 
 		/*
 		 * Get service Child information
 		 */
 		$service = new CentreonService($this->DB, "SERVICE");
-		$service_id = $service->getServiceID($host_id, htmlentities($child_service, ENT_QUOTES));
+		$service_id = $service->getServiceID($host_id, $this->encodeInHTML($child_service));
 
 		/*
 		 * Add link.
@@ -487,7 +513,7 @@ class CentreonServiceCategory {
 		 * Get service Child information
 		 */
 		$service = new CentreonService($this->DB, "SERVICE");
-		$service_id = $service->getServiceTplID(htmlentities($child_service, ENT_QUOTES));
+		$service_id = $service->getServiceTplID($this->encodeInHTML($child_service));
 
 		/*
 		 * Add link.

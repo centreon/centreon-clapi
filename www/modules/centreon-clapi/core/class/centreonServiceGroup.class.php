@@ -40,6 +40,8 @@ class CentreonServiceGroup {
 	private $DB;
 	private $access;
 
+	protected $version;
+	
 	public function __construct($DB) {
 		$this->DB = $DB;
 
@@ -50,6 +52,29 @@ class CentreonServiceGroup {
 
 	}
 
+	/**
+	 *
+	 * Get Version of Centreon
+	 */
+	protected function getVersion() {
+		$request = "SELECT * FROM informations";
+		$DBRESULT = $this->DB->query($request);
+		$info = $DBRESULT->fetchRow();
+		return $info["value"];
+	}
+
+	/**
+	 *
+	 * encode with htmlentities a string
+	 * @param unknown_type $string
+	 */
+	protected function encodeInHTML($string) {
+	    if (!strncmp($this->version, "2.1", 3)) {
+            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
+	    }
+	    return $string;
+	}
+	
 	/*
 	 * Check host existance
 	 */
@@ -60,7 +85,7 @@ class CentreonServiceGroup {
 		/*
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT sg_name, sg_id FROM servicegroup WHERE sg_name = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT sg_name, sg_id FROM servicegroup WHERE sg_name = '".$this->encodeInHTML($name)."'");
 		if ($DBRESULT->numRows() >= 1) {
 			$sg =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
@@ -109,7 +134,7 @@ class CentreonServiceGroup {
 	 */
 
 	public function del($name) {
-		$request = "DELETE FROM servicegroup WHERE sg_name LIKE '".htmlentities($name, ENT_QUOTES)."'";
+		$request = "DELETE FROM servicegroup WHERE sg_name LIKE '".$this->encodeInHTML($name)."'";
 		$DBRESULT =& $this->DB->query($request);
 
 		/**
@@ -129,7 +154,7 @@ class CentreonServiceGroup {
 		 */
 		$searchStr = "";
 		if (isset($search) && $search != "") {
-			$searchStr = " WHERE sg_name LIKE '%".htmlentities($search, ENT_QUOTES)."%'";
+			$searchStr = " WHERE sg_name LIKE '%".$this->encodeInHTML($search)."%'";
 		}
 
 
@@ -148,7 +173,7 @@ class CentreonServiceGroup {
 			if ($i == 0) {
 				print "Name;Alias;Members\n";
 			}
-			print html_entity_decode($data["sg_name"], ENT_QUOTES).";".html_entity_decode($data["sg_alias"], ENT_QUOTES).";";
+			print html_entity_decode($data["sg_name"]).";".html_entity_decode($data["sg_alias"]).";";
 
 			/*
 			 * Get Childs informations
@@ -187,7 +212,7 @@ class CentreonServiceGroup {
 		$request = "SELECT sg_id, sg_name, sg_alias FROM servicegroup ORDER BY sg_name";
 		$DBRESULT =& $this->DB->query($request);
 		while ($data =& $DBRESULT->fetchRow()) {
-			print "SG;ADD;".html_entity_decode($data["sg_name"], ENT_QUOTES).";".html_entity_decode($data["sg_alias"], ENT_QUOTES)."\n";
+			print "SG;ADD;".html_entity_decode($data["sg_name"]).";".html_entity_decode($data["sg_alias"])."\n";
 
 			/*
 			 * Get Childs informations
@@ -195,7 +220,7 @@ class CentreonServiceGroup {
 			$request = "SELECT host_host_id, service_service_id FROM servicegroup_relation WHERE servicegroup_sg_id = '".$data["sg_id"]."'";
 			$DBRESULT2 =& $this->DB->query($request);
 			while ($m =& $DBRESULT2->fetchRow()) {
-				print "SG;ADDCHILD;".html_entity_decode($data["sg_name"], ENT_QUOTES).";".$host->getHostName($m["host_host_id"]).";".$svc->getServiceName($m["service_service_id"], 1)."\n";
+				print "SG;ADDCHILD;".html_entity_decode($data["sg_name"]).";".$host->getHostName($m["host_host_id"]).";".$svc->getServiceName($m["service_service_id"], 1)."\n";
 			}
 			$DBRESULT2->free();
 		}
@@ -239,7 +264,7 @@ class CentreonServiceGroup {
 				$information["sg_alias"] = $information["sg_name"];
 			}
 
-			$request = "INSERT INTO servicegroup (sg_name, sg_alias, sg_activate) VALUES ('".htmlentities($information["sg_name"], ENT_QUOTES)."', '".htmlentities($information["sg_alias"], ENT_QUOTES)."', '1')";
+			$request = "INSERT INTO servicegroup (sg_name, sg_alias, sg_activate) VALUES ('".$this->encodeInHTML($information["sg_name"])."', '".$this->encodeInHTML($information["sg_alias"])."', '1')";
 			$DBRESULT =& $this->DB->query($request);
 
 			$sg_id = $this->getServiceGroupID($information["sg_name"]);
@@ -269,7 +294,7 @@ class CentreonServiceGroup {
 
 	protected function setParamServiceGroup($sg_name, $parameter, $value) {
 
-		$value = htmlentities($value, ENT_QUOTES);
+		$value = $this->encodeInHTML($value);
 
 		if ($parameter != "name" && $parameter != "alias") {
 			print "Unknown parameters.\n";
@@ -317,13 +342,13 @@ class CentreonServiceGroup {
 		 * Get host Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
+		$host_id = $host->getHostID($this->encodeInHTML($child_host));
 
 		/*
 		 * Get service Child information
 		 */
 		$service = new CentreonService($this->DB, "SERVICE");
-		$service_id = $service->getServiceID($host_id, htmlentities($child_service, ENT_QUOTES));
+		$service_id = $service->getServiceID($host_id, $this->encodeInHTML($child_service));
 
 		/*
 		 * Add link.
@@ -373,13 +398,13 @@ class CentreonServiceGroup {
 		 * Get host Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID(htmlentities($child_host, ENT_QUOTES));
+		$host_id = $host->getHostID($this->encodeInHTML($child_host));
 
 		/*
 		 * Get service Child information
 		 */
 		$service = new CentreonService($this->DB, "SERVICE");
-		$service_id = $service->getServiceID($host_id, htmlentities($child_service, ENT_QUOTES));
+		$service_id = $service->getServiceID($host_id, $this->encodeInHTML($child_service));
 
 		/*
 		 * Add link.

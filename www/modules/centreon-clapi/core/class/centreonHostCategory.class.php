@@ -39,7 +39,8 @@
 class CentreonHostCategory {
 	private $DB;
 	private $access;
-
+	protected $version;
+	
 	public function __construct($DB) {
 		$this->DB = $DB;
 
@@ -47,9 +48,32 @@ class CentreonHostCategory {
 		 * Enable Access Object
 		 */
 		$this->access = new CentreonACLResources($this->DB);
-
+		$this->version = $this->getVersion();
 	}
 
+	/**
+	 *
+	 * Get Version of Centreon
+	 */
+	protected function getVersion() {
+		$request = "SELECT * FROM informations";
+		$DBRESULT = $this->DB->query($request);
+		$info = $DBRESULT->fetchRow();
+		return $info["value"];
+	}
+
+	/**
+	 *
+	 * encode with htmlentities a string
+	 * @param unknown_type $string
+	 */
+	protected function encodeInHTML($string) {
+	    if (!strncmp($this->version, "2.1", 3)) {
+            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
+	    }
+	    return $string;
+	}
+	
 	/**
 	 * Check host existance
 	 */
@@ -60,7 +84,7 @@ class CentreonHostCategory {
 		/**
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT hc_name, hc_id FROM hostcategories WHERE hc_name LIKE '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT hc_name, hc_id FROM hostcategories WHERE hc_name LIKE '".$this->encodeInHTML($name)."'");
 		if ($DBRESULT->numRows() >= 1) {
 			$host =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
@@ -111,7 +135,7 @@ class CentreonHostCategory {
 			return $check;
 		}
 
-		$request = "DELETE FROM hostcategories WHERE hc_name LIKE '".htmlentities($options, ENT_QUOTES)."'";
+		$request = "DELETE FROM hostcategories WHERE hc_name LIKE '".$this->encodeInHTML($options)."'";
 		$DBRESULT =& $this->DB->query($request);
 		$this->return_code = 0;
 		return;
@@ -120,7 +144,7 @@ class CentreonHostCategory {
 	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
-			$searchStr = " WHERE hc_name LIKE '%".htmlentities($search, ENT_QUOTES)."%'";
+			$searchStr = " WHERE hc_name LIKE '%".$this->encodeInHTML($search)."%'";
 		}
 		$request = "SELECT hc_id, hc_name, hc_alias FROM hostcategories $searchStr ORDER BY hc_name";
 		$DBRESULT =& $this->DB->query($request);
@@ -129,7 +153,7 @@ class CentreonHostCategory {
 			if ($i == 0) {
 				print "id;name;alias;members\n";
 			}
-			print $data["hc_id"].";".html_entity_decode($data["hc_name"], ENT_QUOTES).";".html_entity_decode($data["hc_alias"], ENT_QUOTES).";";
+			print $data["hc_id"].";".html_entity_decode($data["hc_name"]).";".html_entity_decode($data["hc_alias"]).";";
 
 			$members = "";
 			$request = "SELECT host_name FROM host, hostcategories_relation WHERE hostcategories_hc_id = '".$data["hc_id"]."' AND host_host_id = host_id ORDER BY host_name";
@@ -187,7 +211,7 @@ class CentreonHostCategory {
 			if (!isset($information["hc_alias"]) || $information["hc_alias"] == "")
 				$information["hc_alias"] = $information["hc_name"];
 
-			$request = "INSERT INTO hostcategories (hc_name, hc_alias, hc_activate) VALUES ('".htmlentities($information["hc_name"], ENT_QUOTES)."', '".htmlentities($information["hc_alias"], ENT_QUOTES)."', '1')";
+			$request = "INSERT INTO hostcategories (hc_name, hc_alias, hc_activate) VALUES ('".$this->encodeInHTML($information["hc_name"])."', '".$this->encodeInHTML($information["hc_alias"])."', '1')";
 			$DBRESULT =& $this->DB->query($request);
 
 			$hc_id = $this->getHostCategoryID($information["hc_name"]);
@@ -211,7 +235,7 @@ class CentreonHostCategory {
 
 	protected function setParamHostCategory($hc_name, $parameter, $value) {
 
-		$value = htmlentities($value, ENT_QUOTES);
+		$value = $this->encodeInHTML($value);
 
 		$hc_id = $this->getHostCategoryID($hc_name);
 		if ($hc_id) {

@@ -39,7 +39,8 @@
 class CentreonHostGroup {
 	private $DB;
 	private $access;
-
+	protected $version;
+	
 	public function __construct($DB) {
 		$this->DB = $DB;
 
@@ -50,6 +51,28 @@ class CentreonHostGroup {
 
 	}
 
+	/**
+	 *
+	 * Get Version of Centreon
+	 */
+	protected function getVersion() {
+		$request = "SELECT * FROM informations";
+		$DBRESULT = $this->DB->query($request);
+		$info = $DBRESULT->fetchRow();
+		return $info["value"];
+	}
+
+	/**
+	 *
+	 * encode with htmlentities a string
+	 * @param unknown_type $string
+	 */
+	protected function encodeInHTML($string) {
+	    if (!strncmp($this->version, "2.1", 3)) {
+            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
+	    }
+	    return $string;
+	}
 	/*
 	 * Check host existance
 	 */
@@ -60,7 +83,7 @@ class CentreonHostGroup {
 		/*
 		 * Get informations
 		 */
-		$DBRESULT =& $this->DB->query("SELECT hg_name, hg_id FROM hostgroup WHERE hg_name = '".htmlentities($name, ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT hg_name, hg_id FROM hostgroup WHERE hg_name = '".$this->encodeInHTML($name, ENT_QUOTES)."'");
 		if ($DBRESULT->numRows() >= 1) {
 			$host =& $DBRESULT->fetchRow();
 			$DBRESULT->free();
@@ -122,7 +145,7 @@ class CentreonHostGroup {
 			return $check;
 		}
 
-		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '".htmlentities($options, ENT_QUOTES)."'";
+		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '".$this->encodeInHTML($options)."'";
 		$DBRESULT =& $this->DB->query($request);
 
 		/**
@@ -142,7 +165,7 @@ class CentreonHostGroup {
 	public function show($search = NULL) {
 		$searchStr = "";
 		if (isset($search) && $search != "") {
-			$searchStr = " WHERE hg_name LIKE '%".htmlentities($search, ENT_QUOTES)."%'";
+			$searchStr = " WHERE hg_name LIKE '%".$this->encodeInHTML($search)."%'";
 		}
 		$request = "SELECT hg_id, hg_name, hg_alias FROM hostgroup $searchStr ORDER BY hg_name";
 		$DBRESULT =& $this->DB->query($request);
@@ -151,7 +174,7 @@ class CentreonHostGroup {
 			if ($i == 0) {
 				print "id;name;alias;members\n";
 			}
-			print $data["hg_id"].";".html_entity_decode($data["hg_name"], ENT_QUOTES).";".html_entity_decode($data["hg_alias"], ENT_QUOTES).";";
+			print $data["hg_id"].";".html_entity_decode($data["hg_name"]).";".html_entity_decode($data["hg_alias"]).";";
 
 			$members = "";
 			$request = "SELECT host_name FROM host, hostgroup_relation WHERE hostgroup_hg_id = '".$data["hg_id"]."' AND host_host_id = host_id ORDER BY host_name";
@@ -181,13 +204,13 @@ class CentreonHostGroup {
 		$DBRESULT =& $this->DB->query($request);
 		$i = 0;
 		while ($data =& $DBRESULT->fetchRow()) {
-			print "HG;ADD;".html_entity_decode($data["hg_name"], ENT_QUOTES).";".html_entity_decode($data["hg_alias"], ENT_QUOTES)."\n";
+			print "HG;ADD;".html_entity_decode($data["hg_name"]).";".html_entity_decode($data["hg_alias"])."\n";
 			$members = "";
 			/**
 			$request = "SELECT host_name FROM host, hostgroup_relation WHERE hostgroup_hg_id = '".$data["hg_id"]."' AND host_host_id = host_id ORDER BY host_name";
 			$DBRESULT2 =& $this->DB->query($request);
 			while ($m =& $DBRESULT2->fetchRow()) {
-				print "HG;ADDCHILD;".html_entity_decode($data["hg_name"], ENT_QUOTES).";".html_entity_decode($m["host_name"], ENT_QUOTES)."\n";
+				print "HG;ADDCHILD;".html_entity_decode($data["hg_name"]).";".html_entity_decode($m["host_name"])."\n";
 			}
 			$DBRESULT2->free();
 			*/
@@ -236,7 +259,7 @@ class CentreonHostGroup {
 			if (!isset($information["hg_alias"]) || $information["hg_alias"] == "")
 				$information["hg_alias"] = $information["hg_name"];
 
-			$request = "INSERT INTO hostgroup (hg_name, hg_alias, hg_activate) VALUES ('".htmlentities($information["hg_name"], ENT_QUOTES)."', '".htmlentities($information["hg_alias"], ENT_QUOTES)."', '1')";
+			$request = "INSERT INTO hostgroup (hg_name, hg_alias, hg_activate) VALUES ('".$this->encodeInHTML($information["hg_name"])."', '".$this->encodeInHTML($information["hg_alias"])."', '1')";
 			$DBRESULT =& $this->DB->query($request);
 
 			$hg_id = $this->getHostGroupID($information["hg_name"]);
@@ -265,7 +288,7 @@ class CentreonHostGroup {
 
 	protected function setParamHostGroup($hg_name, $parameter, $value) {
 
-		$value = htmlentities($value, ENT_QUOTES);
+		$value = $this->encodeInHTML($value);
 
 		$hg_id = $this->getHostGroupID($hg_name);
 		if ($hg_id) {
@@ -304,7 +327,7 @@ class CentreonHostGroup {
 		 * Get Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
+		$host_id = $host->getHostID($this->encodeInHTML($child));
 
 		$hg_id = $this->getHostGroupID($hg_name);
 		if ($hg_id && $host_id) {
@@ -351,7 +374,7 @@ class CentreonHostGroup {
 		 * Get Child informations
 		 */
 		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID(htmlentities($child, ENT_QUOTES));
+		$host_id = $host->getHostID($this->encodeInHTML($child));
 
 		$hg_id = $this->getHostGroupID($hg_name);
 		if ($hg_id && $host_id) {

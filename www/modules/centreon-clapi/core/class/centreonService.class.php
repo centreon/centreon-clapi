@@ -109,6 +109,18 @@ class CentreonService {
 
 	/**
 	 *
+	 * encode with htmlentities a string
+	 * @param unknown_type $string
+	 */
+	protected function encodeInHTML($string) {
+	    if (!strncmp($this->version, "2.1", 3)) {
+            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
+	    }
+	    return $string;
+	}
+	
+	/**
+	 *
 	 * Get Version of Centreon
 	 */
 	protected function getVersion() {
@@ -249,7 +261,7 @@ class CentreonService {
 	 */
 	public function testServiceExistence ($name = NULL, $host_id = NULL) {
 
-		$DBRESULT =& $this->DB->query("SELECT service_id FROM service, host_service_relation hsr WHERE hsr.host_host_id = '".$host_id."' AND hsr.service_service_id = service_id AND service.service_description LIKE '".htmlentities($this->encode($name), ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT service_id FROM service, host_service_relation hsr WHERE hsr.host_host_id = '".$host_id."' AND hsr.service_service_id = service_id AND service.service_description LIKE '".$this->encodeInHTML($this->encode($name))."'");
 		$service =& $DBRESULT->fetchRow();
 		if ($DBRESULT->numRows()) {
 			$DBRESULT->free();
@@ -261,7 +273,7 @@ class CentreonService {
 
 	public function testServiceTplExistence ($name = NULL) {
 
-		$DBRESULT =& $this->DB->query("SELECT service_id FROM service WHERE service.service_description LIKE '".htmlentities($this->encode($name), ENT_QUOTES)."'");
+		$DBRESULT =& $this->DB->query("SELECT service_id FROM service WHERE service.service_description LIKE '".$this->encodeInHTML($this->encode($name))."'");
 		$service =& $DBRESULT->fetchRow();
 		if ($DBRESULT->numRows()) {
 			$DBRESULT->free();
@@ -414,7 +426,7 @@ class CentreonService {
 										"WHERE hsr.host_host_id = h.host_id " .
 											"AND h.host_name LIKE '".$this->encode($host)."' " .
 											"AND hsr.service_service_id = service_id " .
-											"AND service.service_description = '".htmlentities($this->encode($name), ENT_QUOTES)."'");
+											"AND service.service_description = '".$this->encodeInHTML($this->encode($name))."'");
 		$service =& $DBRESULT->fetchRow();
 		if ($DBRESULT->numRows() >= 1) {
 			$DBRESULT->free();
@@ -428,7 +440,7 @@ class CentreonService {
 
 		$DBRESULT =& $this->DB->query(	"SELECT service_id " .
 										"FROM service " .
-										"WHERE service.service_description = '".htmlentities($this->encode($name), ENT_QUOTES)."'".
+										"WHERE service.service_description = '".$this->encodeInHTML($this->encode($name))."'".
 										" AND service_register = '0'");
 		$service =& $DBRESULT->fetchRow();
 		if ($DBRESULT->numRows() >= 1) {
@@ -501,10 +513,10 @@ class CentreonService {
 				$template = $data["service_id"];
 			}
 
-			$request = "INSERT INTO service (service_description, service_alias, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."', '".htmlentities($this->encode($information["service_alias"]), ENT_QUOTES)."', '".$template."', '1', '".$this->register."', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+			$request = "INSERT INTO service (service_description, service_alias, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".$this->encodeInHTML($this->encode($information["service_description"]))."', '".$this->encodeInHTML($this->encode($information["service_alias"]))."', '".$template."', '1', '".$this->register."', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 
-			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."' AND service_activate = '1' AND service_register = '".$this->register."'";
+			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".$this->encodeInHTML($this->encode($information["service_description"]))."' AND service_activate = '1' AND service_register = '".$this->register."'";
 			$DBRESULT =& $this->DB->query($request);
 			$service = $DBRESULT->fetchRow();
 			$service_id = $service["MAX(service_id)"];
@@ -561,10 +573,10 @@ class CentreonService {
 				$host = $data["host_id"];
 			}
 
-			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."', '".$template."', '1', '".$this->register."', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
+			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".$this->encodeInHTML($this->encode($information["service_description"]))."', '".$template."', '1', '".$this->register."', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
 			$this->DB->query($request);
 
-			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".htmlentities($this->encode($information["service_description"]), ENT_QUOTES)."' AND service_activate = '1' AND service_register = '".$this->register."'";
+			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".$this->encodeInHTML($this->encode($information["service_description"]))."' AND service_activate = '1' AND service_register = '".$this->register."'";
 			$DBRESULT =& $this->DB->query($request);
 			$service = $DBRESULT->fetchRow();
 			$service_id = $service["MAX(service_id)"];
@@ -652,7 +664,7 @@ class CentreonService {
 					$data["command_name"] = "";
 				}
 				$i++;
-				print $data["host_id"].";".$data["service_id"].";".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].";".$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
+				print $data["host_id"].";".$data["service_id"].";".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"])).";".html_entity_decode($this->decode($data["command_name"])).";".html_entity_decode($this->decode($data["command_command_id_arg"])).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].";".$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
 			}
 			$DBRESULT->free();
 		} else {
@@ -672,7 +684,7 @@ class CentreonService {
 				if (!isset($data["command_name"])) {
 					$data["command_name"] = "";
 				}
-				print $data["service_id"].";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["service_alias"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_name"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["command_command_id_arg"]), ENT_QUOTES).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
+				print $data["service_id"].";".html_entity_decode($this->decode($data["service_description"])).";".html_entity_decode($this->decode($data["service_alias"])).";".html_entity_decode($this->decode($data["command_name"])).";".html_entity_decode($this->decode($data["command_command_id_arg"])).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
 			}
 			$DBRESULT->free();
 		}
@@ -698,7 +710,7 @@ class CentreonService {
 				if (!isset($data["command_name"])) {
 					$data["command_name"] = "";
 				}
-				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceName($data["service_template_model_stm_id"], ENT_QUOTES)) : "")."\n";
+				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"])).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceName($data["service_template_model_stm_id"])) : "")."\n";
 				$this->exportMacros($data["service_id"], $data["host_id"]);
 				$this->exportProperties($data["service_id"], $data["host_id"]);
 			}
@@ -710,7 +722,7 @@ class CentreonService {
 				if (!isset($data["command_name"])) {
 					$data["command_name"] = "";
 				}
-				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"]), ENT_QUOTES).";".html_entity_decode($this->decode($data["service_alias"]), ENT_QUOTES).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceName($data["service_template_model_stm_id"], ENT_QUOTES)) : "")."\n";
+				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"])).";".html_entity_decode($this->decode($data["service_alias"])).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceName($data["service_template_model_stm_id"])) : "")."\n";
 				$this->exportMacros($data["service_id"]);
 				$this->exportProperties($data["service_id"]);
 				$this->exportTemplateLink($data["service_id"]);
@@ -1032,19 +1044,19 @@ class CentreonService {
 		$macro_name = strtoupper($macro_name);
 
 		if ($host_name != "") {
-			$host_id = $this->host->getHostID(htmlentities($host_name, ENT_QUOTES));
+			$host_id = $this->host->getHostID($this->encodeInHTML($host_name));
 			$service_id = $this->getServiceID($host_id, $service_description);
 
 			if ($service_id != 0) {
-				$request = "SELECT COUNT(*) FROM on_demand_macro_service WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$'";
+				$request = "SELECT COUNT(*) FROM on_demand_macro_service WHERE svc_svc_id = '".$this->encodeInHTML($service_id)."' AND svc_macro_name LIKE '\$_SERVICE".$this->encodeInHTML($macro_name)."\$'";
 				$DBRESULT =& $this->DB->query($request);
 				$data =& $DBRESULT->fetchRow();
 				if ($data["COUNT(*)"]) {
-					$request = "UPDATE on_demand_macro_service SET svc_macro_value = '".htmlentities($macro_value, ENT_QUOTES)."' WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$' LIMIT 1";
+					$request = "UPDATE on_demand_macro_service SET svc_macro_value = '".$this->encodeInHTML($macro_value)."' WHERE svc_svc_id = '".$this->encodeInHTML($service_id)."' AND svc_macro_name LIKE '\$_SERVICE".$this->encodeInHTML($macro_name)."\$' LIMIT 1";
 					$DBRESULT =& $this->DB->query($request);
 					return 0;
 				} else {
-					$request = "INSERT INTO on_demand_macro_service (svc_svc_id, svc_macro_value, svc_macro_name) VALUES ('".htmlentities($service_id, ENT_QUOTES)."', '".htmlentities($macro_value, ENT_QUOTES)."', '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$')";
+					$request = "INSERT INTO on_demand_macro_service (svc_svc_id, svc_macro_value, svc_macro_name) VALUES ('".$this->encodeInHTML($service_id)."', '".$this->encodeInHTML($macro_value)."', '\$_SERVICE".$this->encodeInHTML($macro_name)."\$')";
 					$DBRESULT =& $this->DB->query($request);
 					return 0;
 				}
@@ -1056,15 +1068,15 @@ class CentreonService {
 			$service_id = $this->getServiceTplID($service_description);
 
 			if ($service_id != 0) {
-				$request = "SELECT COUNT(*) FROM on_demand_macro_service WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$'";
+				$request = "SELECT COUNT(*) FROM on_demand_macro_service WHERE svc_svc_id = '".$this->encodeInHTML($service_id)."' AND svc_macro_name LIKE '\$_SERVICE".$this->encodeInHTML($macro_name)."\$'";
 				$DBRESULT =& $this->DB->query($request);
 				$data =& $DBRESULT->fetchRow();
 				if ($data["COUNT(*)"]) {
-					$request = "UPDATE on_demand_macro_service SET svc_macro_value = '".htmlentities($macro_value, ENT_QUOTES)."' WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$' LIMIT 1";
+					$request = "UPDATE on_demand_macro_service SET svc_macro_value = '".$this->encodeInHTML($macro_value)."' WHERE svc_svc_id = '".$this->encodeInHTML($service_id)."' AND svc_macro_name LIKE '\$_SERVICE".$this->encodeInHTML($macro_name)."\$' LIMIT 1";
 					$DBRESULT =& $this->DB->query($request);
 					return 0;
 				} else {
-					$request = "INSERT INTO on_demand_macro_service (svc_svc_id, svc_macro_value, svc_macro_name) VALUES ('".htmlentities($service_id, ENT_QUOTES)."', '".htmlentities($macro_value, ENT_QUOTES)."', '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$')";
+					$request = "INSERT INTO on_demand_macro_service (svc_svc_id, svc_macro_value, svc_macro_name) VALUES ('".$this->encodeInHTML($service_id)."', '".$this->encodeInHTML($macro_value)."', '\$_SERVICE".$this->encodeInHTML($macro_name)."\$')";
 					$DBRESULT =& $this->DB->query($request);
 					return 0;
 				}
@@ -1098,10 +1110,10 @@ class CentreonService {
 
 		$macro_name = strtoupper($macro_name);
 
-		$host_id = $this->host->getHostID(htmlentities($host_name, ENT_QUOTES));
+		$host_id = $this->host->getHostID($this->encodeInHTML($host_name));
 		$service_id = $this->getServiceID($host_id, $service_description);
 
-		$request = "DELETE FROM on_demand_macro_service WHERE svc_svc_id = '".htmlentities($service_id, ENT_QUOTES)."' AND svc_macro_name LIKE '\$_SERVICE".htmlentities($macro_name, ENT_QUOTES)."\$'";
+		$request = "DELETE FROM on_demand_macro_service WHERE svc_svc_id = '".$this->encodeInHTML($service_id)."' AND svc_macro_name LIKE '\$_SERVICE".$this->encodeInHTML($macro_name)."\$'";
 		$DBRESULT =& $this->DB->query($request);
 		return 0;
 	}
@@ -1140,7 +1152,7 @@ class CentreonService {
 
 		if (isset($this->parameters[$param]) && isset($this->paramTable[$param])) {
 			if ($this->register) {
-				$host_id = $this->host->getHostID(htmlentities($host_name, ENT_QUOTES));
+				$host_id = $this->host->getHostID($this->encodeInHTML($host_name));
 
 				if (!$this->serviceExists($service_description, $host_name)) {
 					print "Unknown service.\n";

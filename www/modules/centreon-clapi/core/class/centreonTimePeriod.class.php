@@ -43,7 +43,9 @@ class CentreonTimePeriod
      * @var CentreonDB
      */
     protected $_db;
-
+	protected $version;
+    
+    
     /**
      * constructor
      *
@@ -55,6 +57,29 @@ class CentreonTimePeriod
         $this->_db = $db;
     }
 
+	/**
+	 *
+	 * Get Version of Centreon
+	 */
+	protected function getVersion() {
+		$request = "SELECT * FROM informations";
+		$DBRESULT = $this->DB->query($request);
+		$info = $DBRESULT->fetchRow();
+		return $info["value"];
+	}
+
+	/**
+	 *
+	 * encode with htmlentities a string
+	 * @param unknown_type $string
+	 */
+	protected function encodeInHTML($string) {
+	    if (!strncmp($this->version, "2.1", 3)) {
+            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
+	    }
+	    return $string;
+	}
+    
     /**
      * Returns true if timeperiod exists
      *
@@ -63,7 +88,7 @@ class CentreonTimePeriod
      */
     public function timeperiodExists($name)
     {
-        $query = "SELECT tp_name FROM timeperiod WHERE tp_name = '".htmlentities($name, ENT_QUOTES)."'";
+        $query = "SELECT tp_name FROM timeperiod WHERE tp_name = '".$this->encodeInHTML($name)."'";
         $res = $this->_db->query($query);
         if ($res->numRows()) {
             return true;
@@ -80,7 +105,7 @@ class CentreonTimePeriod
      */
     public function getTimeperiodId($name)
     {
-        $query = "SELECT tp_id FROM timeperiod WHERE tp_name = '".htmlentities($name, ENT_QUOTES)."'";
+        $query = "SELECT tp_id FROM timeperiod WHERE tp_name = '".$this->encodeInHTML($name)."'";
         $res = $this->_db->query($query);
         while ($row = $res->fetchRow()) {
             return $row['tp_id'];
@@ -90,7 +115,7 @@ class CentreonTimePeriod
 
 	 public function getTimeperiodName($id)
     {
-        $query = "SELECT tp_name FROM timeperiod WHERE tp_id = '".htmlentities($id, ENT_QUOTES)."'";
+        $query = "SELECT tp_name FROM timeperiod WHERE tp_id = '".$this->encodeInHTML($id)."'";
         $res = $this->_db->query($query);
         while ($row = $res->fetchRow()) {
             return $row['tp_name'];
@@ -108,8 +133,8 @@ class CentreonTimePeriod
     {
         $searchQuery = "";
         if (isset ($search) && $search) {
-            $searchQuery = " WHERE tp_name LIKE '%".htmlentities($search, ENT_QUOTES)."%'
-            				 OR tp_alias LIKE '%".htmlentities($search, ENT_QUOTES)."%' ";
+            $searchQuery = " WHERE tp_name LIKE '%".$this->encodeInHTML($search)."%'
+            				 OR tp_alias LIKE '%".$this->encodeInHTML($search)."%' ";
         }
         $query = "SELECT * FROM timeperiod $searchQuery ORDER BY tp_name";
         $res = $this->_db->query($query);
@@ -118,7 +143,7 @@ class CentreonTimePeriod
             if (!$i) {
                 print "id;name;alias;sunday;monday;tuesday;wednesday;thursday;friday,saturday\n";
             }
-            print html_entity_decode($row['tp_id'].";".$row['tp_name'].";".$row['tp_alias'].";".$row['tp_sunday'].";".$row['tp_monday'].";".$row['tp_tuesday'].";".$row['tp_wednesday'].";".$row['tp_thursday'].";".$row['tp_friday'].";".$row['tp_saturday']."\n", ENT_QUOTES);
+            print html_entity_decode($row['tp_id'].";".$row['tp_name'].";".$row['tp_alias'].";".$row['tp_sunday'].";".$row['tp_monday'].";".$row['tp_tuesday'].";".$row['tp_wednesday'].";".$row['tp_thursday'].";".$row['tp_friday'].";".$row['tp_saturday']."\n");
             $i++;
         }
         return 0;
