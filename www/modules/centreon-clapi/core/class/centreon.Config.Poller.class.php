@@ -344,7 +344,7 @@ class CentreonConfigPoller {
 		require $path."genTimeperiods.php";
 		require $path."genCommands.php";
 		require $path."genContacts.php";
-		if (file_exists($path."genContactTemplates.php";)) {
+		if (file_exists($path."genContactTemplates.php")) {
             require $path."genContactTemplates.php";
 		}
 		require $path."genContactGroups.php";
