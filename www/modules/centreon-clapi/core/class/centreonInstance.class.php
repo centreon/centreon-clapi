@@ -127,9 +127,17 @@ class CentreonInstance extends CentreonObject
         if (isset($parameters)) {
             $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
         }
-        parent::show(array('id', 'name', 'localhost', 'ns_ip_address', 'ns_activate', 'ns_status', 'init_script',
-                           'monitoring_engine', 'nagios_bin', 'nagiostats_bin', 'nagios_perfdata', 'ssh_port'),
-                     $filters);
+        $params = array('id', 'name', 'localhost', 'ns_ip_address', 'ns_activate', 'ns_status', 'init_script',
+                           'monitoring_engine', 'nagios_bin', 'nagiostats_bin', 'nagios_perfdata', 'ssh_port');
+        $paramString = str_replace("_", " ", implode($this->delim, $params));
+        $paramString = str_replace("ns ", "", $paramString);
+        $paramString = str_replace("nagios ", "", $paramString);
+        $paramString = str_replace("nagiostats", "stats", $paramString);
+        echo $paramString . "\n";
+        $elements = $this->object->getList($params, -1, 0, null, null, $filters);
+        foreach ($elements as $tab) {
+            echo implode($this->delim, $tab) . "\n";
+        }
     }
 
     /**
