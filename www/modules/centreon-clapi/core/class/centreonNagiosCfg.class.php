@@ -157,7 +157,10 @@ class CentreonNagiosCfg extends CentreonObject
     {
         $query = "DELETE FROM cfg_nagios_broker_module WHERE cfg_nagios_id = ?";
         $this->db->query($query, array($objectId));
-        $this->db->query("INSERT INTO cfg_nagios_broker_module (cfg_nagios_id, broker_module) VALUES (?, ?)", array($objectId, $brokerModule));
+        $brokerModuleArray = explode("|", $brokerModule);
+        foreach ($brokerModuleArray as $bkModule) {
+            $this->db->query("INSERT INTO cfg_nagios_broker_module (cfg_nagios_id, broker_module) VALUES (?, ?)", array($objectId, $bkModule));
+        }
     }
 
     /**
@@ -224,7 +227,9 @@ class CentreonNagiosCfg extends CentreonObject
             $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
         }
         $params = array("nagios_id", "nagios_name", "nagios_server_id", "nagios_comment");
-        echo str_replace("_", " ", implode($this->delim, $params)) . "\n";
+        $paramString = str_replace("_", " ", implode($this->delim, $params));
+        $paramString = str_replace("nagios server id", "instance", $paramString);
+        echo $paramString . "\n";
         $elements = $this->object->getList($params, -1, 0, null, null, $filters);
         foreach ($elements as $tab) {
             $str = "";
