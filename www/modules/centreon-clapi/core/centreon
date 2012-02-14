@@ -39,7 +39,13 @@
 	$debug = 0;
 	
 	ini_set("display_errors", "Off");
-
+		
+	define('APPLICATION_PATH', realpath(dirname(__FILE__)));
+	set_include_path(implode(PATH_SEPARATOR, array(realpath(APPLICATION_PATH . '/lib'),    											   
+    											   realpath(APPLICATION_PATH . '/class'),
+    												get_include_path()
+    										  )));
+	
 	global $version;
 
 	/**
@@ -69,6 +75,13 @@
 	require_once "../etc/api.conf.php";
 	require_once "$centreon_etc/centreon.conf.php";
 	require_once "./class/centreonAPI.class.php";
+	require_once "./lib/Centreon/Db/Manager/Manager.php";
+	
+	$dbConfig['host'] = $conf_centreon['hostCentreon'];
+	$dbConfig['username'] = $conf_centreon['user'];
+	$dbConfig['password'] = $conf_centreon['password'];
+	$dbConfig['dbname'] = $conf_centreon['db'];
+	Centreon_Db_Manager::factory('centreon', 'pdo_mysql', $dbConfig);
 
 	/**
 	 * Create Centreon API object
@@ -126,7 +139,12 @@
 		} else if (isset($api->options["i"])) {
 			$api->import($api->options["i"]);
 		} else if (isset($api->options["a"])) {
-	  		$api->launchAction();
+	  		try {
+	  			$api->launchAction();
+	  		} catch (Exception $e) {
+	  			print $e->getMessage();
+	  			$api->setReturnCode(1);
+	  		}
 	  	}
 	}
 	$api->close();

@@ -142,11 +142,26 @@ class CentreonAPI {
 		$this->relationObject["TIMEPERIOD"] = "TimePeriod";
 		$this->relationObject["TP"] = "TimePeriod";
 
+		$this->relationObject["INSTANCE"] = "Instance";
+		$this->relationObject["NAGIOSCFG"] = "NagiosCfg";
+		$this->relationObject["NDO2DBCFG"] = "Ndo2dbCfg";
+		$this->relationObject["NDOMODCFG"] = "NdomodCfg";
+
 		/*
 		 * Manage version
 		 */
 		$this->optGen = $this->getOptGen();
 		$version = $this->optGen["version"];
+	}
+
+	/**
+	 * Set Return Code
+	 *
+	 * @param int $returnCode
+	 * @return void
+	 */
+	public function setReturnCode($returnCode) {
+        $this->return_code = $returnCode;
 	}
 
 	/**
@@ -508,6 +523,10 @@ class CentreonAPI {
 		$this->iniObject('CG');
 		$this->iniObject('HTPL');
 		$this->iniObject('STPL');
+		$this->initObject('INSTANCE');
+		$this->initObject('NAGIOSCFG');
+		$this->initObject('NDO2DBCFG');
+		$this->initObject('NDOMODCFG');
 	}
 
 	/**
