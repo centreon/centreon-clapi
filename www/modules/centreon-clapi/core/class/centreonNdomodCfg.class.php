@@ -95,7 +95,9 @@ class CentreonNdomodCfg extends CentreonObject
             $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
         }
         $params = array("id", "description", "ns_nagios_server", "output_type", "output", "tcp_port");
-        echo str_replace("_", " ", implode($this->delim, $params)) . "\n";
+        $paramString = str_replace("_", " ", implode($this->delim, $params));
+        $paramString = str_replace("ns nagios server", "instance", $paramString);
+        echo $paramString . "\n";
         $elements = $this->object->getList($params, -1, 0, null, null, $filters);
         foreach ($elements as $tab) {
             $str = "";
