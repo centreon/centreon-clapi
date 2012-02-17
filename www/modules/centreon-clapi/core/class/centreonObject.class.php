@@ -35,6 +35,7 @@
  * SVN : $Id$
  */
 require_once "Centreon/Db/Manager/Manager.php";
+require_once "centreonClapiException.class.php";
 
 abstract class CentreonObject
 {
@@ -63,6 +64,16 @@ abstract class CentreonObject
         $this->version = $row['value'];
         $this->params = array();
         $this->delim = ";";
+    }
+
+    /**
+     * Get Centreon Version
+     *
+     * @return string
+     */
+    public function getVersion()
+    {
+        return $this->version;
     }
 
     /**
@@ -103,10 +114,10 @@ abstract class CentreonObject
     protected function checkParameters()
     {
         if (!isset($this->params[$this->object->getUniqueLabelField()])) {
-            throw new Exception(self::MISSINGNAMEPARAMETER);
+            throw new CentreonClapiException(self::MISSINGNAMEPARAMETER);
         }
         if ($this->objectExists($this->params[$this->object->getUniqueLabelField()]) === true) {
-            throw new Exception(self::OBJECTALREADYEXISTS);
+            throw new CentreonClapiException(self::OBJECTALREADYEXISTS);
         }
     }
 
@@ -133,7 +144,7 @@ abstract class CentreonObject
         if (count($ids)) {
             $this->object->delete($ids[0]);
         } else {
-            throw new Exception(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
         }
     }
 

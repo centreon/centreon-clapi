@@ -52,18 +52,22 @@
 	 * Declare Options 
 	 */
 	$shortopts  = "";
-	$shortopts .= "u:"; /** Users */
-	$shortopts .= "p:"; /** Password */
-	$shortopts .= "a:"; /** Action */
-	$shortopts .= "o:"; /** Object type */
-	$shortopts .= "v:"; /** Action */
-	$shortopts .= "h"; /** Help */
-	$shortopts .= "V"; /** Version */
-	$shortopts .= "a:"; /** Action */
-	$shortopts .= "i:"; /** Import Massive data */
-	$shortopts .= "e"; /** Export all configuration */
+	$shortopts .= "d"; /* Debug mode */
+	$shortopts .= "u:"; /* Users */
+	$shortopts .= "p:"; /* Password */
+	$shortopts .= "a:"; /* Action */
+	$shortopts .= "o:"; /* Object type */
+	$shortopts .= "v:"; /* Action */
+	$shortopts .= "h"; /* Help */
+	$shortopts .= "V"; /* Version */
+	$shortopts .= "a:"; /* Action */
+	$shortopts .= "i:"; /* Import Massive data */
+	$shortopts .= "e"; /* Export all configuration */
 	
 	$options = getopt($shortopts);
+	if (isset($options['d'])) {
+		$debug = 1;
+	}
 	if ($debug) {
 		print_r($options);
 	}
@@ -141,8 +145,14 @@
 		} else if (isset($api->options["a"])) {
 	  		try {
 	  			$api->launchAction();
+			} catch (CentreonClapiException $e) {
+				print $e->getMessage();
+				$api->setReturnCode(1);
 	  		} catch (Exception $e) {
-	  			print $e->getMessage();
+	  			if (isset($debug) && $debug) {
+	  				print $e->getMessage() . "\n";
+	  			}
+	  			print "Please check that your parameters are valid";
 	  			$api->setReturnCode(1);
 	  		}
 	  	}

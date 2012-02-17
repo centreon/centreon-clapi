@@ -79,7 +79,7 @@ class CentreonNdomodCfg extends CentreonObject
             $updateParams = array($params[1] => $params[2]);
             parent::setparam($objectId, $updateParams);
         } else {
-            throw new Exception(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
         }
     }
 

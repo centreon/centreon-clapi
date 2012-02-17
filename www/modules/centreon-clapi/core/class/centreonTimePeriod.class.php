@@ -36,91 +36,44 @@
  *
  */
 
-class CentreonTimePeriod
+require_once "centreonObject.class.php";
+require_once "Centreon/Object/Timeperiod/Timeperiod.php";
+require_once "Centreon/Object/Relation/Timeperiod/Exclude.php";
+require_once "Centreon/Object/Relation/Timeperiod/Include.php";
+
+class CentreonTimePeriod extends CentreonObject
 {
+    const ORDER_UNIQUENAME        = 0;
+    const ORDER_ALIAS             = 1;
+    const TP_INCLUDE              = "include";
+    const TP_EXCLUDE              = "exclude";
     /**
-     *
-     * @var CentreonDB
+     * @var Centreon_Relation_Timeperiod_Exclude
      */
-    protected $_db;
-	protected $version;
-    
-    
+    protected $exclude;
     /**
-     * constructor
      *
-     * @param CentreonDB $db
+     * @var Centreon_Relation_Timeperiod_Include
+     */
+    protected $include;
+
+    /**
+     * Constructor
+     *
      * @return void
      */
-    public function __construct($db)
+    public function __construct()
     {
-        $this->_db = $db;
-    }
-
-	/**
-	 *
-	 * Get Version of Centreon
-	 */
-	protected function getVersion() {
-		$request = "SELECT * FROM informations";
-		$DBRESULT = $this->DB->query($request);
-		$info = $DBRESULT->fetchRow();
-		return $info["value"];
-	}
-
-	/**
-	 *
-	 * encode with htmlentities a string
-	 * @param unknown_type $string
-	 */
-	protected function encodeInHTML($string) {
-	    if (!strncmp($this->version, "2.1", 3)) {
-            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
-	    }
-	    return $string;
-	}
-    
-    /**
-     * Returns true if timeperiod exists
-     *
-     * @param string $name
-     * @return boolean
-     */
-    public function timeperiodExists($name)
-    {
-        $query = "SELECT tp_name FROM timeperiod WHERE tp_name = '".$this->encodeInHTML($name)."'";
-        $res = $this->_db->query($query);
-        if ($res->numRows()) {
-            return true;
-        }
-        return false;
-    }
-
-	/**
-	 * Gets id of timeperiod
-	 * returns 0 if not found
-	 *
-     * @param string $name
-     * @return int
-     */
-    public function getTimeperiodId($name)
-    {
-        $query = "SELECT tp_id FROM timeperiod WHERE tp_name = '".$this->encodeInHTML($name)."'";
-        $res = $this->_db->query($query);
-        while ($row = $res->fetchRow()) {
-            return $row['tp_id'];
-        }
-        return 0;
-    }
-
-	 public function getTimeperiodName($id)
-    {
-        $query = "SELECT tp_name FROM timeperiod WHERE tp_id = '".$this->encodeInHTML($id)."'";
-        $res = $this->_db->query($query);
-        while ($row = $res->fetchRow()) {
-            return $row['tp_name'];
-        }
-        return 0;
+        parent::__construct();
+        $this->object = new Centreon_Object_Timeperiod();
+        $this->params = array('tp_sunday'           => '',
+                              'tp_monday'           => '',
+                              'tp_tuesday'          => '',
+                              'tp_wednesday'        => '',
+                              'tp_thursday'         => '',
+                              'tp_friday'           => '',
+                              'tp_saturday'         => '');
+        $this->nbOfCompulsoryParams = 2;
     }
 
     /**
@@ -131,21 +84,124 @@ class CentreonTimePeriod
      */
     public function show($search = null)
     {
-        $searchQuery = "";
-        if (isset ($search) && $search) {
-            $searchQuery = " WHERE tp_name LIKE '%".$this->encodeInHTML($search)."%'
-            				 OR tp_alias LIKE '%".$this->encodeInHTML($search)."%' ";
+        $filters = array();
+        if (isset($parameters)) {
+            $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
         }
-        $query = "SELECT * FROM timeperiod $searchQuery ORDER BY tp_name";
-        $res = $this->_db->query($query);
-        $i = 0;
-        while ($row = $res->fetchRow()) {
-            if (!$i) {
-                print "id;name;alias;sunday;monday;tuesday;wednesday;thursday;friday,saturday\n";
+        $params = array('tp_id', 'tp_name', 'tp_alias', 'tp_sunday', 'tp_monday', 'tp_tuesday', 'tp_wednesday',
+                        'tp_thursday', 'tp_friday', 'tp_saturday');
+        $paramString = str_replace("tp_", "", implode($this->delim, $params));
+        echo $paramString . "\n";
+        $elements = $this->object->getList($params, -1, 0, null, null, $filters);
+        foreach ($elements as $tab) {
+            echo implode($this->delim, $tab) . "\n";
+        }
+    }
+
+    /**
+     * Add action
+     *
+     * @param string $parameters
+     * @return void
+     */
+    public function add($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < $this->nbOfCompulsoryParams) {
+            throw new Exception(self::MISSINGPARAMETER);
+        }
+        $addParams = array();
+        $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
+        $addParams['tp_alias'] = $params[self::ORDER_ALIAS];
+        $this->params = array_merge($this->params, $addParams);
+        $this->checkParameters();
+        parent::add();
+    }
+
+    /**
+     * Set parameters
+     *
+     * @param string $parameters
+     * @return void
+     */
+    public function setparam($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < self::NB_UPDATE_PARAMS) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            if ($params[1] == self::TP_INCLUDE) {
+                $this->setRelations(self::TP_INCLUDE, $objectId, $params[2]);
+            } elseif ($params[1] == self::TP_EXCLUDE) {
+                $this->setRelations(self::TP_EXCLUDE, $objectId, $params[2]);
+            } elseif (!preg_match("/^tp_/", $params[1])) {
+                $params[1] = "tp_".$params[1];
             }
-            print html_entity_decode($row['tp_id'].";".$row['tp_name'].";".$row['tp_alias'].";".$row['tp_sunday'].";".$row['tp_monday'].";".$row['tp_tuesday'].";".$row['tp_wednesday'].";".$row['tp_thursday'].";".$row['tp_friday'].";".$row['tp_saturday']."\n");
-            $i++;
+            if ($params[1] != self::TP_INCLUDE && $params[1] != self::TP_EXCLUDE) {
+                $updateParams = array($params[1] => $params[2]);
+                parent::setparam($objectId, $updateParams);
+            }
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
         }
-        return 0;
+    }
+
+    /**
+     * Get Timeperiod Id
+     *
+     * @param string $name
+     * @return int
+     */
+    public function getTimeperiodId($name)
+    {
+        $this->object->setCache(true);
+        $tpIds = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($name));
+        $this->object->setCache(false);
+        if (!count($tpIds)) {
+            throw new CentreonClapiException("Unknown timeperiod: " . $name);
+        }
+        return $tpIds[0];
+    }
+
+    /**
+     * Get timeperiod name
+     *
+     * @param int $timeperiodId
+     * @return string
+     */
+    public function getTimeperiodName($timeperiodId)
+    {
+        $this->object->setCache(true);
+        $tpName = $this->object->getParameters($timeperiodId, array($this->object->getUniqueLabelField()));
+        $this->object->setCache(false);
+        return $tpName[$this->object->getUniqueLabelField()];
+    }
+
+    /**
+     * Set Include / Exclude relations
+     *
+     * @param int $relationType
+     * @param string $sourceName
+     * @param string $relationName
+     * @return void
+     */
+    protected function setRelations($relationType, $sourceId, $relationName)
+    {
+        $relationIds = array();
+        $relationNames = explode("|", $relationName);
+        foreach ($relationNames as $name) {
+            $name = trim($name);
+            $relationIds[] = $this->getTimePeriodId($name);
+        }
+        if ($relationType == self::TP_INCLUDE) {
+            $relObj = new Centreon_Object_Relation_Timeperiod_Include();
+        } else {
+            $relObj = new Centreon_Object_Relation_Timeperiod_Exclude();
+        }
+        $relObj->delete($sourceId);
+        foreach ($relationIds as $relId) {
+            $relObj->insert($sourceId, $relId);
+        }
     }
 }

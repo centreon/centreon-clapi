@@ -80,7 +80,7 @@ class CentreonInstance extends CentreonObject
     {
         $params = explode($this->delim, $parameters);
         if (count($params) < $this->nbOfCompulsoryParams) {
-            throw new Exception(self::MISSINGPARAMETER);
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         $addParams = array();
         $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
@@ -106,13 +106,13 @@ class CentreonInstance extends CentreonObject
     {
         $params = explode($this->delim, $parameters);
         if (count($params) < self::NB_UPDATE_PARAMS) {
-            throw new Exception(self::MISSINGPARAMETER);
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
             $updateParams = array($params[1] => $params[2]);
             parent::setparam($objectId, $updateParams);
         } else {
-            throw new Exception(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
         }
     }
 
