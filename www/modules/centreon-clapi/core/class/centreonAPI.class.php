@@ -146,6 +146,7 @@ class CentreonAPI {
 		$this->relationObject["NAGIOSCFG"] = "NagiosCfg";
 		$this->relationObject["NDO2DBCFG"] = "Ndo2dbCfg";
 		$this->relationObject["NDOMODCFG"] = "NdomodCfg";
+        $this->relationObject["CGICFG"] = "CgiCfg";
 
 		/*
 		 * Manage version

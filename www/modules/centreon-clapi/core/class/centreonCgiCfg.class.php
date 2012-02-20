@@ -34,20 +34,20 @@
  * SVN : $URL$
  * SVN : $Id$
  */
-
 require_once "centreonObject.class.php";
-require_once "Centreon/Object/Instance/Instance.php";
+require_once "centreonInstance.class.php";
+require_once "Centreon/Object/Cgi/Cgi.php";
 
 /**
  *
  * @author sylvestre
  */
-class CentreonInstance extends CentreonObject
+class CentreonCgiCfg extends CentreonObject
 {
     const ORDER_UNIQUENAME        = 0;
-    const ORDER_ADDRESS           = 1;
-    const ORDER_SSH_PORT          = 2;
-    const ORDER_MONITORING_ENGINE = 3;
+    const ORDER_COMMENT           = 1;
+    const ORDER_INSTANCE          = 2;
+    protected $instanceObj;
 
     /**
      * Constructor
@@ -57,17 +57,35 @@ class CentreonInstance extends CentreonObject
     public function __construct()
     {
         parent::__construct();
-        $this->object = new Centreon_Object_Instance();
-        $this->params = array('localhost'                => '0',
-                              'ns_activate'              => '1',
-                              'ssh_port'                 => '22',
-                              'monitoring_engine'        => 'NAGIOS',
-                              'nagios_bin'               => '/usr/sbin/nagios',
-                              'nagiostats_bin'           => '/usr/bin/nagiostats',
-                              'nagios_perfdata'          => '/var/log/nagios/service-perfdata',
-        					  'init_script'              => '/etc/init.d/nagios',
-                              'centreonbroker_cfg_path'  => '/etc/centreon/broker');
-        $this->nbOfCompulsoryParams = 4;
+        $this->instanceObj = new CentreonInstance();
+        $this->object = new Centreon_Object_Cgi();
+        $this->params = array(  'main_config_file'                          => '',
+                                'physical_html_path'	                    => '',
+                                'url_html_path'                             => '',
+                                'nagios_check_command'				        => '',
+                                'use_authentication'				        => '',
+                                'default_user_name'					        => '',
+                                'authorized_for_system_information'         => '',
+                                'authorized_for_system_commands'	        => '',
+                                'authorized_for_configuration_information'	=> '',
+                                'authorized_for_all_hosts'					=> '',
+                                'authorized_for_all_host_commands'			=> '',
+                                'authorized_for_all_services'				=> '',
+                                'authorized_for_all_service_commands'		=> '',
+                                'statusmap_background_image'                => '',
+                                'default_statusmap_layout'					=> '2',
+                                'statuswrl_include'		                    => '',
+                                'default_statuswrl_layout'		            => '2',
+                                'host_unreachable_sound'		            => '',
+                                'host_down_sound'					        => '',
+                                'service_critical_sound'					=> '',
+                                'service_warning_sound'					    => '',
+                                'service_unknown_sound'					    => '',
+                                'ping_syntax'					            => '',
+                                'cgi_comment'					            => '',
+                                'cgi_activate'					            => '1'
+                            );
+        $this->nbOfCompulsoryParams = 3;
     }
 
     /**
@@ -84,12 +102,8 @@ class CentreonInstance extends CentreonObject
         }
         $addParams = array();
         $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
-        $addParams['ns_ip_address'] = $params[self::ORDER_ADDRESS];
-        $addParams['ssh_port'] = $params[self::ORDER_SSH_PORT];
-        $addParams['monitoring_engine'] = $params[self::ORDER_MONITORING_ENGINE];
-        if ($addParams['ns_ip_address'] == "127.0.0.1" || strtolower($addParams['ns_ip_address']) == "localhost") {
-            $this->params['localhost'] = '1';
-        }
+        $addParams['instance_id'] = $this->instanceObj->getInstanceId($params[self::ORDER_INSTANCE]);
+        $addParams['cgi_comment'] = $params[self::ORDER_COMMENT];
         $this->params = array_merge($this->params, $addParams);
         $this->checkParameters();
         parent::add();
@@ -109,6 +123,12 @@ class CentreonInstance extends CentreonObject
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            if ($params[1] == "instance") {
+                $params[1] = "instance_id";
+                $params[2] = $this->instanceObj->getInstanceId($params[2]);
+            } elseif ($params[1] == "comment" || $params[1] == "activate" || $params['1'] == "name") {
+                $params[1] = "cgi_".$params[1];
+            }
             $updateParams = array($params[1] => $params[2]);
             parent::setparam($objectId, $updateParams);
         } else {
@@ -119,6 +139,7 @@ class CentreonInstance extends CentreonObject
     /**
      * Show
      *
+     * @param string $parameters
      * @return void
      */
     public function show($parameters = null)
@@ -127,47 +148,22 @@ class CentreonInstance extends CentreonObject
         if (isset($parameters)) {
             $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
         }
-        $params = array('id', 'name', 'localhost', 'ns_ip_address', 'ns_activate', 'ns_status', 'init_script',
-                           'monitoring_engine', 'nagios_bin', 'nagiostats_bin', 'nagios_perfdata', 'ssh_port');
+        $params = array("cgi_id", "cgi_name", "cgi_comment", "instance_id", "cgi_activate");
         $paramString = str_replace("_", " ", implode($this->delim, $params));
-        $paramString = str_replace("ns ", "", $paramString);
-        $paramString = str_replace("nagios ", "", $paramString);
-        $paramString = str_replace("nagiostats", "stats", $paramString);
+        $paramString = str_replace("cgi ", "", $paramString);
+        $paramString = str_replace("instance id", "instance", $paramString);
         echo $paramString . "\n";
         $elements = $this->object->getList($params, -1, 0, null, null, $filters);
         foreach ($elements as $tab) {
-            echo implode($this->delim, $tab) . "\n";
+            $str = "";
+            foreach ($tab as $key => $value) {
+                if ($key == "instance_id") {
+                    $value = $this->instanceObj->getInstanceName($value);
+                }
+                $str .= $value . $this->delim;
+            }
+            $str = trim($str, $this->delim) . "\n";
+            echo $str;
         }
-    }
-
-    /**
-     * Get instance Id
-     *
-     * @param string $name
-     * @return int
-     */
-    public function getInstanceId($name)
-    {
-        $this->object->setCache(true);
-        $instanceIds = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($name));
-        $this->object->setCache(false);
-        if (!count($instanceIds)) {
-            throw new CentreonClapiException("Unknown instance");
-        }
-        return $instanceIds[0];
-    }
-
-    /**
-     * Get instance name
-     *
-     * @param int $instanceId
-     * @return string
-     */
-    public function getInstanceName($instanceId)
-    {
-        $this->object->setCache(true);
-        $instanceName = $this->object->getParameters($instanceId, array($this->object->getUniqueLabelField()));
-        $this->object->setCache(false);
-        return $instanceName[$this->object->getUniqueLabelField()];
     }
 }
