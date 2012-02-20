@@ -152,9 +152,10 @@ class CentreonResourceCfg extends CentreonObject
         if (isset($parameters)) {
             $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
         }
-        $params = array("resource_id", "resource_name", "resource_comment", "resource_line", "resource_activate");
+        $params = array("resource_id", "resource_name", "resource_line", "resource_comment", "resource_activate");
         $paramString = str_replace("_", " ", implode($this->delim, $params));
         $paramString = str_replace("resource ", "", $paramString);
+        $paramString = str_replace("line", "value", $paramString);
         echo $paramString . $this->delim . "instance"."\n";
         $elements = $this->object->getList($params, -1, 0, null, null, $filters);
         foreach ($elements as $tab) {
