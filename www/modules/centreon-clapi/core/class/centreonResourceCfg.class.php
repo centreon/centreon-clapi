@@ -119,6 +119,9 @@ class CentreonResourceCfg extends CentreonObject
                 $this->setRelations($objectId, $instanceIds);
             } else {
                 $params[1] = str_replace("value", "line ", $params[1]);
+                if ($params[1] == "name") {
+                    $params[2] = "$".$params[2]."$";
+                }
                 $params[1] = "resource_".$params[1];
                 $updateParams = array($params[1] => $params[2]);
                 parent::setparam($objectId, $updateParams);
