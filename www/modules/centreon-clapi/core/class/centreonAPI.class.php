@@ -147,6 +147,7 @@ class CentreonAPI {
 		$this->relationObject["NDO2DBCFG"] = "Ndo2dbCfg";
 		$this->relationObject["NDOMODCFG"] = "NdomodCfg";
         $this->relationObject["CGICFG"] = "CgiCfg";
+        $this->relationObject["RESOURCECFG"] = "ResourceCfg";
 
 		/*
 		 * Manage version
