@@ -208,6 +208,7 @@ class CentreonACLGroup extends CentreonObject
                             $relobj->delete($groupId, $relationId);
                         }
                     }
+                    parent::setparam($groupId, array('acl_group_changed' => '1'));
                 }
             } else {
                 throw new CentreonClapiException(self::UNKNOWN_METHOD);

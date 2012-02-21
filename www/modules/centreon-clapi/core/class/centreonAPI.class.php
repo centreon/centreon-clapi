@@ -149,6 +149,7 @@ class CentreonAPI {
         $this->relationObject["CGICFG"] = "CgiCfg";
         $this->relationObject["RESOURCECFG"] = "ResourceCfg";
 
+        $this->relationObject["ACL"] = "ACL";
         $this->relationObject["ACLGROUP"] = "ACLGroup";
 
 		/*
