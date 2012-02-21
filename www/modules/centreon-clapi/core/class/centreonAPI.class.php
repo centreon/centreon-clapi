@@ -151,6 +151,7 @@ class CentreonAPI {
 
         $this->relationObject["ACL"] = "ACL";
         $this->relationObject["ACLGROUP"] = "ACLGroup";
+        $this->relationObject["ACLACTION"] = "ACLAction";
 
 		/*
 		 * Manage version
