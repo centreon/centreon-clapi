@@ -43,6 +43,7 @@ abstract class CentreonObject
     const MISSINGNAMEPARAMETER = "Missing name parameter";
     const OBJECTALREADYEXISTS = "Object already exists";
     const OBJECT_NOT_FOUND = "Object not found";
+    const UNKNOWN_METHOD = "Method not implemented into Centreon API";
     const NB_UPDATE_PARAMS = 3;
     protected $db;
     protected $version;

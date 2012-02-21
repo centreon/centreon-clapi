@@ -149,6 +149,8 @@ class CentreonAPI {
         $this->relationObject["CGICFG"] = "CgiCfg";
         $this->relationObject["RESOURCECFG"] = "ResourceCfg";
 
+        $this->relationObject["ACLGROUP"] = "ACLGroup";
+
 		/*
 		 * Manage version
 		 */
@@ -378,7 +380,7 @@ class CentreonAPI {
            		return 1;
             }
 			$obj = new $objName($this->DB, $this->object);
-			if (method_exists($obj, $action)) {
+			if (method_exists($obj, $action) || method_exists($obj, "__call")) {
 				$this->return_code = $obj->$action($this->variables);
 			} else {
 				print "Method not implemented into Centreon API.\n";
