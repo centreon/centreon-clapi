@@ -67,4 +67,20 @@ class CentreonACL
         $this->db->query("UPDATE acl_resources SET changed = 1");
         passthru('php ' . CentreonUtils::getCentreonPath() . '/cron/centAcl.php');
     }
+
+    /**
+     * Print timestamp at when ACL was last reloaded
+     *
+     * @return void
+     */
+    public function lastreload($timeformat = null)
+    {
+        $res = $this->db->query("SELECT time_launch FROM cron_operation WHERE name LIKE 'centAcl%'");
+        $row = $res->fetch();
+        $time = $row['time_launch'];
+        if (isset($timeformat) && $timeformat) {
+            $time = date($timeformat, $time);
+        }
+        echo $time."\n";
+    }
 }
