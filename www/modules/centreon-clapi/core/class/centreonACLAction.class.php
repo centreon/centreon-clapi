@@ -48,7 +48,10 @@ class CentreonACLAction extends CentreonObject
 {
     const ORDER_UNIQUENAME        = 0;
     const ORDER_DESCRIPTION       = 1;
+    const UNKNOWN_ACTION = "Unknown action";
     protected $relObject;
+    protected $aclGroupObj;
+    protected $availableActions;
 
  	/**
      * Constructor
@@ -63,6 +66,46 @@ class CentreonACLAction extends CentreonObject
         $this->relObject = new Centreon_Object_Relation_Acl_Group_Action();
         $this->params = array('acl_action_activate' => '1');
         $this->nbOfCompulsoryParams = 2;
+        $this->availableActions = array('global_event_handler',
+										'global_flap_detection',
+										'global_host_checks',
+										'global_host_obsess',
+										'global_host_passive_checks',
+										'global_notifications',
+										'global_perf_data',
+										'global_restart',
+                                        'global_service_checks',
+                                        'global_service_obsess',
+                                        'global_service_passive_checks',
+                                        'global_shutdown',
+                                        'host_acknowledgement',
+                                        'host_acknowledgement',
+                                        'host_checks',
+                                        'host_checks_for_services',
+                                        'host_comment',
+                                        'host_event_handler',
+                                        'host_flap_detection',
+                                        'host_notifications',
+                                        'host_notifications_for_services',
+                                        'host_schedule_check',
+                                        'host_schedule_downtime',
+                                        'host_schedule_forced_check',
+                                        'host_submit_result',
+                                        'poller_listing',
+                                        'poller_stats',
+                                        'service_acknowledgement',
+                                        'service_acknowledgement',
+                                        'service_checks',
+                                        'service_comment',
+                                        'service_event_handler',
+                                        'service_flap_detection',
+                                        'service_notifications',
+                                        'service_passive_checks',
+                                        'service_schedule_check',
+                                        'service_schedule_downtime',
+                                        'service_schedule_forced_check',
+                                        'service_submit_result',
+                                        'top_counter');
     }
 
     /**
@@ -180,7 +223,16 @@ class CentreonACLAction extends CentreonObject
     public function grant($parameters)
     {
         list($aclActionId, $action) = $this->splitParams($parameters);
-        $actions = explode("|", $action);
+        if ($action == "*") {
+            $actions = $this->availableActions;
+        } else {
+            $actions = explode("|", $action);
+            foreach ($actions as $act) {
+                if (!in_array($act, $this->availableActions)) {
+                    throw new CentreonClapiException(self::UNKNOWN_ACTION . ":" . $act);
+                }
+            }
+        }
         foreach ($actions as $act) {
             $res = $this->db->query("SELECT COUNT(*) as nb FROM acl_actions_rules WHERE acl_action_rule_id = ? AND acl_action_name = ?",
                                     array($aclActionId, $act));
@@ -189,6 +241,7 @@ class CentreonACLAction extends CentreonObject
                 $this->db->query("INSERT INTO acl_actions_rules (acl_action_rule_id, acl_action_name) VALUES (?, ?)",
                                  array($aclActionId, $act));
             }
+            unset($res);
         }
     }
 
@@ -201,10 +254,20 @@ class CentreonACLAction extends CentreonObject
     public function revoke($parameters)
     {
         list($aclMenuId, $action) = $this->splitParams($parameters);
-        $actions = explode("|", $action);
-        foreach ($actions as $act) {
-            $this->db->query("DELETE FROM acl_actions_rules WHERE acl_action_rule_id = ? AND acl_action_name = ?",
-                             array($aclMenuId, $act));
+        if ($action == "*") {
+            $this->db->query("DELETE FROM acl_actions_rules WHERE acl_action_rule_id = ?",
+                             array($aclMenuId));
+        } else {
+            $actions = explode("|", $action);
+            foreach ($actions as $act) {
+                if (!in_array($act, $this->availableActions)) {
+                    throw new CentreonClapiException(self::UNKNOWN_ACTION . ":" . $act);
+                }
+            }
+            foreach ($actions as $act) {
+                $this->db->query("DELETE FROM acl_actions_rules WHERE acl_action_rule_id = ? AND acl_action_name = ?",
+                                 array($aclMenuId, $act));
+            }
         }
     }
 }
