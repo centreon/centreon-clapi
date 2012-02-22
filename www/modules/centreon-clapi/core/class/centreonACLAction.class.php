@@ -253,10 +253,10 @@ class CentreonACLAction extends CentreonObject
      */
     public function revoke($parameters)
     {
-        list($aclMenuId, $action) = $this->splitParams($parameters);
+        list($aclActionId, $action) = $this->splitParams($parameters);
         if ($action == "*") {
             $this->db->query("DELETE FROM acl_actions_rules WHERE acl_action_rule_id = ?",
-                             array($aclMenuId));
+                             array($aclActionId));
         } else {
             $actions = explode("|", $action);
             foreach ($actions as $act) {
@@ -266,7 +266,7 @@ class CentreonACLAction extends CentreonObject
             }
             foreach ($actions as $act) {
                 $this->db->query("DELETE FROM acl_actions_rules WHERE acl_action_rule_id = ? AND acl_action_name = ?",
-                                 array($aclMenuId, $act));
+                                 array($aclActionId, $act));
             }
         }
     }
