@@ -201,7 +201,13 @@ class CentreonACLAction extends CentreonObject
      */
     public function getaclgroup($aclActionName)
     {
+        if (!isset($aclActionName) || !$aclActionName) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
         $aclActionId = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($aclActionName));
+        if (!count($aclActionId)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
         $groupIds = $this->relObject->getacl_group_idFromacl_action_id($aclActionId[0]);
         echo "id;name" . "\n";
         if (count($groupIds)) {
