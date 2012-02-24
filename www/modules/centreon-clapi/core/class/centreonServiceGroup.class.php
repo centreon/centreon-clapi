@@ -41,7 +41,7 @@ class CentreonServiceGroup {
 	private $access;
 
 	protected $version;
-	
+
 	public function __construct($DB) {
 		$this->DB = $DB;
 
@@ -74,7 +74,7 @@ class CentreonServiceGroup {
 	    }
 	    return $string;
 	}
-	
+
 	/*
 	 * Check host existance
 	 */
@@ -296,7 +296,7 @@ class CentreonServiceGroup {
 
 		$value = $this->encodeInHTML($value);
 
-		if ($parameter != "name" && $parameter != "alias") {
+		if ($parameter != "name" && $parameter != "alias" && $parameter != "comment") {
 			print "Unknown parameters.\n";
 			return 1;
 		}
