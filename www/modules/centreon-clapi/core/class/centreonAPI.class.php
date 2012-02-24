@@ -155,6 +155,8 @@ class CentreonAPI {
         $this->relationObject["ACLMENU"] = "ACLMenu";
         $this->relationObject["ACLRESOURCE"] = "ACLResource";
 
+        $this->relationObject["LDAP"] = "LDAP";
+
 		/*
 		 * Manage version
 		 */
