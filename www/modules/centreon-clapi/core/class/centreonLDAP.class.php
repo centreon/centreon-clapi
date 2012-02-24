@@ -200,4 +200,27 @@ class CentreonLDAP extends CentreonObject
             				  WHERE ar_id = ?", array($params[2], $ldapId));
         }
     }
+
+    /**
+     * Set contact template
+     *
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function setcontacttemplate($parameters)
+    {
+        if (!isset($parameters)) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $sql = "SELECT contact_id FROM contact WHERE contact_name = ? AND contact_register = 0";
+        $res = $this->db->query($sql, array($parameters));
+        $row = $res->fetch();
+        if (!isset($row['contact_id'])) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+        $contactId = $row['contact_id'];
+        unset($res);
+        $this->db->query("UPDATE options SET `value` = ? WHERE `key` = 'ldap_contact_tmpl'", array($contactId));
+    }
 }
