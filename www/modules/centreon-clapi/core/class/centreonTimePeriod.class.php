@@ -82,7 +82,7 @@ class CentreonTimePeriod extends CentreonObject
      * @param string $search
      * @return int
      */
-    public function show($search = null)
+    public function show($parameters = null)
     {
         $filters = array();
         if (isset($parameters)) {
@@ -131,10 +131,8 @@ class CentreonTimePeriod extends CentreonObject
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
-            if ($params[1] == self::TP_INCLUDE) {
-                $this->setRelations(self::TP_INCLUDE, $objectId, $params[2]);
-            } elseif ($params[1] == self::TP_EXCLUDE) {
-                $this->setRelations(self::TP_EXCLUDE, $objectId, $params[2]);
+            if ($params[1] == self::TP_INCLUDE || $params[1] == self::TP_EXCLUDE) {
+                $this->setRelations($params[1], $objectId, $params[2]);
             } elseif (!preg_match("/^tp_/", $params[1])) {
                 $params[1] = "tp_".$params[1];
             }
