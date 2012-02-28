@@ -104,6 +104,7 @@ class CentreonACLAction extends CentreonObject
                                         'service_schedule_forced_check',
                                         'service_submit_result',
                                         'top_counter');
+        $this->activateField = "acl_action_activate";
     }
 
     /**

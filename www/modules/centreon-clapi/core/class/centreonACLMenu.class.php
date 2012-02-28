@@ -69,6 +69,7 @@ class CentreonACLMenu extends CentreonObject
         $this->relObject = new Centreon_Object_Relation_Acl_Group_Menu();
         $this->params = array('acl_topo_activate' => '1');
         $this->nbOfCompulsoryParams = 2;
+        $this->activateField = "acl_topo_activate";
     }
 
     /**

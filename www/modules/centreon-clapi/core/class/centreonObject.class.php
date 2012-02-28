@@ -138,7 +138,7 @@ abstract class CentreonObject
      *
      * @param string $objectName
      * @return void
-     * @throws Exception
+     * @throws CentreonClapiException
      */
     public function del($objectName)
     {
@@ -181,6 +181,7 @@ abstract class CentreonObject
      *
      * @param string $objectName
      * @param int $value
+     * @throws CentreonClapiException
      */
     protected function activate($objectName, $value)
     {
@@ -204,7 +205,6 @@ abstract class CentreonObject
      *
      * @param string $objectName
      * @return void
-     * @throws CentreonClapiException
      */
     public function enable($objectName)
     {
@@ -216,7 +216,6 @@ abstract class CentreonObject
      *
      * @param string $objectName
      * @return void
-     * @throws CentreonClapiException
      */
     public function disable($objectName)
     {

@@ -143,6 +143,7 @@ class CentreonNagiosCfg extends CentreonObject
                                 'debug_verbosity'                         => '2'
                             );
         $this->nbOfCompulsoryParams = 3;
+        $this->activateField = "nagios_activate";
     }
 
     /**

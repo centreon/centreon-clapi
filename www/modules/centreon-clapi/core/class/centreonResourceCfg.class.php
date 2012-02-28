@@ -68,6 +68,7 @@ class CentreonResourceCfg extends CentreonObject
                                 'resource_activate'                         => '1'
                             );
         $this->nbOfCompulsoryParams = 4;
+        $this->activateField = "resource_activate";
     }
 
     /**

@@ -70,6 +70,7 @@ class CentreonACLGroup extends CentreonObject
                                 'acl_group_activate'	                    => '1'
                             );
         $this->nbOfCompulsoryParams = 2;
+        $this->activateField = "acl_group_activate";
     }
 
     /**

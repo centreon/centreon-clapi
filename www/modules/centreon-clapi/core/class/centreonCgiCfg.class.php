@@ -86,6 +86,7 @@ class CentreonCgiCfg extends CentreonObject
                                 'cgi_activate'					            => '1'
                             );
         $this->nbOfCompulsoryParams = 3;
+        $this->activateField = "cgi_activate";
     }
 
     /**

@@ -78,6 +78,7 @@ class CentreonNdo2dbCfg extends CentreonObject
                                 'activate'					=> '1'
                             );
         $this->nbOfCompulsoryParams = 2;
+        $this->activateField = "activate";
     }
 
     /**

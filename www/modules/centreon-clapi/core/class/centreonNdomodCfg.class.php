@@ -36,6 +36,7 @@ class CentreonNdomodCfg extends CentreonObject
                                 'activate'					=> '1'
                             );
         $this->nbOfCompulsoryParams = 2;
+        $this->activateField = "activate";
     }
 
     /**

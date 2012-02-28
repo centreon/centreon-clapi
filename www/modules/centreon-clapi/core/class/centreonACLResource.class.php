@@ -112,6 +112,7 @@ class CentreonACLResource extends CentreonObject
                                 'changed'			  => '1'
                              );
         $this->nbOfCompulsoryParams = 2;
+        $this->activateField = "acl_res_activate";
     }
 
     /**

@@ -68,6 +68,7 @@ class CentreonInstance extends CentreonObject
         					  'init_script'              => '/etc/init.d/nagios',
                               'centreonbroker_cfg_path'  => '/etc/centreon/broker');
         $this->nbOfCompulsoryParams = 4;
+        $this->activateField = "ns_activate";
     }
 
     /**
