@@ -233,6 +233,7 @@ class CentreonContact extends CentreonObject
                     $params[1] = "lang";
                 } elseif ($params[1] == "password") {
                     $params[1] = "passwd";
+                    $params[2] = md5(trim($params[2]));
                 } elseif ($params[1] == "hostnotifopt") {
                     $params[1] = "host_notification_options";
                 } elseif ($params[1] == "servicenotifopt") {
