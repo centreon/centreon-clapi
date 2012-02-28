@@ -107,13 +107,13 @@ class CentreonContact extends CentreonObject
 	 */
 	public function getContactID($contact_name = null)
 	{
-		if (!isset($contact_name))
-			return;
-
-		$request = "SELECT contact_id FROM contact WHERE contact_name LIKE '$contact_name'";
-		$DBRESULT = $this->DB->query($request);
-		$data = $DBRESULT->fetchRow();
-		return $data["contact_id"];
+		$this->object->setCache(true);
+        $cIds = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($contact_name));
+        $this->object->setCache(false);
+        if (!count($cIds)) {
+            throw new CentreonClapiException("Unknown timeperiod: " . $contact_name);
+        }
+        return $cIds[0];
 	}
 
 	/**
@@ -223,7 +223,7 @@ class CentreonContact extends CentreonObject
                 } elseif ($params[1] == "template") {
                     $params[1] = "template_id";
                     $contactId = $this->getContactID($params[2]);
-                    if (isset($contactId) || !$contactId) {
+                    if (!isset($contactId) || !$contactId) {
                         throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[2]);
                     }
                     $params[2] = $contactId;
