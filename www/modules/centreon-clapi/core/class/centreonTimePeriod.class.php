@@ -150,6 +150,7 @@ class CentreonTimePeriod extends CentreonObject
      *
      * @param string $name
      * @return int
+     * @throws CentreonClapiException
      */
     public function getTimeperiodId($name)
     {

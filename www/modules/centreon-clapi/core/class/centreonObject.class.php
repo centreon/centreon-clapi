@@ -51,6 +51,7 @@ abstract class CentreonObject
     protected $params;
     protected $nbOfCompulsoryParams;
     protected $delim;
+    protected $activateField;
 
     /**
      * Constructor
@@ -173,5 +174,52 @@ abstract class CentreonObject
         foreach ($elements as $tab) {
             echo implode($this->delim, $tab) . "\n";
         }
+    }
+
+    /**
+     * Set the activate field
+     *
+     * @param string $objectName
+     * @param int $value
+     */
+    protected function activate($objectName, $value)
+    {
+        if (!isset($objectName) || !$objectName) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (isset($this->activateField)) {
+            $ids = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($objectName));
+            if (count($ids)) {
+                $this->object->update($ids[0], array($this->activateField => $value));
+            } else {
+                throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            }
+        } else {
+            throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
+    }
+
+    /**
+     * Enable object
+     *
+     * @param string $objectName
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function enable($objectName)
+    {
+        $this->activate($objectName, 1);
+    }
+
+    /**
+     * Disable object
+     *
+     * @param string $objectName
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function disable($objectName)
+    {
+        $this->activate($objectName, 0);
     }
 }
