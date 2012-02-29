@@ -200,13 +200,12 @@ class CentreonACLGroup extends CentreonObject
                     }
                     $existingRelationIds = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), array($groupId));
                     foreach($relationTable as $relationId) {
-                        if (in_array($relationId, $existingRelationIds)) {
-                            continue;
-                        }
-                        if ($matches[1] == "set" || $matches[1] == "add") {
-                            $relobj->insert($groupId, $relationId);
-                        } elseif ($matches[1] == "del") {
+                        if ($matches[1] == "del") {
                             $relobj->delete($groupId, $relationId);
+                        } elseif ($matches[1] == "set" || $matches[1] == "add") {
+                            if (!in_array($relationId, $existingRelationIds)) {
+                                $relobj->insert($groupId, $relationId);
+                            }
                         }
                     }
                     parent::setparam($groupId, array('acl_group_changed' => '1'));

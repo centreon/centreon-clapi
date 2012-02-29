@@ -61,11 +61,13 @@ class CentreonACL
      *
      * @return void
      */
-    public function reload()
+    public function reload($flagOnly = false)
     {
         $this->db->query("UPDATE acl_groups SET acl_group_changed = 1");
         $this->db->query("UPDATE acl_resources SET changed = 1");
-        passthru('php ' . CentreonUtils::getCentreonPath() . '/cron/centAcl.php');
+        if ($flagOnly == false) {
+            passthru('php ' . CentreonUtils::getCentreonPath() . '/cron/centAcl.php');
+        }
     }
 
     /**

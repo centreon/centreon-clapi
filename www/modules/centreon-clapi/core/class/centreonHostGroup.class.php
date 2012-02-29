@@ -36,359 +36,194 @@
  *
  */
 
-class CentreonHostGroup {
-	private $DB;
-	private $access;
-	protected $version;
-	
-	public function __construct($DB) {
-		$this->DB = $DB;
+require_once "centreonObject.class.php";
+require_once "centreonACL.class.php";
+require_once "centreonHost.class.php";
+require_once "Centreon/Object/Host/Group.php";
+require_once "Centreon/Object/Host/Host.php";
+require_once "Centreon/Object/Relation/Host/Group/Host.php";
 
-		/**
-		 * Enable Access Object
-		 */
-		$this->access = new CentreonACLResources($this->DB);
+/**
+ * Class for managing host groups
+ *
+ * @author sylvestre
+ */
+class CentreonHostGroup extends CentreonObject
+{
+    const ORDER_UNIQUENAME        = 0;
+    const ORDER_ALIAS             = 1;
 
-	}
+    /**
+     * Constructor
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->object = new Centreon_Object_Host_Group();
+        $this->params = array('hg_snmp_community'           => 'public',
+                              'hg_snmp_version'             => '2c',
+                              'hg_activate'                 => '1');
+        $this->nbOfCompulsoryParams = 2;
+        $this->activateField = "hg_activate";
+    }
 
-	/**
-	 *
-	 * Get Version of Centreon
-	 */
-	protected function getVersion() {
-		$request = "SELECT * FROM informations";
-		$DBRESULT = $this->DB->query($request);
-		$info = $DBRESULT->fetchRow();
-		return $info["value"];
-	}
+    /**
+     * Display all Host Groups
+     *
+     * @param string $parameters
+     * @return void
+     */
+    public function show($parameters = null)
+    {
+        $filters = array();
+        if (isset($parameters)) {
+            $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
+        }
+        $params = array('hg_id', 'hg_name', 'hg_alias');
+        $paramString = str_replace("hg_", "", implode($this->delim, $params));
+        echo $paramString . "\n";
+        $elements = $this->object->getList($params, -1, 0, null, null, $filters);
+        foreach ($elements as $tab) {
+            echo implode($this->delim, $tab) . "\n";
+        }
+    }
 
-	/**
-	 *
-	 * encode with htmlentities a string
-	 * @param unknown_type $string
-	 */
-	protected function encodeInHTML($string) {
-	    if (!strncmp($this->version, "2.1", 3)) {
-            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
-	    }
-	    return $string;
-	}
-	/*
-	 * Check host existance
-	 */
-	public function hostGroupExists($name) {
-		if (!isset($name))
-			return 0;
+    /**
+     * Add action
+     *
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function add($parameters = null)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < $this->nbOfCompulsoryParams) {
+            throw new Exception(self::MISSINGPARAMETER);
+        }
+        $addParams = array();
+        $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
+        $addParams['hg_alias'] = $params[self::ORDER_ALIAS];
+        $this->params = array_merge($this->params, $addParams);
+        $this->checkParameters();
+        parent::add();
+    }
 
-		/*
-		 * Get informations
-		 */
-		$DBRESULT =& $this->DB->query("SELECT hg_name, hg_id FROM hostgroup WHERE hg_name = '".$this->encodeInHTML($name, ENT_QUOTES)."'");
-		if ($DBRESULT->numRows() >= 1) {
-			$host =& $DBRESULT->fetchRow();
-			$DBRESULT->free();
-			return $host["hg_id"];
-		} else {
-			return 0;
-		}
-	}
+    /**
+     * Set params
+     *
+     * @param string $parameters
+     * @return void
+     * @throws CenrtreonClapiException
+     */
+    public function setparam($parameters = null)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < self::NB_UPDATE_PARAMS) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            if (!preg_match("/^hg_/", $params[1])) {
+                $params[1] = "hg_".$params[1];
+            }
+            $updateParams = array($params[1] => $params[2]);
+            parent::setparam($objectId, $updateParams);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+    }
 
-	protected function checkParameters($options) {
-		if (!isset($options) || $options == "") {
-			print "No options defined.\n";
-			$this->return_code = 1;
-			return 1;
-		}
-	}
+    /**
+     * Export all HG
+     *
+     * @param unknown_type $search
+     */
+    public function export() {
 
-	protected function validateName($name) {
-		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
-			return $this->checkNameformat($name);
-		} else {
-			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);
-		}
-	}
+        $request = "SELECT hg_id, hg_name, hg_alias FROM hostgroup ORDER BY hg_name";
+        $DBRESULT =& $this->DB->query($request);
+        $i = 0;
+        while ($data =& $DBRESULT->fetchRow()) {
+            print "HG;ADD;".html_entity_decode($data["hg_name"]).";".html_entity_decode($data["hg_alias"])."\n";
+            $members = "";
+            /**
+             $request = "SELECT host_name FROM host, hostgroup_relation WHERE hostgroup_hg_id = '".$data["hg_id"]."' AND host_host_id = host_id ORDER BY host_name";
+             $DBRESULT2 =& $this->DB->query($request);
+             while ($m =& $DBRESULT2->fetchRow()) {
+             print "HG;ADDCHILD;".html_entity_decode($data["hg_name"]).";".html_entity_decode($m["host_name"])."\n";
+             }
+             $DBRESULT2->free();
+             */
+            $i++;
+        }
+        $DBRESULT->free();
+    }
 
-	protected function checkNameformat($name) {
-		if (strlen($name) > 45) {
-			print "Warning: host name reduce to 45 caracters.\n";
-		}
-		return sprintf("%.45s", $name);
-	}
-
-	protected function getHostGroupID($hg_name = NULL) {
-		if (!isset($hg_name))
-			return;
-
-		$request = "SELECT hg_id FROM hostgroup WHERE hg_name LIKE '$hg_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["hg_id"];
-	}
-
-	public function getHostGroupHosts($hg_id) {
-		$hostList = array();
-		$request = "SELECT host_host_id FROM hostgroup_relation WHERE hostgroup_hg_id = '".(int)$hg_id."'";
-		$DBRESULT =& $this->DB->query($request);
-		while ($hg = $DBRESULT->fetchRow()) {
-			$hostList[$hg["host_host_id"]] = $hg["host_host_id"];
-		}
-		$DBRESULT->free();
-		return $hostList;
-	}
-
-	public function del($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$request = "DELETE FROM hostgroup WHERE hg_name LIKE '".$this->encodeInHTML($options)."'";
-		$DBRESULT =& $this->DB->query($request);
-
-		/**
-		 * Update ACL
-		 */
-		$this->access->updateACL();
-
-
-		return 0;
-	}
-
-	/**
-	 *
-	 * Display all HG
-	 * @param unknown_type $search
-	 */
-	public function show($search = NULL) {
-		$searchStr = "";
-		if (isset($search) && $search != "") {
-			$searchStr = " WHERE hg_name LIKE '%".$this->encodeInHTML($search)."%'";
-		}
-		$request = "SELECT hg_id, hg_name, hg_alias FROM hostgroup $searchStr ORDER BY hg_name";
-		$DBRESULT =& $this->DB->query($request);
-		$i = 0;
-		while ($data =& $DBRESULT->fetchRow()) {
-			if ($i == 0) {
-				print "id;name;alias;members\n";
-			}
-			print $data["hg_id"].";".html_entity_decode($data["hg_name"]).";".html_entity_decode($data["hg_alias"]).";";
-
-			$members = "";
-			$request = "SELECT host_name FROM host, hostgroup_relation WHERE hostgroup_hg_id = '".$data["hg_id"]."' AND host_host_id = host_id ORDER BY host_name";
-			$DBRESULT2 =& $this->DB->query($request);
-			while ($m =& $DBRESULT2->fetchRow()) {
-				if ($members != "") {
-					$members .= ",";
-				}
-				$members .= $m["host_name"];
-			}
-			$DBRESULT2->free();
-			print $members."\n";
-
-			$i++;
-		}
-		$DBRESULT->free();
-	}
-
-	/**
-	 *
-	 * Export all HG
-	 * @param unknown_type $search
-	 */
-	public function export() {
-
-		$request = "SELECT hg_id, hg_name, hg_alias FROM hostgroup ORDER BY hg_name";
-		$DBRESULT =& $this->DB->query($request);
-		$i = 0;
-		while ($data =& $DBRESULT->fetchRow()) {
-			print "HG;ADD;".html_entity_decode($data["hg_name"]).";".html_entity_decode($data["hg_alias"])."\n";
-			$members = "";
-			/**
-			$request = "SELECT host_name FROM host, hostgroup_relation WHERE hostgroup_hg_id = '".$data["hg_id"]."' AND host_host_id = host_id ORDER BY host_name";
-			$DBRESULT2 =& $this->DB->query($request);
-			while ($m =& $DBRESULT2->fetchRow()) {
-				print "HG;ADDCHILD;".html_entity_decode($data["hg_name"]).";".html_entity_decode($m["host_name"])."\n";
-			}
-			$DBRESULT2->free();
-			*/
-			$i++;
-		}
-		$DBRESULT->free();
-	}
-
-	/* *************************************
-	 * Add functions
-	 */
-	public function add($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		/*
-		 * Split options
-		 */
-		$info = split(";", $options);
-
-		$info[0] = $this->validateName($info[0]);
-
-		if (!$this->hostGroupExists($info[0])) {
-			$convertionTable = array(0 => "hg_name", 1 => "hg_alias");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}
-			$this->addHostGroup($informations);
-			unset($informations);
-		} else {
-			print "Hostgroup ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return;
-		}
-	}
-
-	protected function addHostGroup($information) {
-		if (!isset($information["hg_name"])) {
-			print "No information received\n";
-			return 0;
-		} else {
-			if (!isset($information["hg_alias"]) || $information["hg_alias"] == "")
-				$information["hg_alias"] = $information["hg_name"];
-
-			$request = "INSERT INTO hostgroup (hg_name, hg_alias, hg_activate) VALUES ('".$this->encodeInHTML($information["hg_name"])."', '".$this->encodeInHTML($information["hg_alias"])."', '1')";
-			$DBRESULT =& $this->DB->query($request);
-
-			$hg_id = $this->getHostGroupID($information["hg_name"]);
-
-			/**
-			 * Update ACL
-			 */
-			$this->access->updateACL();
-
-			return $hg_id;
-		}
-	}
-
-	/* ***************************************
-	 * Set params
-	 */
-	public function setParam($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		return $this->setParamHostGroup($elem[0], $elem[1], $elem[2]);
-	}
-
-	protected function setParamHostGroup($hg_name, $parameter, $value) {
-
-		$value = $this->encodeInHTML($value);
-
-		$hg_id = $this->getHostGroupID($hg_name);
-		if ($hg_id) {
-			$request = "UPDATE hostgroup SET $parameter = '$value' WHERE hg_id = '$hg_id'";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Hostgroup doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
-
-	/* ************************************
-	 * Add Child
-	 */
-
-	public function addChild($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		return $this->return_code = $this->addChildHostGroup($elem[0], $elem[1]);
-	}
-
-	protected function addChildHostGroup($hg_name, $child) {
-
-		require_once "./class/centreonHost.class.php";
-
-		/*
-		 * Get Child informations
-		 */
-		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID($this->encodeInHTML($child));
-
-		$hg_id = $this->getHostGroupID($hg_name);
-		if ($hg_id && $host_id) {
-			$request = "DELETE FROM hostgroup_relation WHERE host_host_id = '$host_id' AND hostgroup_hg_id = '$hg_id'";
-			$DBRESULT =& $this->DB->query($request);
-			$request = "INSERT INTO hostgroup_relation (host_host_id, hostgroup_hg_id) VALUES ('$host_id', '$hg_id')";
-			$DBRESULT =& $this->DB->query($request);
-
-			/**
-			 * Update ACL
-			 */
-			$this->access->updateACL();
-
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Hostgroup or host doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
-
-	/* ************************************
-	 * Del Child
-	 */
-
-	public function delChild($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		return $this->return_code = $this->delChildHostGroup($elem[0], $elem[1]);
-	}
-
-	protected function delChildHostGroup($hg_name, $child) {
-
-		require_once "./class/centreonHost.class.php";
-
-		/*
-		 * Get Child informations
-		 */
-		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID($this->encodeInHTML($child));
-
-		$hg_id = $this->getHostGroupID($hg_name);
-		if ($hg_id && $host_id) {
-			$request = "DELETE FROM hostgroup_relation WHERE host_host_id = '$host_id' AND hostgroup_hg_id = '$hg_id'";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Hostgroup or host doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
+    /**
+     * Magic method
+     *
+     * @param string $name
+     * @param array $args
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function __call($name, $arg)
+    {
+        $name = strtolower($name);
+        if (!isset($arg[0])) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $args = explode($this->delim, $arg[0]);
+        $hgIds = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($args[0]));
+        if (!count($hgIds)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND .":".$args[0]);
+        }
+        $groupId = $hgIds[0];
+        if (preg_match("/^(get|set|add|del)member/", $name, $matches)) {
+            $relobj = new Centreon_Object_Relation_Host_Group_Host();
+            $obj = new Centreon_Object_Host();
+            if ($matches[1] == "get") {
+                $tab = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), $hgIds);
+                echo "id".$this->delim."name"."\n";
+                foreach($tab as $value) {
+                    $tmp = $obj->getParameters($value, array($obj->getUniqueLabelField()));
+                    echo $value . $this->delim . $tmp[$obj->getUniqueLabelField()] . "\n";
+                }
+            } else {
+                if (!isset($args[1])) {
+                    throw new CentreonClapiException(self::MISSINGPARAMETER);
+                }
+                $relation = $args[1];
+                $relations = explode("|", $relation);
+                $relationTable = array();
+                foreach($relations as $rel) {
+                    $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
+                    if (!count($tab)) {
+                        throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":".$rel);
+                    }
+                    $relationTable[] = $tab[0];
+                }
+                if ($matches[1] == "set") {
+                    $relobj->delete($groupId);
+                }
+                $existingRelationIds = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), array($groupId));
+                foreach($relationTable as $relationId) {
+                    if ($matches[1] == "del") {
+                        $relobj->delete($groupId, $relationId);
+                    } elseif ($matches[1] == "set" || $matches[1] == "add") {
+                        if (!in_array($relationId, $existingRelationIds)) {
+                            $relobj->insert($groupId, $relationId);
+                        }
+                    }
+                }
+                $acl = new CentreonACL();
+                $acl->reload(true);
+            }
+        } else {
+            throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
+    }
 }
 ?>
