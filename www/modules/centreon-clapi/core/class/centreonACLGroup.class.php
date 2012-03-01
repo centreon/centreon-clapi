@@ -217,5 +217,4 @@ class CentreonACLGroup extends CentreonObject
             throw new CentreonClapiException(self::UNKNOWN_METHOD);
         }
     }
-
 }

@@ -137,7 +137,7 @@ class CentreonAPI {
 		$this->relationObject["CG"] = "ContactGroup";
 
 		/* Templates */
-		$this->relationObject["HTPL"] = "Host";
+		$this->relationObject["HTPL"] = "HostTemplate";
 		$this->relationObject["STPL"] = "Service";
 
 		$this->relationObject["TIMEPERIOD"] = "TimePeriod";
