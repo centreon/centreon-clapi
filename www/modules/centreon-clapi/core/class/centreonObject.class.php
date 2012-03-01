@@ -109,6 +109,22 @@ abstract class CentreonObject
     }
 
     /**
+     * Get Object Name
+     *
+     * @param int $id
+     * @return string
+     */
+    protected function getObjectName($id)
+    {
+        $tmp = $this->object->getParameters($id, array($this->object->getUniqueLabelField()));
+        if (isset($tmp[$this->object->getUniqueLabelField()])) {
+            return $tmp[$this->object->getUniqueLabelField()];
+        }
+        return "";
+    }
+
+
+    /**
      * Checks if parameters are correct
      *
      * @throws Exception

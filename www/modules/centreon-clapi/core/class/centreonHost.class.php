@@ -103,6 +103,28 @@ class CentreonHost extends CentreonObject
 	}
 
 	/**
+	 * We keep this method for retro compatibility with other objects
+	 *
+	 * @param string $name
+	 * @return int
+	 */
+	public function getHostID($name)
+	{
+        return $this->getObjectId($name);
+	}
+
+	/**
+	 * We keep this method for retro compatibility with other objects
+	 *
+	 * @param int $hostId
+	 * @return string
+	 */
+	public function getHostName($hostId)
+	{
+        return $this->getObjectName($hostId);
+	}
+
+	/**
 	 * Display all hosts
 	 *
 	 * @param string $parameters
