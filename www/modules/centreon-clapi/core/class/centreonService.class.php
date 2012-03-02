@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2005-2010 MERETHIS
  * Centreon is developped by : Julien Mathis and Romain Le Merlus under
  * GPL Licence 2.0.
@@ -36,1464 +36,489 @@
  *
  */
 
-class CentreonService {
-
-	var $DB;
-	private $access;
-	private $version;
-
-	var $register;
-	var $flag;
-	var $object;
-
-	var $host;
-	var $contact;
-	var $cg;
-
-	var $parameters;
-	var $paramTable;
-
-	private $_cmd;
-	private $_timeperiod;
-
-	public $obj;
-
-	public function __construct($DB, $objName, $version = null) {
-		$this->DB = $DB;
-		$this->register = 1;
-		$this->object = $objName;
-
-		$this->obj = strtoupper($objName);
-
-		/**
-		 * Enable Access Object
-		 */
-		$this->access = new CentreonACLResources($this->DB);
-
-		if (strtoupper($objName) == "STPL") {
-			$this->setTemplateFlag();
-			$this->host = new CentreonHost($this->DB, "HTPL");
-		} else {
-			$this->host = new CentreonHost($this->DB, "HOST");
-		}
-
-		/*
-		 * Create contact object
-		 */
-		require_once "./class/centreonCommand.class.php";
-		require_once "./class/centreonContact.class.php";
-		$this->contact = new CentreonContact($this->DB, "CONTACT");
-
-		/*
-		 * Create ContactGroup object
-		 */
-		require_once "./class/centreonContactGroup.class.php";
-		$this->cg = new CentreonContactGroup($this->DB, "CG");
-
-		$this->_timeperiod = new CentreonTimePeriod($this->DB);
-		$this->_cmd = new CentreonCommand($this->DB);
-
-		/*
-		 * Change buffers
-		 */
-		$this->setParametersList();
-		$this->setParametersTable();
-		$this->setFlags();
-
-		if ($version == null) {
-			$this->version = $this->getVersion();
-		} else {
-			$this->version = $version;
-		}
-	}
-
-	/**
-	 *
-	 * encode with htmlentities a string
-	 * @param unknown_type $string
-	 */
-	protected function encodeInHTML($string) {
-	    if (!strncmp($this->version, "2.1", 3)) {
-            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
-	    }
-	    return $string;
-	}
-	
-	/**
-	 *
-	 * Get Version of Centreon
-	 */
-	protected function getVersion() {
-		$request = "SELECT * FROM informations";
-		$DBRESULT = $this->DB->query($request);
-		$info = $DBRESULT->fetchRow();
-		return $info["value"];
-	}
-
-	protected function setFlags() {
-		$this->flag = array(0 => "No", 1 => "Yes", 2 => "Default");
-	}
-
-	protected function setParametersList() {
-		$this->parameters = array();
-		$this->parameters["description"] = "service_description";
-		$this->parameters["alias"] = "service_alias";
-		$this->parameters["template"] = "service_template_model_stm_id";
-
-		$this->parameters["command"] = "command_command_id";
-		$this->parameters["args"] = "command_command_id_arg";
-
-		$this->parameters["max_check_attempts"] = "service_max_check_attempts";
-		$this->parameters["normal_check_interval"] = "service_normal_check_interval";
-		$this->parameters["retry_check_interval"] = "service_retry_check_interval";
-
-		$this->parameters["active_checks_enabled"] = "service_active_checks_enabled";
-		$this->parameters["passive_checks_enabled"] = "service_passive_checks_enabled";
-
-		$this->parameters["notif_options"] = "service_notification_options";
-		$this->parameters["notification_options"] = "service_notification_options";
-		$this->parameters["notification_interval"] = "service_notification_interval";
-		$this->parameters["notifications_enabled"] = "service_notifications_enabled";
-
-		$this->parameters["check_period"] = "timeperiod_tp_id";
-		$this->parameters["notif_period"] = "timeperiod_tp_id2";
-
-		$this->parameters["check_command"] = "command_command_id";
-		$this->parameters["check_command_args"] = "command_command_id_arg";
-
-		$this->parameters["activate"] = "service_activate";
-
-		$this->parameters["url"] = "esi_notes_url";
-		$this->parameters["notes"] = "esi_notes";
-		$this->parameters["action_url"] = "esi_action_url";
-	}
-
-	protected function setParametersTable() {
-		$this->paramTable = array();
-
-		$this->paramTable["description"] = "service";
-		$this->paramTable["alias"] = "service";
-		$this->paramTable["template"] = "service";
-
-		$this->paramTable["command"] = "service";
-		$this->paramTable["args"] = "service";
-
-		$this->paramTable["max_check_attempts"] = "service";
-		$this->paramTable["normal_check_interval"] = "service";
-		$this->paramTable["retry_check_interval"] = "service";
-
-		$this->paramTable["active_checks_enabled"] = "service";
-		$this->paramTable["passive_checks_enabled"] = "service";
-
-		$this->paramTable["notif_options"] = "service";
-		$this->paramTable["notification_options"] = "service";
-		$this->paramTable["notification_interval"] = "service";
-		$this->paramTable["notifications_enabled"] = "service";
-
-		$this->paramTable["check_period"] = "service";
-		$this->paramTable["notif_period"] = "service";
-
-		$this->paramTable["check_command"] = "service";
-		$this->paramTable["check_command_args"] = "service";
-
-		$this->paramTable["activate"] = "service";
-
-		$this->paramTable["url"] = "extended_service_information";
-		$this->paramTable["notes"] = "extended_service_information";
-		$this->paramTable["action_url"] = "extended_service_information";
-	}
-
-	protected function checkNameformat($name) {
-		if ($this->register) {
-			$len = 45;
-		} else {
-			$len = 55;
-		}
-
-		if (strlen($name) > $len) {
-			print "Warning: host name reduce to $len caracters.\n";
-		}
-		return sprintf("%.".$len."s", $name);
-	}
-
-	/* ************************
-	 * Set object type : service or template
-	 */
-	protected function setTemplateFlag() {
-		$this->register = 0;
-	}
-
-	protected function checkHostNumber($service_id) {
-		$request = "SELECT host_host_id FROM host_service_relation WHERE service_service_id = '$service_id'";
-		$DBRESULT =& $this->DB->query($request);
-		if (isset($DBRESULT)) {
-			$num = $DBRESULT->numRows();
-			if (isset($num)) {
-				return $num;
-			}
-		}
-		return -1;
-	}
-
-	protected function checkHostServiceRelation($host_id, $service_id) {
-		$request = "SELECT host_host_id FROM host_service_relation WHERE service_service_id = '$service_id' AND host_host_id = '$host_id'";
-		$DBRESULT =& $this->DB->query($request);
-		if (isset($DBRESULT)) {
-			$num = $DBRESULT->numRows();
-			if (isset($num)) {
-				return $num;
-			}
-		}
-		return -1;
-	}
-
-	protected function validateName($name) {
-		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.\:]*$/', $name, $matches) && strlen($name)) {
-			return $this->checkNameformat($name);
-		} else {
-			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);
-		}
-	}
-
-	/* ************************************
-	 * Check if service already exists.
-	 */
-	public function testServiceExistence ($name = NULL, $host_id = NULL) {
-
-		$DBRESULT =& $this->DB->query("SELECT service_id FROM service, host_service_relation hsr WHERE hsr.host_host_id = '".$host_id."' AND hsr.service_service_id = service_id AND service.service_description LIKE '".$this->encodeInHTML($this->encode($name))."'");
-		$service =& $DBRESULT->fetchRow();
-		if ($DBRESULT->numRows()) {
-			$DBRESULT->free();
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public function testServiceTplExistence ($name = NULL) {
-
-		$DBRESULT =& $this->DB->query("SELECT service_id FROM service WHERE service.service_description LIKE '".$this->encodeInHTML($this->encode($name))."'");
-		$service =& $DBRESULT->fetchRow();
-		if ($DBRESULT->numRows()) {
-			$DBRESULT->free();
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public function getServiceName($service_id, $readable = NULL) {
-		$request = "SELECT service_description FROM service WHERE service_id = '$service_id'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		$DBRESULT->free();
-		if (isset($data["service_description"]) && $data["service_description"]) {
-			if (isset($readable) && $readable) {
-				$data["service_description"] = $this->decode($data["service_description"]);
-			}
-			return $data["service_description"];
-		} else {
-			return "";
-		}
-	}
-
-	public function getServiceAlias($service_id) {
-		$request = "SELECT service_alias FROM service WHERE service_id = '$service_id'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		$DBRESULT->free();
-		if (isset($data["service_alias"]) && $data["service_alias"])
-			return $data["service_alias"];
-		else
-			return "";
-	}
-
-	public function hostTypeLink($service_id) {
-		/*
-		 * return 1 = host(s)
-		 * return 2 = hostgroup(s)
-		 * return 3 = host(s) + hostgroup(s) (Futur)
-		 */
-		$request = "SELECT host_host_id FROM host_service_relation WHERE hostgroup_hg_id IS NULL and service_service_id = '".(int)$service_id."'";
-		$DBRESULT = $this->DB->query($request);
-		if ($DBRESULT->numRows()) {
-			return 1;
-		} else {
-			$request = "SELECT hostgroup_hg_id FROM host_service_relation WHERE hostgroup_hg_id IS NOT NULL and service_service_id = '".(int)$service_id."'";
-			$DBRESULT = $this->DB->query($request);
-			if ($DBRESULT->numRows()) {
-				return 2;
-			} else {
-				return 0;
-			}
-		}
-	}
-
-	public function getServiceHosts($service_id) {
-
-		$hostList = array();
-
-		$request = "SELECT host_host_id FROM host_service_relation WHERE hostgroup_hg_id IS NULL and service_service_id = '".(int)$service_id."'";
-		$DBRESULT = $this->DB->query($request);
-		if ($DBRESULT->numRows()) {
-			while ($h = $DBRESULT->fetchRow()) {
-				$hostList[$h["host_host_id"]] = $h["host_host_id"];
-			}
-		}
-		return $hostList;
-	}
-
-	public function getServiceHostGroups($service_id) {
-
-		$hostGroupList = array();
-
-		$request = "SELECT hostgroup_hg_id FROM host_service_relation WHERE hostgroup_hg_id IS NOT NULL and service_service_id = '".(int)$service_id."'";
-		$DBRESULT = $this->DB->query($request);
-		if ($DBRESULT->numRows()) {
-			while ($h = $DBRESULT->fetchRow()) {
-				$hostGroupList[$h["hostgroup_hg_id"]] = $h["hostgroup_hg_id"];
-			}
-		}
-		return $hostGroupList;
-	}
-
-	protected function encode($str) {
-		if (!strncmp($this->version, "2.1", 3)) {
-			$str = str_replace("/", "#S#", $str);
-			$str = str_replace("\\", "#BS#", $str);
-		}
-		return $str;
-	}
-
-	protected function decode($str) {
-		if (!strncmp($this->version, "2.1", 3)) {
-			$str = str_replace("#S#", "/", $str);
-			$str = str_replace("#BS#", "\\", $str);
-		}
-		return $str;
-	}
-
-	protected function checkParameters($options) {
-		if (!isset($options) || $options == "") {
-			print "No options defined.\n";
-			$this->return_code = 1;
-			return 1;
-		}
-	}
-
-	/* ************************************
-	 * Get service ID
-	 */
-	public function getServiceID($host_id, $service_description) {
-
-		$service_description = $this->encode($service_description);
-
-		$DBRESULT =& $this->DB->query(	"SELECT service_id FROM service, host_service_relation hsr " .
-										"WHERE hsr.host_host_id = '".$host_id."' AND hsr.service_service_id = service_id " .
-										"AND service_description = '".$service_description."' LIMIT 1");
-		$row =& $DBRESULT->fetchRow();
-		if ($row["service_id"]) {
-			return $row["service_id"];
-		} else {
-			return 0;
-		}
-	}
-
-	/* ************************************
-	 * Get service ID
-	 */
-	public function getServiceTplID($service_description) {
-
-		$service_description = $this->encode($service_description);
-
-		$DBRESULT =& $this->DB->query(	"SELECT service_id FROM service " .
-										"WHERE service_description = '".$service_description."' LIMIT 1");
-		$row =& $DBRESULT->fetchRow();
-		if ($row["service_id"]) {
-			return $row["service_id"];
-		} else {
-			return 0;
-		}
-	}
-
-	/* **********************************
-	 *  Check if service is defind
-	 */
-	public function serviceExists($name = NULL, $host = NULL)	{
-		$DBRESULT =& $this->DB->query(	"SELECT service_id " .
-										"FROM service, host_service_relation hsr, host h " .
-										"WHERE hsr.host_host_id = h.host_id " .
-											"AND h.host_name LIKE '".$this->encode($host)."' " .
-											"AND hsr.service_service_id = service_id " .
-											"AND service.service_description = '".$this->encodeInHTML($this->encode($name))."'");
-		$service =& $DBRESULT->fetchRow();
-		if ($DBRESULT->numRows() >= 1) {
-			$DBRESULT->free();
-			return true;
-		}
-		$DBRESULT->free();
-		return false;
-	}
-
-	public function serviceTplExists($name = NULL)	{
-
-		$DBRESULT =& $this->DB->query(	"SELECT service_id " .
-										"FROM service " .
-										"WHERE service.service_description = '".$this->encodeInHTML($this->encode($name))."'".
-										" AND service_register = '0'");
-		$service =& $DBRESULT->fetchRow();
-		if ($DBRESULT->numRows() >= 1) {
-			$DBRESULT->free();
-			return true;
-		}
-		$DBRESULT->free();
-		return false;
-	}
-
-	/* **************************************
-	 * Add services
-	 */
-	public function add($information) {
-
-		$check = $this->checkParameters($information);
-		if ($check) {
-			return $check;
-		}
-
-		$tabInfo = split(";", $information);
-
-		$tabInfo[0] = $this->validateName($tabInfo[0]);
-
-		if ($this->register) {
-			if ($this->register && !$this->host->hostExists($tabInfo[0])) {
-				print "Host doesn't exists.\n";
-				return 1;
-			}
-
-			if ($this->serviceExists($tabInfo[1], $tabInfo[0])) {
-				print "Service already exists.\n";
-				return 1;
-			}
-
-			if (count($tabInfo) == 3) {
-				$data = array("host" => $tabInfo[0], "service_description" => $tabInfo[1], "template" => $tabInfo[2]);
-				return $this->addService($data);
-			} else {
-				print "No enought data for creating services.\n";
-				return 1;
-			}
-		} else {
-
-			if ($this->serviceTplExists($tabInfo[0])) {
-				print "Service template already exists.\n";
-				return 1;
-			}
-
-			if (count($tabInfo) == 3) {
-				$data = array("service_description" => $tabInfo[0], "service_alias" => $tabInfo[1], "template" => $tabInfo[2]);
-				return $this->addServiceTemplate($data);
-			} else {
-				print "No enought data for creating services template.\n";
-				return 1;
-			}
-		}
-	}
-
-	protected function addServiceTemplate($information) {
-		if (!isset($information["service_description"]) || !isset($information["template"])) {
-			return 0;
-		} else {
-			if (preg_match("/^[0-9]*$/", $information["template"], $matches)) {
-				$template = $information["template"];
-			} else {
-				$request = "SELECT service_id FROM service WHERE service_description LIKE '".$information["template"]."' LIMIT 1";
-				$DBRESULT = $this->DB->query($request);
-				$data = $DBRESULT->fetchRow();
-				$template = $data["service_id"];
-			}
-
-			$request = "INSERT INTO service (service_description, service_alias, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".$this->encodeInHTML($this->encode($information["service_description"]))."', '".$this->encodeInHTML($this->encode($information["service_alias"]))."', '".$template."', '1', '".$this->register."', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
-			$this->DB->query($request);
-
-			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".$this->encodeInHTML($this->encode($information["service_description"]))."' AND service_activate = '1' AND service_register = '".$this->register."'";
-			$DBRESULT =& $this->DB->query($request);
-			$service = $DBRESULT->fetchRow();
-			$service_id = $service["MAX(service_id)"];
-
-			if ($service_id != 0) {
-
-				$request = "INSERT INTO extended_service_information (service_service_id) VALUE ('$service_id')";
-				$this->DB->query($request);
-
-				if (isset($information["macro"])) {
-					foreach ($information["macro"] as $value) {
-						if (strstr($value, ":")) {
-							$tab = split(":", $value);
-							if (isset($tab[1]) && $tab[1] != "") {
-								$request = "INSERT INTO on_demand_macro_service (svc_macro_name, svc_macro_value, svc_svc_id) VALUE ('\$_SERVICE".$tab[0]."\$', '".$tab[1]."', '$service_id')";
-								$this->DB->query($request);
-							}
-						}
-					}
-				}
-			}
-
-			/**
-			 * Update ACL
-			 */
-			$this->access->updateACL();
-
-			return $service_id;
-		}
-	}
-
-	public function addService($information) {
-
-		$information["template"] = trim($information["template"]);
-
-		if (!isset($information["service_description"]) || !isset($information["host"]) || !isset($information["template"])) {
-			return 0;
-		} else {
-			if (preg_match("/^[0-9]*$/", $information["template"], $matches)) {
-				$template = $information["template"];
-			} else {
-				$request = "SELECT service_id FROM service WHERE service_description LIKE '".$information["template"]."' AND service_register = '0' LIMIT 1";
-				$DBRESULT = $this->DB->query($request);
-				$data = $DBRESULT->fetchRow();
-				$template = $data["service_id"];
-			}
-
-			if (preg_match("/^[0-9]*$/", $information["host"], $matches)) {
-				$host = $information["host"];
-			} else {
-				$request = "SELECT host_id FROM host WHERE host_name LIKE '".$information["host"]."' LIMIT 1";
-				$DBRESULT = $this->DB->query($request);
-				$data = $DBRESULT->fetchRow();
-				$host = $data["host_id"];
-			}
-
-			$request = "INSERT INTO service (service_description, service_template_model_stm_id, service_activate, service_register, service_active_checks_enabled, service_passive_checks_enabled, service_parallelize_check, service_obsess_over_service, service_check_freshness, service_event_handler_enabled, service_process_perf_data, service_retain_status_information, service_notifications_enabled, service_is_volatile) VALUES ('".$this->encodeInHTML($this->encode($information["service_description"]))."', '".$template."', '1', '".$this->register."', '2', '2', '2', '2', '2', '2', '2', '2', '2', '2')";
-			$this->DB->query($request);
-
-			$request = "SELECT MAX(service_id) FROM service WHERE service_description = '".$this->encodeInHTML($this->encode($information["service_description"]))."' AND service_activate = '1' AND service_register = '".$this->register."'";
-			$DBRESULT =& $this->DB->query($request);
-			$service = $DBRESULT->fetchRow();
-			$service_id = $service["MAX(service_id)"];
-
-			if ($service_id != 0 && $host != 0) {
-				$request = "INSERT INTO host_service_relation (service_service_id, host_host_id) VALUES ('$service_id', '".$host."')";
-				$this->DB->query($request);
-
-				$request = "INSERT INTO extended_service_information (service_service_id) VALUE ('$service_id')";
-				$this->DB->query($request);
-
-				if (isset($information["macro"])) {
-					foreach ($information["macro"] as $value) {
-						if (strstr($value, ":")) {
-							$tab = split(":", $value);
-							if (isset($tab[1]) && $tab[1] != "") {
-								$request = "INSERT INTO on_demand_macro_service (svc_macro_name, svc_macro_value, svc_svc_id) VALUE ('\$_SERVICE".$tab[0]."\$', '".$tab[1]."', '$service_id')";
-								$this->DB->query($request);
-							}
-						}
-					}
-				}
-			}
-
-			/**
-			 * Update ACL
-			 */
-			$this->access->updateACL();
-
-			return $service_id;
-		}
-	}
-
-	/* ***************************************
-	 * Show all services
-	 */
-	public function show($search_string = NULL) {
-
-		if ($this->register) {
-
-			$search = "";
-			if ($search_string != "") {
-				$search = " AND (service_description LIKE '%$search_string%' OR service_alias LIKE '%$search_string%') ";
-			}
-			/*
-			$request = "SELECT " .
-						" service_id, service_description, service_alias, s.command_command_id, ".
-					    " s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, " .
-						" service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, " .
-						" s.command_command_id_arg, host_id, host_name " .
-
-						" FROM service s" .
-						" JOIN (SELECT hsr.service_service_id FROM host_service_relation hsr" .
-						" JOIN host h" .
-						"     ON hsr.host_host_id = h.host_id" .
-						"     	WHERE h.host_name = '".$host_name."'" .
-						"     UNION" .
-						"    	 SELECT hsr.service_service_id FROM hostgroup_relation hgr" .
-						" JOIN host h" .
-						"     ON hgr.host_host_id = h.host_id" .
-						" JOIN host_service_relation hsr" .
-						"     ON hgr.hostgroup_hg_id = hsr.hostgroup_hg_id" .
-						"     	WHERE h.host_name = '".$host_name."' ) ghsrv" .
-						" ON s.service_id = ghsrv.service_service_id" .
-						" WHERE s.service_description = '".$svc_desc."' LIMIT 1";
-			*/
-			$request =  " SELECT " .
-					    " service_id, service_description, service_alias, s.command_command_id, ".
-					    " s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, " .
-						" service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, " .
-						" s.command_command_id_arg, host_id, host_name " .
-						" FROM service s, host h, host_service_relation hr ".
-						" WHERE s.service_id = hr.service_service_id " .
-						" AND hr.host_host_id = h.host_id ".
-						" AND service_register = '".$this->register."' ".
-						" AND host_register = '1' $search ".
-						" ORDER BY host_name, service_description";
-			$DBRESULT = $this->DB->query($request);
-			$i = 0;
-			while ($data = $DBRESULT->fetchRow()) {
-				if ($i == 0) {
-					print "hostid;svcid;host;description;command;args;checkPeriod;maxAttempts;checkInterval;retryInterval;active;passive\n";
-				}
-				if (!isset($data["command_name"])) {
-					$data["command_name"] = "";
-				}
-				$i++;
-				print $data["host_id"].";".$data["service_id"].";".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"])).";".html_entity_decode($this->decode($data["command_name"])).";".html_entity_decode($this->decode($data["command_command_id_arg"])).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].";".$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
-			}
-			$DBRESULT->free();
-		} else {
-			$search = "";
-			if ($search_string != "") {
-				$search = " AND (service_description LIKE '%$search_string%' OR service_alias LIKE '%$search_string%') ";
-			}
-
-			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg FROM service s WHERE service_register = '".$this->register."' $search ORDER BY service_description, service_alias";
-			$DBRESULT = $this->DB->query($request);
-			$i = 0;
-			while ($data = $DBRESULT->fetchRow()) {
-				if ($i == 0) {
-					print "svcid;name;service_name;command;args;checkPeriod;maxAttempts;checkInterval;retryInterval;active;passive\n";
-				}
-				$i++;
-				if (!isset($data["command_name"])) {
-					$data["command_name"] = "";
-				}
-				print $data["service_id"].";".html_entity_decode($this->decode($data["service_description"])).";".html_entity_decode($this->decode($data["service_alias"])).";".html_entity_decode($this->decode($data["command_name"])).";".html_entity_decode($this->decode($data["command_command_id_arg"])).";".$this->decode($data["timeperiod_tp_id"]).";".$data["service_max_check_attempts"].";".$data["service_normal_check_interval"].";".$data["service_retry_check_interval"].$this->flag[$data["service_active_checks_enabled"]].";".$this->flag[$data["service_passive_checks_enabled"]]."\n";
-			}
-			$DBRESULT->free();
-		}
-	}
-
-	/* ***************************************
-	 * Export all services
-	 */
-	public function export() {
-
-		if ($this->register) {
-			$request =  " SELECT " .
-					    " service_id, service_description, service_alias, service_template_model_stm_id, ".
-					    " host_id, host_name " .
-						" FROM service s, host h, host_service_relation hr ".
-						" WHERE s.service_id = hr.service_service_id " .
-						" AND hr.host_host_id = h.host_id ".
-						" AND service_register = '".$this->register."' ".
-						" AND host_register = '1'".
-						" ORDER BY host_name, service_description";
-			$DBRESULT = $this->DB->query($request);
-			while ($data = $DBRESULT->fetchRow()) {
-				if (!isset($data["command_name"])) {
-					$data["command_name"] = "";
-				}
-				print $this->obj.";ADD;".$this->decode($data["host_name"]).";".html_entity_decode($this->decode($data["service_description"])).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceName($data["service_template_model_stm_id"])) : "")."\n";
-				$this->exportMacros($data["service_id"], $data["host_id"]);
-				$this->exportProperties($data["service_id"], $data["host_id"]);
-			}
-			$DBRESULT->free();
-		} else {
-			$request = "SELECT service_id, service_description, service_alias, s.command_command_id, s.timeperiod_tp_id, service_max_check_attempts, service_normal_check_interval, service_retry_check_interval,service_active_checks_enabled, service_passive_checks_enabled, s.command_command_id_arg, s.service_template_model_stm_id FROM service s WHERE service_register = '".$this->register."' ORDER BY service_description, service_alias";
-			$DBRESULT = $this->DB->query($request);
-			while ($data = $DBRESULT->fetchRow()) {
-				if (!isset($data["command_name"])) {
-					$data["command_name"] = "";
-				}
-				print $this->obj.";ADD;".html_entity_decode($this->decode($data["service_description"])).";".html_entity_decode($this->decode($data["service_alias"])).";".html_entity_decode(isset($data["service_template_model_stm_id"]) ? $this->decode($this->getServiceName($data["service_template_model_stm_id"])) : "")."\n";
-				$this->exportMacros($data["service_id"]);
-				$this->exportProperties($data["service_id"]);
-				$this->exportTemplateLink($data["service_id"]);
-			}
-			$DBRESULT->free();
-		}
-	}
-
-	/**
-	 *
-	 * Export all properties
-	 * @param unknown_type $service_id
-	 * @param unknown_type $host_id
-	 */
-	private function exportProperties($service_id, $host_id = NULL) {
-		$this->exportTP($service_id, "", "check_period", $host_id);
-		$this->exportTP($service_id, 2, "notif_period", $host_id);
-		$this->exportExtInfos($service_id, "notes_url", "url", $host_id);
-		$this->exportExtInfos($service_id, "action_url", "action_url", $host_id);
-		$this->exportExtInfos($service_id, "notes", "notes", $host_id);
-		$this->exportServiceProperty($service_id, "notification_options", $host_id);
-		$this->exportServiceProperty($service_id, "max_check_attempts", $host_id);
-		$this->exportServiceProperty($service_id, "normal_check_interval", $host_id);
-		$this->exportServiceProperty($service_id, "retry_check_interval", $host_id);
-		$this->exportServiceProperty($service_id, "active_checks_enabled", $host_id);
-		$this->exportServiceProperty($service_id, "passive_checks_enabled", $host_id);
-		$this->exportServiceProperty($service_id, "notification_interval", $host_id);
-		$this->exportServiceProperty($service_id, "notifications_enabled", $host_id);
-		$this->exportCGLinks($service_id, $host_id);
-		$this->exportCctLinks($service_id, $host_id);
-		$this->exportCMD($service_id, $host_id);
-		$this->exportCMDArgs($service_id, $host_id);
-	}
-
-	/**
-	 *
-	 * Export host temmplate links
-	 * @param integer $service_id
-	 */
-	private function exportTemplateLink($service_id) {
-		$request = "SELECT host_host_id, host_name FROM host_service_relation, host WHERE host_host_id = host_id AND service_service_id = '".$service_id."'";
-		$DBRESULT = $this->DB->query($request);
-        while ($data = $DBRESULT->fetchRow()) {
-			print $this->obj.";SETHOST;".$this->decode($this->getServiceName($service_id)).";".$this->decode($data["host_name"])."\n";
+require_once "centreonObject.class.php";
+require_once "centreonTimePeriod.class.php";
+require_once "centreonACL.class.php";
+require_once "Centreon/Object/Instance/Instance.php";
+require_once "Centreon/Object/Command/Command.php";
+require_once "Centreon/Object/Timeperiod/Timeperiod.php";
+require_once "Centreon/Object/Host/Host.php";
+require_once "Centreon/Object/Host/Extended.php";
+require_once "Centreon/Object/Host/Group.php";
+require_once "Centreon/Object/Host/Host.php";
+require_once "Centreon/Object/Host/Macro/Custom.php";
+require_once "Centreon/Object/Service/Service.php";
+require_once "Centreon/Object/Service/Macro/Custom.php";
+require_once "Centreon/Object/Service/Extended.php";
+require_once "Centreon/Object/Contact/Contact.php";
+require_once "Centreon/Object/Contact/Group.php";
+require_once "Centreon/Object/Relation/Host/Template/Host.php";
+require_once "Centreon/Object/Relation/Contact/Service.php";
+require_once "Centreon/Object/Relation/Contact/Group/Service.php";
+require_once "Centreon/Object/Relation/Host/Service.php";
+
+
+/**
+ * Centreon Service objects
+ *
+ * @author sylvestre
+ */
+class CentreonService extends CentreonObject
+{
+    const ORDER_HOSTNAME = 0;
+    const ORDER_SVCDESC  = 1;
+    const ORDER_SVCTPL   = 2;
+    const NB_UPDATE_PARAMS = 4;
+
+    /**
+     * Constructor
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->object = new Centreon_Object_Service();
+        $this->params = array('service_is_volatile'         		   => '2',
+                              'service_active_checks_enabled'          => '2',
+                              'service_passive_checks_enabled'         => '2',
+                              'service_parallelize_check'              => '2',
+                              'service_obsess_over_service'            => '2',
+                              'service_check_freshness'                => '2',
+                              'service_event_handler_enabled'          => '2',
+                              'service_flap_detection_enabled'         => '2',
+                              'service_process_perf_data'		       => '2',
+                              'service_retain_status_information'	   => '2',
+        					  'service_retain_nonstatus_information'   => '2',
+                              'service_notifications_enabled'		   => '2',
+                              'service_register'					   => '1',
+                              'service_activate'				       => '1'
+                              );
+                              $this->nbOfCompulsoryParams = 3;
+                              $this->register = 1;
+                              $this->activateField = 'service_activate';
+    }
+
+    /**
+     * Check parameters
+     *
+     * @param string $hostName
+     * @param string $serviceDescription
+     * @return bool
+     */
+    protected function serviceExists($hostName, $serviceDescription)
+    {
+        $relObj = new Centreon_Object_Relation_Host_Service();
+        $elements = $relObj->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array('host_name' => $hostName,
+        																										 'service_description' => $serviceDescription), "AND");
+        if (count($elements)) {
+            return true;
         }
-        $DBRESULT->free();
-	}
+        return false;
+    }
 
     /**
+     * Display all services
      *
-     * Export macro of service and templates
-     * @param $service_id
-     * @param $host_id
+     * @param string $parameters
+     * @return void
      */
-	private function exportMacros($service_id, $host_id = NULL) {
-        $request = "SELECT svc_macro_name, svc_macro_value FROM on_demand_macro_service WHERE svc_svc_id = '$service_id'";
-        $DBRESULT =& $this->DB->query($request);
-        while ($data =& $DBRESULT->fetchRow()) {
-        	$data["svc_macro_name"] = str_replace("\$", '', $data["svc_macro_name"]);
-        	$data["svc_macro_name"] = preg_replace("/\_SERVICE/", '', $data["svc_macro_name"], 1);
-        	if (isset($host_id)) {
-        		print $this->obj.";SETMACRO;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";".$data["svc_macro_name"].";".$data["svc_macro_value"]."\n";
-        	} else {
-        		print $this->obj.";SETMACRO;".$this->decode($this->getServiceName($service_id)).";".$data["svc_macro_name"].";".$data["svc_macro_value"]."\n";
-        	}
+    public function show($parameters = null)
+    {
+        $filters = array('service_register' => $this->register);
+        if (isset($parameters)) {
+            $filters["service_description"] = "%".$parameters."%";
         }
-        $DBRESULT->free();
+        $commandObject = new Centreon_Object_Command();
+        $paramsHost = array('host_id', 'host_name');
+        $paramsSvc = array('service_id', 'service_description', 'command_command_id', 'command_command_id_arg',
+                        'service_normal_check_interval', 'service_retry_check_interval', 'service_max_check_attempts',
+                        'service_active_checks_enabled', 'service_passive_checks_enabled');
+        $relObject = new Centreon_Object_Relation_Host_Service();
+        $elements = $relObject->getMergedParameters($paramsHost, $paramsSvc, -1, 0, "host_name,service_description", "ASC", $filters, "AND");
+        $paramHostString = str_replace("_", " ", implode($this->delim, $paramsHost));
+        echo $paramHostString . $this->delim;
+        $paramSvcString = str_replace("service_", "", implode($this->delim, $paramsSvc));
+        $paramSvcString = str_replace("command_command_id", "check command", $paramSvcString);
+        $paramSvcString = str_replace("command_command_id_arg", "check command arguments", $paramSvcString);
+        $paramSvcString = str_replace("_", " ", $paramSvcString);
+        echo $paramSvcString."\n";
+        foreach ($elements as $tab) {
+            if (isset($tab['command_command_id']) && $tab['command_command_id']) {
+                $tmp = $commandObject->getParameters($tab['command_command_id'], array($commandObject->getUniqueLabelField()));
+                if (isset($tmp[$commandObject->getUniqueLabelField()])) {
+                    $tab['command_command_id'] = $tmp[$commandObject->getUniqueLabelField()];
+                }
+            }
+            echo implode($this->delim, $tab) . "\n";
+        }
     }
 
     /**
+     * Delete service
      *
-     * Export service or template property
-     * @param $service_id
-     * @param $properties
-     * @param $host_id
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
      */
-   	private function exportServiceProperty($service_id, $properties, $host_id = NULL) {
-		$request = "SELECT service_".$properties." FROM `service` WHERE service_id = '$service_id'";
-		$DBRESULT =& $this->DB->query($request);
- 		while ($data =& $DBRESULT->fetchRow()) {
- 			if (isset($data["service_".$properties]) && $data["service_".$properties] != "") {
- 				if (isset($host_id)) {
-					print $this->obj.";SETPARAM;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";$properties;".$data["service_".$properties]."\n";
- 				} else {
-					print $this->obj.";SETPARAM;".$this->decode($this->getServiceName($service_id)).";$properties;".$data["service_".$properties]."\n";
- 				}
- 			}
- 		}
- 		$DBRESULT->free();
-    }
-
-	/**
-     *
-     * Export Host command
-     * @param $host_id
-     */
-	private function exportCMD($service_id, $host_id = NULL) {
-		$request = "SELECT command_command_id FROM `service` WHERE service_id = '$service_id'";
-		$DBRESULT =& $this->DB->query($request);
- 		while ($data =& $DBRESULT->fetchRow()) {
- 			if (isset($data["command_command_id"]) && $data["command_command_id"] != 0) {
- 				if (isset($host_id)) {
- 					print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->decode($this->getServiceName($service_id)).";check_command;".$this->_cmd->getCommandName($data["command_command_id"])."\n";
- 				} else {
- 					print $this->obj.";SETPARAM;" . $this->decode($this->getServiceName($service_id)).";check_command;".$this->_cmd->getCommandName($data["command_command_id"])."\n";
- 				}
- 			}
- 		}
- 		$DBRESULT->free();
+    public function del($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 2) {
+            throw new Exception(self::MISSINGPARAMETER);
+        }
+        $hostName = $params[0];
+        $serviceDesc = $params[1];
+        $relObject = new Centreon_Object_Relation_Host_Service();
+        $elements = $relObject->getMergedParameters(array("host_id"), array("service_id"), -1, 0, null, null, array("host_name" => $hostName,
+                                                                                                                    "service_description" => $serviceDesc), "AND");
+        if (!count($elements)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+        $this->object->delete($elements[0]['service_id']);
     }
 
     /**
+     * Add a contact
      *
-     * Export Host commands Args
-     * @param unknown_type $host_id
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
      */
-	private function exportCMDArgs($service_id, $host_id = NULL) {
-		$request = "SELECT command_command_id_arg FROM `service` WHERE service_id = '$service_id'";
-		$DBRESULT =& $this->DB->query($request);
- 		while ($data =& $DBRESULT->fetchRow()) {
- 			if (isset($host_id)) {
- 				print $this->obj.";SETPARAM;" . $this->host->getHostName($host_id) . ";".$this->decode($this->getServiceName($service_id)).";check_command_args;".html_entity_decode($data["command_command_id_arg"])."\n";
- 			} else {
- 				print $this->obj.";SETPARAM;" . $this->decode($this->getServiceName($service_id)).";check_command_args;".$data["command_command_id_arg"]."\n";
- 			}
- 		}
- 		$DBRESULT->free();
+    public function add($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < $this->nbOfCompulsoryParams) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if ($this->serviceExists($params[self::ORDER_HOSTNAME], $params[self::ORDER_SVCDESC]) == true) {
+            throw new CentreonClapiException(self::OBJECTALREADYEXISTS);
+        }
+        $hostObject = new Centreon_Object_Host();
+        $tmp = $hostObject->getIdByParameter($hostObject->getUniqueLabelField(), $params[self::ORDER_HOSTNAME]);
+        if (!count($tmp)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $params[self::ORDER_HOSTNAME]);
+        }
+        $hostId = $tmp[0];
+        $addParams = array();
+        $addParams['service_description'] = $params[self::ORDER_SVCDESC];
+        $template = $params[self::ORDER_SVCTPL];
+        $tmp = $this->object->getList($this->object->getPrimaryKey(), -1, 0, null, null, array('service_description' => $template, 'service_register' => '0'), "AND");
+        if (!count($tmp)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $template);
+        }
+        $addParams['service_template_model_stm_id'] = $tmp[0][$this->object->getPrimaryKey()];
+        $this->params = array_merge($this->params, $addParams);
+        $serviceId = parent::add();
+
+        $relObject = new Centreon_Object_Relation_Host_Service();
+        $relObject->insert($hostId, $serviceId);
+
+        $extended = new Centreon_Object_Service_Extended();
+        $extended->insert(array($extended->getUniqueLabelField() => $serviceId));
     }
 
     /**
+     * Returns command id
      *
-     * Export extended informations
-     * @param $service_id
-     * @param $property
-     * @param $property_name
-     * @param $host_id
+     * @param string $commandName
+     * @return int
+     * @throws CentreonClapiException
      */
-	private function exportExtInfos($service_id, $property, $property_name, $host_id = NULL) {
-		$request = "SELECT esi_$property FROM `extended_service_information` WHERE service_service_id = '$service_id'";
-		$DBRESULT =& $this->DB->query($request);
- 		while ($data =& $DBRESULT->fetchRow()) {
- 			if (isset($data["esi_$property"]) && $data["esi_$property"] != "") {
- 				if (isset($host_id)) {
- 					print $this->obj.";SETPARAM;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";$property_name;".$data["esi_$property"]."\n";
- 				} else {
- 					print $this->obj.";SETPARAM;".$this->decode($this->getServiceName($service_id)).";$property_name;".$data["esi_$property"]."\n";
- 				}
- 			}
- 		}
- 		$DBRESULT->free();
+    protected function getCommandId($commandName)
+    {
+        $obj = new Centreon_Object_Command();
+        $tmp = $obj->getIdByParameter($obj->getUniqueLabelField(), $commandName);
+        if (count($tmp)) {
+            $id = $tmp[0];
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $commandName);
+        }
+        return $id;
     }
 
     /**
+     * Set parameters
      *
-     * Export TP informations
-     * @param unknown_type $service_id
-     * @param unknown_type $type
-     * @param unknown_type $property_name
-     * @param unknown_type $host_id
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
      */
-    private function exportTP($service_id, $type, $property_name, $host_id = NULL) {
-		$request = "SELECT timeperiod_tp_id$type FROM `service` WHERE service_id = '$service_id'";
-		$DBRESULT =& $this->DB->query($request);
- 		while ($data =& $DBRESULT->fetchRow()) {
- 			if (isset($data["timeperiod_tp_id$type"]) && $data["timeperiod_tp_id$type"] != 0) {
- 				if (isset($host_id)) {
-					print $this->obj.";SETPARAM;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";$property_name;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
- 				} else {
-					print $this->obj.";SETPARAM;".$this->decode($this->getServiceName($service_id)).";$property_name;".$this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id$type"])."\n";
- 				}
- 			}
- 		}
- 		$DBRESULT->free();
+    public function setparam($parameters = null)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < self::NB_UPDATE_PARAMS) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $hostName = $params[0];
+        $serviceDesc = $params[1];
+        $relObject = new Centreon_Object_Relation_Host_Service();
+        $elements = $relObject->getMergedParameters(array("host_id"), array("service_id"), -1, 0, null, null, array("host_name" => $hostName,
+                                                                                                                    "service_description" => $serviceDesc), "AND");
+        if (!count($elements)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+        $objectId = $elements[0]['service_id'];
+        $extended = false;
+        switch ($params[2]) {
+            case "check_command":
+                $params[2] = "command_command_id";
+                $params[3] = $this->getCommandId($params[3]);
+                break;
+            case "check_command_arguments":
+                $params[2] = "command_command_id_arg1";
+                break;
+            case "event_handler":
+                $params[2] = "command_command_id2";
+                $params[3] = $this->getCommandId($params[3]);
+                break;
+            case "event_handler_arguments":
+                $params[2] = "command_command_id_arg2";
+                break;
+            case "check_period":
+                $params[2] = "timeperiod_tp_id";
+                $tpObj = new CentreonTimePeriod();
+                $params[3] = $tpObj->getTimeperiodId($params[3]);
+                break;
+            case "notification_period":
+                $params[2] = "timeperiod_tp_id2";
+                $tpObj = new CentreonTimePeriod();
+                $params[3] = $tpObj->getTimeperiodId($params[3]);
+                break;
+            case "flap_detection_options":
+                break;
+            case "template":
+                $params[2] = "service_template_model_stm_id";
+                $tmp = $this->object->getList($this->object->getPrimaryKey(), -1, 0, null, null, array('service_description' => $params[3], 'service_register' => '0'), "AND");
+                if (!count($tmp)) {
+                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $template);
+                }
+                $params[3] = $tmp[0][$this->object->getPrimaryKey()];
+                break;
+            case "notes":
+                $extended = true;
+                break;
+            case "notes_url":
+                $extended = true;
+                break;
+            case "action_url":
+                $extended = true;
+                break;
+            case "icon_image":
+                $extended = true;
+                break;
+            case "icon_image_alt":
+                $extended = true;
+                break;
+            default:
+                $params[2] = "service_".$params[2];
+                break;
+        }
+        if ($extended == false) {
+            $updateParams = array($params[2] => $params[3]);
+            parent::setparam($objectId, $updateParams);
+        } else {
+            $params[2] = "esi_".$params[2];
+            $extended = new Centreon_Object_Service_Extended();
+            $extended->update($objectId, array($params[2] => $params[3]));
+        }
     }
 
- 	/**
+    /**
+     * Wrap macro
      *
-     * Export contactgroup of an particular service
-     * @param unknown_type $host_id
-     * @param unknown_type $service_id
+     * @param string $macroName
+     * @return string
      */
-    private function exportCGLinks($service_id, $host_id = NULL) {
-		$request = "SELECT cg_name FROM contactgroup_service_relation, contactgroup WHERE service_service_id = '$service_id' AND cg_id = contactgroup_cg_id";
-		$DBRESULT =& $this->DB->query($request);
- 		while ($data =& $DBRESULT->fetchRow()) {
- 			if (isset($host_id)) {
- 				print $this->obj.";SETCG;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";".$data["cg_name"]."\n";
- 			} else {
-				print $this->obj.";SETCG;".$this->decode($this->getServiceName($service_id)).";".$data["cg_name"]."\n";
- 			}
- 		}
- 		$DBRESULT->free();
+    protected function wrapMacro($macroName)
+    {
+        $wrappedMacro = "\$_SERVICE".strtoupper($macroName)."\$";
+        return $wrappedMacro;
     }
 
-   	/**
+    /**
+     * Get macro list of a service
      *
-     * Export contactlist of an particular service
-     * @param unknown_type $host_id
-     * @param unknown_type $service_id
+     * @param string $hostName
+     * @param string $serviceDescription
+     * @return void
+     * @throws CentreonClapiException
      */
-    private function exportCctLinks($service_id, $host_id = NULL) {
-		$request = "SELECT contact_name FROM contact_service_relation, contact WHERE service_service_id = '$service_id' AND contact_service_relation.contact_id = contact.contact_id";
-		$DBRESULT =& $this->DB->query($request);
- 		while ($data =& $DBRESULT->fetchRow()) {
- 			if (isset($host_id)) {
- 				print $this->obj.";SETCONTACT;" . $this->decode($this->host->getHostName($host_id)) . ";".$this->decode($this->getServiceName($service_id)).";".$data["contact_name"]."\n";
- 			} else {
-				print $this->obj.";SETCONTACT;".$this->decode($this->getServiceName($service_id)).";".$data["contact_name"]."\n";
- 			}
- 		}
- 		$DBRESULT->free();
+    public function getmacro($parameters)
+    {
+        $tmp = explode($this->delim, $parameters);
+        if (count($tmp) < 2) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $hostName = $tmp[0];
+        $serviceDescription = $tmp[1];
+        $relObject = new Centreon_Object_Relation_Host_Service();
+        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $hostName,
+                                                                                                                    "service_description" => $serviceDescription), "AND");
+        if (!count($elements)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+        $macroObj = new Centreon_Object_Service_Macro_Custom();
+        $macroList = $macroObj->getList(array("svc_macro_name", "svc_macro_value"), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id']));
+        echo "macro name;macro value\n";
+        foreach ($macroList as $macro) {
+            echo $macro['svc_macro_name'] . $this->delim . $macro['svc_macro_value'] . "\n";
+        }
     }
 
-
-	/* ***************************************
-	 * Delete a service
-	 */
-	public function del($information) {
-
-		$check = $this->checkParameters($information);
-		if ($check) {
-			return $check;
-		}
-
-		$tabInfo = split(";", $information);
-
-		if ($this->register && !$this->host->hostExists($tabInfo[0])) {
-			print "Host doesn't exists.\n";
-			return 1;
-		}
-
-		if ($this->register) {
-
-			if (!$this->serviceExists($tabInfo[1], $tabInfo[0])) {
-				print "Service doesn't exists.\n";
-				return 1;
-			}
-
-			/*
-			 * Looking for service id
-			 */
-			$request = "SELECT service_service_id as service_id FROM host_service_relation hr, host h, service s WHERE s.service_description LIKE '".$this->encode($tabInfo[1])."' AND hr.service_service_id = s.service_id AND h.host_id = hr.host_host_id AND h.host_name LIKE '".$this->encode($tabInfo[0])."' AND h.host_register = '".$this->register."'";
-			$DBRESULT = $this->DB->query($request);
-			$data =& $DBRESULT->fetchRow();
-			$service_id = $data["service_id"];
-			$DBRESULT->free();
-
-			/*
-			 * Delete service
-			 */
-			$request = "DELETE FROM service WHERE service_id = '".$service_id."' ";
-			$this->DB->query($request);
-
-			/**
-			 * Update ACL
-			 */
-			$this->access->updateACL();
-
-			return 0;
-
-		} else {
-			if (!$this->serviceTplExists($tabInfo[0])) {
-				print "Service doesn't exists.\n";
-				return 1;
-			}
-
-			/*
-			 * Looking for service id
-			 */
-			$request = "SELECT service_id FROM service WHERE service_description LIKE '".$this->encode($tabInfo[0])."' AND service_register = '0'";
-			$DBRESULT = $this->DB->query($request);
-			$data =& $DBRESULT->fetchRow();
-			$service_id = $data["service_id"];
-			$DBRESULT->free();
-
-			/*
-			 * Delete service
-			 */
-			$request = "DELETE FROM service WHERE service_id = '".$service_id."' ";
-			$this->DB->query($request);
-
-			/**
-			 * Update ACL
-			 */
-			$this->access->updateACL();
-
-			return 0;
-		}
-	}
-
-	/* *******************************************
-	 * Set Macro
-	 */
-	public function setMacro($informations) {
-
-		$check = $this->checkParameters($informations);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $informations);
-		if (count($info) == 4) {
-			$return_code = $this->setMacroService($info[0], $info[1], $info[2], $info[3]);
-		} else if (count($info) == 3) {
-			$return_code = $this->setMacroService("", $info[0], $info[1], $info[1]);
-		} else {
-			print "Not enought arguments for setting macros.\n";
-			$return_code = 1;
-		}
-		return $return_code;
-	}
-
-	protected function setMacroService($host_name, $service_description, $macro_name, $macro_value) {
-		if ((!isset($host_name) || !isset($macro_name)) && (!isset($service_description) || !isset($service_description))) {
-			print "Bad parameters\n";
-			return 1;
-		}
-
-		$macro_name = strtoupper($macro_name);
-
-		if ($host_name != "") {
-			$host_id = $this->host->getHostID($this->encodeInHTML($host_name));
-			$service_id = $this->getServiceID($host_id, $service_description);
-
-			if ($service_id != 0) {
-				$request = "SELECT COUNT(*) FROM on_demand_macro_service WHERE svc_svc_id = '".$this->encodeInHTML($service_id)."' AND svc_macro_name LIKE '\$_SERVICE".$this->encodeInHTML($macro_name)."\$'";
-				$DBRESULT =& $this->DB->query($request);
-				$data =& $DBRESULT->fetchRow();
-				if ($data["COUNT(*)"]) {
-					$request = "UPDATE on_demand_macro_service SET svc_macro_value = '".$this->encodeInHTML($macro_value)."' WHERE svc_svc_id = '".$this->encodeInHTML($service_id)."' AND svc_macro_name LIKE '\$_SERVICE".$this->encodeInHTML($macro_name)."\$' LIMIT 1";
-					$DBRESULT =& $this->DB->query($request);
-					return 0;
-				} else {
-					$request = "INSERT INTO on_demand_macro_service (svc_svc_id, svc_macro_value, svc_macro_name) VALUES ('".$this->encodeInHTML($service_id)."', '".$this->encodeInHTML($macro_value)."', '\$_SERVICE".$this->encodeInHTML($macro_name)."\$')";
-					$DBRESULT =& $this->DB->query($request);
-					return 0;
-				}
-			} else {
-				print "Cannot find service ID.\n";
-				return 1;
-			}
-		} else {
-			$service_id = $this->getServiceTplID($service_description);
-
-			if ($service_id != 0) {
-				$request = "SELECT COUNT(*) FROM on_demand_macro_service WHERE svc_svc_id = '".$this->encodeInHTML($service_id)."' AND svc_macro_name LIKE '\$_SERVICE".$this->encodeInHTML($macro_name)."\$'";
-				$DBRESULT =& $this->DB->query($request);
-				$data =& $DBRESULT->fetchRow();
-				if ($data["COUNT(*)"]) {
-					$request = "UPDATE on_demand_macro_service SET svc_macro_value = '".$this->encodeInHTML($macro_value)."' WHERE svc_svc_id = '".$this->encodeInHTML($service_id)."' AND svc_macro_name LIKE '\$_SERVICE".$this->encodeInHTML($macro_name)."\$' LIMIT 1";
-					$DBRESULT =& $this->DB->query($request);
-					return 0;
-				} else {
-					$request = "INSERT INTO on_demand_macro_service (svc_svc_id, svc_macro_value, svc_macro_name) VALUES ('".$this->encodeInHTML($service_id)."', '".$this->encodeInHTML($macro_value)."', '\$_SERVICE".$this->encodeInHTML($macro_name)."\$')";
-					$DBRESULT =& $this->DB->query($request);
-					return 0;
-				}
-			} else {
-				print "Cannot find template service ID.\n";
-				return 1;
-			}
-		}
-	}
-
-	/* *******************************************
-	 * Un-Set Macro
-	 */
-	public function delMacro($informations) {
-
-		$check = $this->checkParameters($informations);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $informations);
-		$return_code = $this->delMacroService($info[0], $info[1], $info[2]);
-		return $return_code;
-	}
-
-	protected function delMacroService($host_name, $service_description, $macro_name) {
-		if ((!isset($host_name) || !isset($macro_name)) && (!isset($service_description) || !isset($service_description))) {
-			print "Bad parameters\n";
-			return 1;
-		}
-
-		$macro_name = strtoupper($macro_name);
-
-		$host_id = $this->host->getHostID($this->encodeInHTML($host_name));
-		$service_id = $this->getServiceID($host_id, $service_description);
-
-		$request = "DELETE FROM on_demand_macro_service WHERE svc_svc_id = '".$this->encodeInHTML($service_id)."' AND svc_macro_name LIKE '\$_SERVICE".$this->encodeInHTML($macro_name)."\$'";
-		$DBRESULT =& $this->DB->query($request);
-		return 0;
-	}
-
-	/* ******************************************
-	 * Set parameters
-	 */
-	public function setParam($informations) {
-
-		$check = $this->checkParameters($informations);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $informations);
-
-		if ($this->register) {
-			$return_code = $this->setParamService($info[0], $info[1], $info[2], $info[3]);
-		} else {
-			$return_code = $this->setParamService("", $info[0], $info[1], $info[2]);
-		}
-		return $return_code;
-	}
-
-	/**
-	 *
-	 * add service parameters in DB
-	 * @param unknown_type $host_name
-	 * @param unknown_type $service_description
-	 * @param unknown_type $param
-	 * @param unknown_type $value
-	 */
-	protected function setParamService($host_name, $service_description, $param, $value) {
-
-		$value = trim($value);
-
-		if (isset($this->parameters[$param]) && isset($this->paramTable[$param])) {
-			if ($this->register) {
-				$host_id = $this->host->getHostID($this->encodeInHTML($host_name));
-
-				if (!$this->serviceExists($service_description, $host_name)) {
-					print "Unknown service.\n";
-					return 1;
-				}
-
-				if ($param == "template") {
-					$value = $this->getServiceTplID($value);
-				}
-
-				if ($param == "check_command") {
-					require_once "./class/centreonCommand.class.php";
-					$cmd = new CentreonCommand($this->DB);
-					$value = $cmd->getCommandID($value);
-				}
-
-				if ($param == "check_period" || $param == "notif_period") {
-					require_once "./class/centreonTimePeriod.class.php";
-					$tp = new CentreonTimePeriod($this->DB);
-					$value = $tp->getTimeperiodId($value);
-				}
-
-				$service_id = $this->getServiceID($host_id, $service_description);
-				$request = "UPDATE ".$this->paramTable[$param]." SET ".$this->parameters[$param]." = '".$value."' WHERE ".($this->paramTable[$param] == "service" ? "" : "service_")."service_id = '$service_id'";
-				$this->DB->query($request);
-				return 0;
-			} else {
-				if (!$this->testServiceTplExistence($service_description)) {
-					print "Unknown service template.\n";
-					return 1;
-				}
-
-				if ($param == "template") {
-					$value = $this->getServiceTplID($value);
-				}
-
-				if ($param == "check_command") {
-					require_once "./class/centreonCommand.class.php";
-					$cmd = new CentreonCommand($this->DB);
-					$value = $cmd->getCommandID($value);
-				}
-
-				if ($param == "check_period" || $param == "notif_period") {
-					require_once "./class/centreonTimePeriod.class.php";
-					$tp = new CentreonTimePeriod($this->DB);
-					$value = $tp->getTimeperiodId($value);
-				}
-
-				$service_id = $this->getServiceTplID($service_description);
-				$request = "UPDATE ".$this->paramTable[$param]." SET ".$this->parameters[$param]." = '".$value."' WHERE ".($this->paramTable[$param] == "service" ? "" : "service_")."service_id = '$service_id'";
-				$this->DB->query($request);
-			}
-		} else {
-			print "Unknown parameter '$param' for a service.\n";
-			return 1;
-		}
-		return 0;
-	}
-
-	/* ***************************************
-	 * Set Contact lionk for notification
-	 */
-	public function setContact($informations) {
-
-		$check = $this->checkParameters($informations);
-		if ($check) {
-			return $check;
-		}
-
-		$conatct_name;
-		$info = split(";", $informations);
-		if ($this->register) {
-			$contact_id = $this->contact->getContactID($info[2]);
-			$contact_name = $info[2];
-		} else {
-			$contact_id = $this->contact->getContactID($info[1]);
-			$contact_name = $info[1];
-		}
-
-		/*
-		 * Check contact IS
-		 */
-		if ($contact_id != 0) {
-			if ($this->register) {
-				$host_id = $this->host->getHostID($info[0]);
-				$service_id = $this->getServiceID($host_id, $info[1]);
-			} else {
-				$service_id = $this->getServiceTplID($info[0]);
-			}
-
-			/*
-			 * Clean all data
-			 */
-			$request = "DELETE FROM contact_service_relation WHERE contact_id = '$contact_id'  AND service_service_id = '$service_id'";
-			$this->DB->query($request);
-
-			/*
-			 * Insert new entry
-			 */
-			$request = "INSERT INTO contact_service_relation (contact_id, service_service_id) VALUES ('$contact_id', '$service_id')";
-			$this->DB->query($request);
-			return 0;
-		} else {
-			print "Cannot find user : '".$contact_name."'.";
-			return 1;
-		}
-	}
-
-	/* ***************************************
-	 * UN-Set Contact lionk for notification
-	 */
-	public function unsetContact($informations) {
-
-		$check = $this->checkParameters($informations);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $informations);
-
-		require_once "./class/centreonContact.class.php";
-		$contact = new CentreonContact($this->DB, "CONTACT");
-
-		$contact_id = $contact->getContactID($info[2]);
-		$host_id = $this->host->getHostID($info[0]);
-		$service_id = $this->getServiceID($host_id, $info[1]);
-
-		/*
-		 * Clean all data
-		 */
-		$request = "DELETE FROM contact_service_relation WHERE contact_id = '$contact_id'  AND service_service_id = '$service_id'";
-		$this->DB->query($request);
-
-		return 0;
-	}
-
-	/* ***************************************
-	 * Set ContactGroup lionk for notification
-	 */
-	public function setCG($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $options);
-		if ($this->register) {
-			$cg_id = $this->cg->getContactGroupID($info[2]);
-		} else {
-			$cg_id = $this->cg->getContactGroupID($info[1]);
-		}
-
-		/*
-		 * Check contact ID
-		 */
-		if ($cg_id != 0) {
-			if ($this->register) {
-				$host_id = $this->host->getHostID($info[0]);
-				$service_id = $this->getServiceID($host_id, $info[1]);
-			} else {
-				$service_id = $this->getServiceTplID($info[0]);
-			}
-
-			/*
-			 * Clean all data
-			 */
-			$request = "DELETE FROM contactgroup_service_relation WHERE contactgroup_cg_id = '$cg_id'  AND service_service_id = '$service_id'";
-			$this->DB->query($request);
-
-			/*
-			 * Insert new entry
-			 */
-			$request = "INSERT INTO contactgroup_service_relation (contactgroup_cg_id, service_service_id) VALUES ('$cg_id', '$service_id')";
-			$this->DB->query($request);
-			return 0;
-		} else {
-			print "Cannot find contact group : '".$info[2]."'.\n";
-			return 1;
-		}
-	}
-
-	/* ***************************************
-	 * UN-Set ContactGroup lionk for notification
-	 */
-	public function unsetCG($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $options);
-		if ($this->register) {
-			$cg_id = $this->cg->getContactGroupID($info[2]);
-		} else {
-			$cg_id = $this->cg->getContactGroupID($info[1]);
-		}
-
-		/*
-		 * Check contact ID
-		 */
-		if ($cg_id != 0) {
-			if ($this->register) {
-				$host_id = $this->host->getHostID($info[0]);
-				$service_id = $this->getServiceID($host_id, $info[1]);
-			} else {
-				$service_id = $this->getServiceTplID($info[0]);
-			}
-
-			/*
-			 * Clean all data
-			 */
-			$request = "DELETE FROM contactgroup_service_relation WHERE contactgroup_cg_id = '$cg_id'  AND service_service_id = '$service_id'";
-			$this->DB->query($request);
-			return 0;
-		} else {
-			print "Cannot find contact group : '".$info[2]."'.\n";
-			return 1;
-		}
-	}
-
-	/* *********************************************
-	 * Set Hopst Link
-	 */
-	public function setHost($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $options);
-
-		if ($this->register) {
-			$host_id = $this->host->getHostID($info[0]);
-			$service_id = $this->getServiceID($host_id, $info[1]);
-
-			/*
-			 * Get host link
-			 */
-			$host_link_id = $this->host->getHostID($info[2]);
-
-			/*
-			 * Delete all data
-			 */
-			$request = "DELETE FROM host_service_relation WHERE service_service_id = '".$service_id."' AND host_host_id = '".$host_link_id."'";
-			$this->DB->query($request);
-
-			/*
-			 * Insert new entry
-			 */
-			$request = "INSERT INTO host_service_relation (host_host_id, service_service_id) VALUES ('".$host_link_id."', '".$service_id."')";
-			$this->DB->query($request);
-		} else {
-			$service_id = $this->getServiceTplID($info[0]);
-
-			/*
-			 * Get host link
-			 */
-			$host_link_id = $this->host->getHostID($info[1]);
-
-			/*
-			 * Delete all data
-			 */
-			$request = "DELETE FROM host_service_relation WHERE service_service_id = '".$service_id."' AND host_host_id = '".$host_link_id."'";
-			$this->DB->query($request);
-
-			/*
-			 * Insert new entry
-			 */
-			$request = "INSERT INTO host_service_relation (host_host_id, service_service_id) VALUES ('".$host_link_id."', '".$service_id."')";
-			$this->DB->query($request);
-		}
-
-		/**
-		 * Update ACL
-		 */
-		$this->access->updateACL();
-
-		return 0;
-	}
-
-	/* *********************************************
-	 * Set Hopst Link
-	 */
-	public function unsetHost($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $options);
-
-		if ($this->register) {
-			$host_id = $this->host->getHostID($info[0]);
-			$service_id = $this->getServiceID($host_id, $info[1]);
-
-			if ($service_id == 0) {
-				print "Couple host/service not Found.\n";
-				return 1;
-			}
-
-			$hostNumber = $this->checkHostNumber($service_id);
-			if ($hostNumber == 1) {
-				print "Cannot remove this host link for service '".$info[1]."' because only this host is actually attached to this service.\n";
-				return 1;
-			} else if ($hostNumber == -1) {
-				print "Unknown error.\n";
-				return 1;
-			}
-
-			/*
-			 * Get host link
-			 */
-			$host_link_id = $this->host->getHostID($info[2]);
-
-			/*
-			 * Delete all data
-			 */
-			$request = "DELETE FROM host_service_relation WHERE service_service_id = '".$service_id."' AND host_host_id = '".$host_link_id."'";
-			$this->DB->query($request);
-		} else {
-			$service_id = $this->getServiceTplID($info[0]);
-
-			/*
-			 * Get host link
-			 */
-			$host_link_id = $this->host->getHostID($info[1]);
-
-			/*
-			 * Delete all data
-			 */
-			$request = "DELETE FROM host_service_relation WHERE service_service_id = '".$service_id."' AND host_host_id = '".$host_link_id."'";
-			$this->DB->query($request);
-		}
-
-		/**
-		 * Update ACL
-		 */
-		$this->access->updateACL();
-
-		return 0;
-	}
+    /**
+     * Inserts/updates custom macro
+     *
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function setmacro($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 4) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $hostName = $params[0];
+        $serviceDescription = $params[1];
+        $relObject = new Centreon_Object_Relation_Host_Service();
+        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $hostName,
+                                                                                                                    "service_description" => $serviceDescription), "AND");
+        if (!count($elements)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+        $macroObj = new Centreon_Object_Service_Macro_Custom();
+        $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("svc_svc_id"      => $elements[0]['service_id'],
+                                                                                			 "svc_macro_name" => $this->wrapMacro($params[2])),
+                                                                                		"AND");
+        if (count($macroList)) {
+            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[3]));
+        } else {
+            $macroObj->insert(array('svc_svc_id'       => $elements[0]['service_id'],
+                                    'svc_macro_name'  => $this->wrapMacro($params[2]),
+                                    'svc_macro_value' => $params[3]));
+        }
+    }
+
+    /**
+     * Delete custom macro
+     *
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function delmacro($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 3) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $hostName = $params[0];
+        $serviceDescription = $params[1];
+        $relObject = new Centreon_Object_Relation_Host_Service();
+        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $hostName,
+                                                                                                                    "service_description" => $serviceDescription), "AND");
+        if (!count($elements)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+        $macroObj = new Centreon_Object_Service_Macro_Custom();
+        $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("svc_svc_id"      => $elements[0]['service_id'],
+                                                                                			 "svc_macro_name" => $this->wrapMacro($params[2])),
+                                                                                		"AND");
+        if (count($macroList)) {
+            $macroObj->delete($macroList[0][$macroObj->getPrimaryKey()]);
+        }
+    }
+
+    /**
+     * Magic method
+     *
+     * @param string $name
+     * @param array $args
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function __call($name, $arg)
+    {
+        $name = strtolower($name);
+        if (!isset($arg[0])) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $args = explode($this->delim, $arg[0]);
+        $relObject = new Centreon_Object_Relation_Host_Service();
+        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $args[0],
+                                                                                                                    "service_description" => $args[1]), "AND");
+        if (!count($elements)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+        $serviceId = $elements[0]['service_id'];
+        if (preg_match("/^(get|set|add|del)([a-zA-Z_]+)/", $name, $matches)) {
+            switch ($matches[2]) {
+                case "host":
+                    $class = "Centreon_Object_Host";
+                    $relclass = "Centreon_Object_Relation_Host_Service";
+                    break;
+                case "contact":
+                    $class = "Centreon_Object_Contact";
+                    $relclass = "Centreon_Object_Relation_Contact_Service";
+                    break;
+                case "contactgroup":
+                    $class = "Centreon_Object_Contact_Group";
+                    $relclass = "Centreon_Object_Relation_Contact_Group_Service";
+                    break;
+                default:
+                    throw new CentreonClapiException(self::UNKNOWN_METHOD);
+                    break;
+            }
+            if (class_exists($relclass) && class_exists($class)) {
+                $relobj = new $relclass();
+                $obj = new $class();
+                if ($matches[1] == "get") {
+                    $tab = $relobj->getTargetIdFromSourceId($relobj->getFirstKey(), $relobj->getSecondKey(), $serviceId);
+                    echo "id".$this->delim."name"."\n";
+                    foreach($tab as $value) {
+                        $tmp = $obj->getParameters($value, array($obj->getUniqueLabelField()));
+                        echo $value . $this->delim . $tmp[$obj->getUniqueLabelField()] . "\n";
+                    }
+                } else {
+                    if (!isset($args[1])) {
+                        throw new CentreonClapiException(self::MISSINGPARAMETER);
+                    }
+                    if ($matches[2] == "contact") {
+                        $args[2] = str_replace(" ", "_", $args[2]);
+                    }
+                    $relation = $args[2];
+                    $relations = explode("|", $relation);
+                    $relationTable = array();
+                    foreach($relations as $rel) {
+                        if ($matches[1] != "del" && $matches[2] == "host" && $this->serviceExists($rel, $args[1])) {
+                            throw new CentreonClapiException(self::OBJECTALREADYEXISTS);
+                        }
+                        $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
+                        if (!count($tab)) {
+                            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":".$rel);
+                        }
+                        $relationTable[] = $tab[0];
+                    }
+                    if ($matches[1] == "set") {
+                        $relobj->delete(null, $serviceId);
+                    }
+                    $existingRelationIds = $relobj->getTargetIdFromSourceId($relobj->getFirstKey(), $relobj->getSecondKey(), $serviceId);
+                    foreach($relationTable as $relationId) {
+                        if ($matches[1] == "del") {
+                            $relobj->delete($relationId, $serviceId);
+                        } elseif ($matches[1] == "set" || $matches[1] == "add") {
+                            if (!in_array($relationId, $existingRelationIds)) {
+                                $relobj->insert($relationId, $serviceId);
+                            }
+                        }
+                    }
+                }
+            } else {
+                throw new CentreonClapiException(self::UNKNOWN_METHOD);
+            }
+        } else {
+            throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
+    }
 }
-
-?>
