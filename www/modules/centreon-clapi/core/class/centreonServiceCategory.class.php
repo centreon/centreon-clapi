@@ -36,6 +36,10 @@
  *
  */
 
+require_once "centreonHost.class.php";
+require_once "centreonService.class.php";
+require_once "Centreon/Object/Relation/Host/Service.php";
+
 class CentreonServiceCategory {
 	private $DB;
 	private $access;
@@ -44,7 +48,7 @@ class CentreonServiceCategory {
 	private $host;
 
 	protected $version;
-	
+
 	public function __construct($DB) {
 		$this->DB = $DB;
 
@@ -54,8 +58,8 @@ class CentreonServiceCategory {
 		$this->access = new CentreonACLResources($this->DB);
 
 		$this->obj = "SC";
-		$this->host = new CentreonHost($this->DB, "HOST");
-		$this->svc = new CentreonService($this->DB, "SERVICE");
+		$this->host = new CentreonHost();
+		$this->svc = new CentreonService();
 	}
 
 	/**
@@ -80,8 +84,8 @@ class CentreonServiceCategory {
 	    }
 	    return $string;
 	}
-	
-	
+
+
 	/*
 	 * Check host existance
 	 */
@@ -167,10 +171,6 @@ class CentreonServiceCategory {
 		/*
 		 * Get Child informations
 		 */
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-		$host = new CentreonHost($this->DB, "HOST");
-		$svc = new CentreonService($this->DB, "SERVICE");
 
 		$request = "SELECT sc_id, sc_name, sc_description FROM service_categories $searchStr ORDER BY sc_name";
 		$DBRESULT =& $this->DB->query($request);
@@ -188,29 +188,30 @@ class CentreonServiceCategory {
 				$request = "SELECT service_service_id FROM service_categories_relation WHERE sc_id = '".$data["sc_id"]."'";
 				$DBRESULT2 =& $this->DB->query($request);
 				$i2 = 0;
+				$relObject = new Centreon_Object_Relation_Host_Service();
 				while ($m =& $DBRESULT2->fetchRow()) {
-					$type = $svc->hostTypeLink($m["service_service_id"]);
+					$type = $this->svc->hostTypeLink($m["service_service_id"]);
 					if ($type == 1) {
-						$hostList = $svc->getServiceHosts($m["service_service_id"]);
-						foreach ($hostList as $host_id) {
+						$elements = $relObject->getMergedParameters(array("host_name"), array("service_description"), -1, 0, null, null, array("service_id" => $m['service_service_id']), "AND");
+						foreach ($elements as $element) {
 							if ($i2) {
 								print ",";
 							}
-							print $host->getHostName($host_id).",".$svc->getServiceName($m["service_service_id"], 1);
+							print $element['host_name'].",".$element['service_description'];
 							$i2++;
 						}
 					} else if ($type == 2) {
-						$hg = new CentreonHostGroup($this->DB);
+						/*$hg = new CentreonHostGroup($this->DB);
 						foreach ($hg as $hg_id) {
 							$hostList = $svc->getServiceHosts($m["service_service_id"]);
 							foreach ($hostList as $host_id) {
 								if ($i2) {
 									print ",";
 								}
-								print $host->getHostName($host_id).",".$svc->getServiceName($m["service_service_id"], 1);
+								print $this->host->getHostName($host_id).",".$this->svc->getServiceName($m["service_service_id"]);
 								$i2++;
 							}
-						}
+						}*/
 					} else {
 						;
 					}

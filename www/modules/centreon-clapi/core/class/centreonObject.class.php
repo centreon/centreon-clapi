@@ -99,7 +99,7 @@ abstract class CentreonObject
      * @param string $name
      * @return int
      */
-    protected function getObjectId($name)
+    public function getObjectId($name)
     {
         $ids = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($name));
         if (count($ids)) {
@@ -114,7 +114,7 @@ abstract class CentreonObject
      * @param int $id
      * @return string
      */
-    protected function getObjectName($id)
+    public function getObjectName($id)
     {
         $tmp = $this->object->getParameters($id, array($this->object->getUniqueLabelField()));
         if (isset($tmp[$this->object->getUniqueLabelField()])) {

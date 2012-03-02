@@ -163,8 +163,8 @@ class CentreonServiceGroup {
 		 */
 		require_once "./class/centreonHost.class.php";
 		require_once "./class/centreonService.class.php";
-		$host = new CentreonHost($this->DB, "HOST");
-		$svc = new CentreonService($this->DB, "SERVICE");
+		$host = new CentreonHost();
+		$svc = new CentreonService();
 
 		$request = "SELECT sg_id, sg_name, sg_alias FROM servicegroup $searchStr ORDER BY sg_name";
 		$DBRESULT =& $this->DB->query($request);
@@ -185,7 +185,7 @@ class CentreonServiceGroup {
 				if ($i2) {
 					print ",";
 				}
-				print $host->getHostName($m["host_host_id"]).",".$svc->getServiceName($m["service_service_id"], 1);
+				print $host->getObjectName($m["host_host_id"]).",".$svc->getObjectName($m["service_service_id"]);
 				$i2++;
 			}
 			$DBRESULT2->free();

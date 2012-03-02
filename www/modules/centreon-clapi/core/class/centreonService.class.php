@@ -100,6 +100,27 @@ class CentreonService extends CentreonObject
     }
 
     /**
+     * Returns type of host service relation
+     *
+     * @param int $serviceId
+     * @return int
+     */
+    public function hostTypeLink($serviceId)
+    {
+        $sql = "SELECT host_host_id, hostgroup_hg_id FROM host_service_relation WHERE service_service_id = ?";
+        $res = $this->db->query($sql, array($serviceId));
+        $rows = $res->fetch();
+        if (count($rows)) {
+            if (isset($rows['host_host_id']) && $rows['host_host_id']) {
+                return 1;
+            } elseif (isset($rows['hostgroup_hg_id']) && $rows['hostgroup_hg_id']) {
+                return 2;
+            }
+        }
+        return 0;
+    }
+
+    /**
      * Check parameters
      *
      * @param string $hostName
@@ -428,6 +449,21 @@ class CentreonService extends CentreonObject
         if (count($macroList)) {
             $macroObj->delete($macroList[0][$macroObj->getPrimaryKey()]);
         }
+    }
+
+    /**
+     * Get Object Name
+     *
+     * @param int $id
+     * @return string
+     */
+    public function getObjectName($id)
+    {
+        $tmp = $this->object->getParameters($id, array('service_description'));
+        if (isset($tmp['service_description'])) {
+            return $tmp['service_description'];
+        }
+        return "";
     }
 
     /**
