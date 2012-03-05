@@ -138,7 +138,7 @@ class CentreonAPI {
 
 		/* Templates */
 		$this->relationObject["HTPL"] = "HostTemplate";
-		$this->relationObject["STPL"] = "Service";
+		$this->relationObject["STPL"] = "ServiceTemplate";
 
 		$this->relationObject["TIMEPERIOD"] = "TimePeriod";
 		$this->relationObject["TP"] = "TimePeriod";

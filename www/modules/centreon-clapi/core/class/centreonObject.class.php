@@ -44,6 +44,7 @@ abstract class CentreonObject
     const OBJECTALREADYEXISTS = "Object already exists";
     const OBJECT_NOT_FOUND = "Object not found";
     const UNKNOWN_METHOD = "Method not implemented into Centreon API";
+    const NAMEALREADYINUSE = "Name is already in use";
     const NB_UPDATE_PARAMS = 3;
     protected $db;
     protected $version;
@@ -84,10 +85,16 @@ abstract class CentreonObject
      * @param string $name
      * @return bool
      */
-    protected function objectExists($name)
+    protected function objectExists($name, $updateId = null)
     {
-        $ids = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($name));
-        if (count($ids)) {
+        $ids = $this->object->getList($this->object->getPrimaryKey(), -1, 0, null, null, array($this->object->getUniqueLabelField() => $name), "AND");
+        if (isset($updateId) && count($ids)) {
+            if ($ids[0][$this->object->getPrimaryKey()] == $updateId) {
+                return false;
+            } else {
+                return true;
+            }
+        } elseif (count($ids)) {
             return true;
         }
         return false;
@@ -174,6 +181,9 @@ abstract class CentreonObject
      */
     public function setparam($objectId, $params = array())
     {
+        if (isset($params[$this->object->getUniqueLabelField()]) && $this->objectExists($params[$this->object->getUniqueLabelField()], $objectId) == true) {
+            throw new CentreonClapiException(self::NAMEALREADYINUSE);
+        }
         $this->object->update($objectId, $params);
     }
 

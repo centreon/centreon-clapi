@@ -31,44 +31,24 @@
  *
  * For more information : contact@centreon.com
  *
- * SVN : $URL$
- * SVN : $Id$
+ * SVN : $URL: http://svn.modules.centreon.com/centreon-clapi/trunk/www/modules/centreon-clapi/core/class/centreonHost.class.php $
+ * SVN : $Id: centreonHost.class.php 241 2012-01-16 21:48:49Z jmathis $
  *
  */
 
-require_once "centreonObject.class.php";
-require_once "centreonTimePeriod.class.php";
-require_once "centreonACL.class.php";
-require_once "Centreon/Object/Instance/Instance.php";
-require_once "Centreon/Object/Command/Command.php";
-require_once "Centreon/Object/Timeperiod/Timeperiod.php";
-require_once "Centreon/Object/Host/Host.php";
-require_once "Centreon/Object/Host/Extended.php";
-require_once "Centreon/Object/Host/Group.php";
-require_once "Centreon/Object/Host/Host.php";
-require_once "Centreon/Object/Host/Macro/Custom.php";
-require_once "Centreon/Object/Service/Service.php";
-require_once "Centreon/Object/Service/Macro/Custom.php";
-require_once "Centreon/Object/Service/Extended.php";
-require_once "Centreon/Object/Contact/Contact.php";
-require_once "Centreon/Object/Contact/Group.php";
-require_once "Centreon/Object/Relation/Host/Template/Host.php";
-require_once "Centreon/Object/Relation/Contact/Service.php";
-require_once "Centreon/Object/Relation/Contact/Group/Service.php";
-require_once "Centreon/Object/Relation/Host/Service.php";
-
+require_once "centreonService.class.php";
 
 /**
- * Centreon Service objects
+ * Class for managing service templates
  *
  * @author sylvestre
  */
-class CentreonService extends CentreonObject
+class CentreonServiceTemplate extends CentreonObject
 {
-    const ORDER_HOSTNAME = 0;
-    const ORDER_SVCDESC  = 1;
+    const ORDER_SVCDESC  = 0;
+    const ORDER_SVCALIAS = 1;
     const ORDER_SVCTPL   = 2;
-    const NB_UPDATE_PARAMS = 4;
+    const NB_UPDATE_PARAMS = 3;
 
     /**
      * Constructor
@@ -91,47 +71,24 @@ class CentreonService extends CentreonObject
                               'service_retain_status_information'	   => '2',
         					  'service_retain_nonstatus_information'   => '2',
                               'service_notifications_enabled'		   => '2',
-                              'service_register'					   => '1',
+                              'service_register'					   => '0',
                               'service_activate'				       => '1'
                               );
         $this->nbOfCompulsoryParams = 3;
-        $this->register = 1;
+        $this->register = 0;
         $this->activateField = 'service_activate';
-    }
-
-    /**
-     * Returns type of host service relation
-     *
-     * @param int $serviceId
-     * @return int
-     */
-    public function hostTypeLink($serviceId)
-    {
-        $sql = "SELECT host_host_id, hostgroup_hg_id FROM host_service_relation WHERE service_service_id = ?";
-        $res = $this->db->query($sql, array($serviceId));
-        $rows = $res->fetch();
-        if (count($rows)) {
-            if (isset($rows['host_host_id']) && $rows['host_host_id']) {
-                return 1;
-            } elseif (isset($rows['hostgroup_hg_id']) && $rows['hostgroup_hg_id']) {
-                return 2;
-            }
-        }
-        return 0;
     }
 
     /**
      * Check parameters
      *
-     * @param string $hostName
      * @param string $serviceDescription
      * @return bool
      */
-    protected function serviceExists($hostName, $serviceDescription)
+    protected function serviceExists($serviceDescription)
     {
-        $relObj = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObj->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array('host_name' => $hostName,
-        																										 'service_description' => $serviceDescription), "AND");
+        $elements = $this->object->getList("service_description", -1, 0, null, null, array('service_description' => $serviceDescription,
+                                                                                           'service_register' => 0), "AND");
         if (count($elements)) {
             return true;
         }
@@ -139,7 +96,7 @@ class CentreonService extends CentreonObject
     }
 
     /**
-     * Display all services
+     * Display all service templates
      *
      * @param string $parameters
      * @return void
@@ -151,14 +108,10 @@ class CentreonService extends CentreonObject
             $filters["service_description"] = "%".$parameters."%";
         }
         $commandObject = new Centreon_Object_Command();
-        $paramsHost = array('host_id', 'host_name');
-        $paramsSvc = array('service_id', 'service_description', 'command_command_id', 'command_command_id_arg',
+        $paramsSvc = array('service_id', 'service_description', 'service_alias', 'command_command_id', 'command_command_id_arg',
                         'service_normal_check_interval', 'service_retry_check_interval', 'service_max_check_attempts',
                         'service_active_checks_enabled', 'service_passive_checks_enabled');
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters($paramsHost, $paramsSvc, -1, 0, "host_name,service_description", "ASC", $filters, "AND");
-        $paramHostString = str_replace("_", " ", implode($this->delim, $paramsHost));
-        echo $paramHostString . $this->delim;
+        $elements = $this->object->getList($paramsSvc, -1, 0, null, null, $filters, "AND");
         $paramSvcString = str_replace("service_", "", implode($this->delim, $paramsSvc));
         $paramSvcString = str_replace("command_command_id", "check command", $paramSvcString);
         $paramSvcString = str_replace("command_command_id_arg", "check command arguments", $paramSvcString);
@@ -175,32 +128,8 @@ class CentreonService extends CentreonObject
         }
     }
 
-    /**
-     * Delete service
-     *
-     * @param string $parameters
-     * @return void
-     * @throws CentreonClapiException
-     */
-    public function del($parameters)
-    {
-        $params = explode($this->delim, $parameters);
-        if (count($params) < 2) {
-            throw new Exception(self::MISSINGPARAMETER);
-        }
-        $hostName = $params[0];
-        $serviceDesc = $params[1];
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array("host_id"), array("service_id"), -1, 0, null, null, array("host_name" => $hostName,
-                                                                                                                    "service_description" => $serviceDesc), "AND");
-        if (!count($elements)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
-        }
-        $this->object->delete($elements[0]['service_id']);
-    }
-
-    /**
-     * Add a service
+	/**
+     * Add a service template
      *
      * @param string $parameters
      * @return void
@@ -212,17 +141,12 @@ class CentreonService extends CentreonObject
         if (count($params) < $this->nbOfCompulsoryParams) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        if ($this->serviceExists($params[self::ORDER_HOSTNAME], $params[self::ORDER_SVCDESC]) == true) {
+        if ($this->serviceExists($params[self::ORDER_SVCDESC]) == true) {
             throw new CentreonClapiException(self::OBJECTALREADYEXISTS);
         }
-        $hostObject = new Centreon_Object_Host();
-        $tmp = $hostObject->getIdByParameter($hostObject->getUniqueLabelField(), $params[self::ORDER_HOSTNAME]);
-        if (!count($tmp)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $params[self::ORDER_HOSTNAME]);
-        }
-        $hostId = $tmp[0];
         $addParams = array();
         $addParams['service_description'] = $params[self::ORDER_SVCDESC];
+        $addParams['service_alias'] = $params[self::ORDER_SVCALIAS];
         $template = $params[self::ORDER_SVCTPL];
         $tmp = $this->object->getList($this->object->getPrimaryKey(), -1, 0, null, null, array('service_description' => $template, 'service_register' => '0'), "AND");
         if (!count($tmp)) {
@@ -232,11 +156,26 @@ class CentreonService extends CentreonObject
         $this->params = array_merge($this->params, $addParams);
         $serviceId = parent::add();
 
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $relObject->insert($hostId, $serviceId);
-
         $extended = new Centreon_Object_Service_Extended();
         $extended->insert(array($extended->getUniqueLabelField() => $serviceId));
+    }
+
+    /**
+     * Delete service template
+     *
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function del($parameters)
+    {
+        $serviceDesc = $parameters;
+        $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $serviceDesc,
+                                                                                  'service_register' => 0), "AND");
+        if (!count($elements)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+        $this->object->delete($elements[0]['service_id']);
     }
 
     /**
@@ -258,7 +197,7 @@ class CentreonService extends CentreonObject
         return $id;
     }
 
-    /**
+	/**
      * Set parameters
      *
      * @param string $parameters
@@ -271,50 +210,48 @@ class CentreonService extends CentreonObject
         if (count($params) < self::NB_UPDATE_PARAMS) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $hostName = $params[0];
-        $serviceDesc = $params[1];
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array("host_id"), array("service_id"), -1, 0, null, null, array("host_name" => $hostName,
-                                                                                                                    "service_description" => $serviceDesc), "AND");
+        $serviceDesc = $params[0];
+        $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $serviceDesc,
+                                                                                  'service_register' => 0), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
         }
         $objectId = $elements[0]['service_id'];
         $extended = false;
-        switch ($params[2]) {
+        switch ($params[1]) {
             case "check_command":
-                $params[2] = "command_command_id";
-                $params[3] = $this->getCommandId($params[3]);
+                $params[1] = "command_command_id";
+                $params[2] = $this->getCommandId($params[2]);
                 break;
             case "check_command_arguments":
-                $params[2] = "command_command_id_arg";
+                $params[1] = "command_command_id_arg";
                 break;
             case "event_handler":
-                $params[2] = "command_command_id2";
-                $params[3] = $this->getCommandId($params[3]);
+                $params[1] = "command_command_id2";
+                $params[2] = $this->getCommandId($params[2]);
                 break;
             case "event_handler_arguments":
-                $params[2] = "command_command_id_arg2";
+                $params[1] = "command_command_id_arg2";
                 break;
             case "check_period":
-                $params[2] = "timeperiod_tp_id";
+                $params[1] = "timeperiod_tp_id";
                 $tpObj = new CentreonTimePeriod();
-                $params[3] = $tpObj->getTimeperiodId($params[3]);
+                $params[2] = $tpObj->getTimeperiodId($params[2]);
                 break;
             case "notification_period":
-                $params[2] = "timeperiod_tp_id2";
+                $params[1] = "timeperiod_tp_id2";
                 $tpObj = new CentreonTimePeriod();
-                $params[3] = $tpObj->getTimeperiodId($params[3]);
+                $params[2] = $tpObj->getTimeperiodId($params[2]);
                 break;
             case "flap_detection_options":
                 break;
             case "template":
-                $params[2] = "service_template_model_stm_id";
-                $tmp = $this->object->getList($this->object->getPrimaryKey(), -1, 0, null, null, array('service_description' => $params[3], 'service_register' => '0'), "AND");
+                $params[1] = "service_template_model_stm_id";
+                $tmp = $this->object->getList($this->object->getPrimaryKey(), -1, 0, null, null, array('service_description' => $params[2], 'service_register' => '0'), "AND");
                 if (!count($tmp)) {
-                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $params[3]);
+                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $params[2]);
                 }
-                $params[3] = $tmp[0][$this->object->getPrimaryKey()];
+                $params[2] = $tmp[0][$this->object->getPrimaryKey()];
                 break;
             case "notes":
                 $extended = true;
@@ -332,16 +269,16 @@ class CentreonService extends CentreonObject
                 $extended = true;
                 break;
             default:
-                $params[2] = "service_".$params[2];
+                $params[1] = "service_".$params[1];
                 break;
         }
         if ($extended == false) {
-            $updateParams = array($params[2] => $params[3]);
+            $updateParams = array($params[1] => $params[2]);
             parent::setparam($objectId, $updateParams);
         } else {
-            $params[2] = "esi_".$params[2];
+            $params[1] = "esi_".$params[1];
             $extended = new Centreon_Object_Service_Extended();
-            $extended->update($objectId, array($params[2] => $params[3]));
+            $extended->update($objectId, array($params[1] => $params[2]));
         }
     }
 
@@ -358,7 +295,7 @@ class CentreonService extends CentreonObject
     }
 
     /**
-     * Get macro list of a service
+     * Get macro list of a service template
      *
      * @param string $parameters
      * @return void
@@ -366,15 +303,9 @@ class CentreonService extends CentreonObject
      */
     public function getmacro($parameters)
     {
-        $tmp = explode($this->delim, $parameters);
-        if (count($tmp) < 2) {
-            throw new CentreonClapiException(self::MISSINGPARAMETER);
-        }
-        $hostName = $tmp[0];
-        $serviceDescription = $tmp[1];
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $hostName,
-                                                                                                                    "service_description" => $serviceDescription), "AND");
+        $serviceDesc = $parameters;
+        $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $serviceDesc,
+                                                                                  'service_register' => 0), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
         }
@@ -396,27 +327,24 @@ class CentreonService extends CentreonObject
     public function setmacro($parameters)
     {
         $params = explode($this->delim, $parameters);
-        if (count($params) < 4) {
+        if (count($params) < 3) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $hostName = $params[0];
-        $serviceDescription = $params[1];
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $hostName,
-                                                                                                                    "service_description" => $serviceDescription), "AND");
+        $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $params[0],
+                                                                                  'service_register' => 0), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
         }
         $macroObj = new Centreon_Object_Service_Macro_Custom();
         $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("svc_svc_id"      => $elements[0]['service_id'],
-                                                                                			 "svc_macro_name" => $this->wrapMacro($params[2])),
+                                                                                			 "svc_macro_name" => $this->wrapMacro($params[1])),
                                                                                 		"AND");
         if (count($macroList)) {
-            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[3]));
+            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[2]));
         } else {
             $macroObj->insert(array('svc_svc_id'       => $elements[0]['service_id'],
-                                    'svc_macro_name'  => $this->wrapMacro($params[2]),
-                                    'svc_macro_value' => $params[3]));
+                                    'svc_macro_name'  => $this->wrapMacro($params[1]),
+                                    'svc_macro_value' => $params[2]));
         }
     }
 
@@ -430,39 +358,21 @@ class CentreonService extends CentreonObject
     public function delmacro($parameters)
     {
         $params = explode($this->delim, $parameters);
-        if (count($params) < 3) {
+        if (count($params) < 2) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $hostName = $params[0];
-        $serviceDescription = $params[1];
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $hostName,
-                                                                                                                    "service_description" => $serviceDescription), "AND");
+        $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $params[0],
+                                                                                  'service_register' => 0), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
         }
         $macroObj = new Centreon_Object_Service_Macro_Custom();
         $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("svc_svc_id"      => $elements[0]['service_id'],
-                                                                                			 "svc_macro_name" => $this->wrapMacro($params[2])),
+                                                                                			 "svc_macro_name" => $this->wrapMacro($params[1])),
                                                                                 		"AND");
         if (count($macroList)) {
             $macroObj->delete($macroList[0][$macroObj->getPrimaryKey()]);
         }
-    }
-
-    /**
-     * Get Object Name
-     *
-     * @param int $id
-     * @return string
-     */
-    public function getObjectName($id)
-    {
-        $tmp = $this->object->getParameters($id, array('service_description'));
-        if (isset($tmp['service_description'])) {
-            return $tmp['service_description'];
-        }
-        return "";
     }
 
     /**
@@ -480,9 +390,8 @@ class CentreonService extends CentreonObject
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         $args = explode($this->delim, $arg[0]);
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $args[0],
-                                                                                                                    "service_description" => $args[1]), "AND");
+        $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $args[0],
+                                                                                  'service_register' => 0), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
         }
@@ -520,15 +429,12 @@ class CentreonService extends CentreonObject
                         throw new CentreonClapiException(self::MISSINGPARAMETER);
                     }
                     if ($matches[2] == "contact") {
-                        $args[2] = str_replace(" ", "_", $args[2]);
+                        $args[1] = str_replace(" ", "_", $args[1]);
                     }
-                    $relation = $args[2];
+                    $relation = $args[1];
                     $relations = explode("|", $relation);
                     $relationTable = array();
                     foreach($relations as $rel) {
-                        if ($matches[1] != "del" && $matches[2] == "host" && $this->serviceExists($rel, $args[1])) {
-                            throw new CentreonClapiException(self::OBJECTALREADYEXISTS);
-                        }
                         $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
                         if (!count($tab)) {
                             throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":".$rel);
