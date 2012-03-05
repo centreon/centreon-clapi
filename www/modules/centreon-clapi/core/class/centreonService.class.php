@@ -476,7 +476,7 @@ class CentreonService extends CentreonObject
     public function __call($name, $arg)
     {
         $name = strtolower($name);
-        if (!isset($arg[0])) {
+        if (!isset($arg[0]) || !$arg[0]) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         $args = explode($this->delim, $arg[0]);
