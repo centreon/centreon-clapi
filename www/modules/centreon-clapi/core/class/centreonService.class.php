@@ -529,7 +529,7 @@ class CentreonService extends CentreonObject
                         echo $value . $this->delim . $tmp[$obj->getUniqueLabelField()] . "\n";
                     }
                 } else {
-                    if (!isset($args[1])) {
+                    if (!isset($args[1]) || !isset($args[2])) {
                         throw new CentreonClapiException(self::MISSINGPARAMETER);
                     }
                     if ($matches[2] == "contact") {
