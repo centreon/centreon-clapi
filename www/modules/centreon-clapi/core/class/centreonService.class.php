@@ -42,6 +42,7 @@ require_once "centreonACL.class.php";
 require_once "Centreon/Object/Instance/Instance.php";
 require_once "Centreon/Object/Command/Command.php";
 require_once "Centreon/Object/Timeperiod/Timeperiod.php";
+require_once "Centreon/Object/Graph/Template/Template.php";
 require_once "Centreon/Object/Host/Host.php";
 require_once "Centreon/Object/Host/Extended.php";
 require_once "Centreon/Object/Host/Group.php";
@@ -316,6 +317,16 @@ class CentreonService extends CentreonObject
                 }
                 $params[3] = $tmp[0][$this->object->getPrimaryKey()];
                 break;
+            case "graphtemplate":
+                $extended = true;
+                $graphObj = new Centreon_Object_Graph_Template();
+                $tmp = $graphObj->getIdByParameter($graphObj->getUniqueLabelField(), $params[3]);
+                if (!count($tmp)) {
+                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $params[3]);
+                }
+                $params[2] = "graph_id";
+                $params[3] = $tmp[0];
+                break;
             case "notes":
                 $extended = true;
                 break;
@@ -339,7 +350,9 @@ class CentreonService extends CentreonObject
             $updateParams = array($params[2] => $params[3]);
             parent::setparam($objectId, $updateParams);
         } else {
-            $params[2] = "esi_".$params[2];
+            if ($params[2] != "graph_id") {
+                $params[2] = "esi_".$params[2];
+            }
             $extended = new Centreon_Object_Service_Extended();
             $extended->update($objectId, array($params[2] => $params[3]));
         }

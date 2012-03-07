@@ -253,6 +253,16 @@ class CentreonServiceTemplate extends CentreonObject
                 }
                 $params[2] = $tmp[0][$this->object->getPrimaryKey()];
                 break;
+            case "graphtemplate":
+                $extended = true;
+                $graphObj = new Centreon_Object_Graph_Template();
+                $tmp = $graphObj->getIdByParameter($graphObj->getUniqueLabelField(), $params[2]);
+                if (!count($tmp)) {
+                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $params[2]);
+                }
+                $params[1] = "graph_id";
+                $params[2] = $tmp[0];
+                break;
             case "notes":
                 $extended = true;
                 break;
@@ -276,7 +286,9 @@ class CentreonServiceTemplate extends CentreonObject
             $updateParams = array($params[1] => $params[2]);
             parent::setparam($objectId, $updateParams);
         } else {
-            $params[1] = "esi_".$params[1];
+            if ($params[1] != "graph_id") {
+                $params[1] = "esi_".$params[1];
+            }
             $extended = new Centreon_Object_Service_Extended();
             $extended->update($objectId, array($params[1] => $params[2]));
         }

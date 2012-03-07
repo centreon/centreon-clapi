@@ -229,6 +229,30 @@ class CentreonHost extends CentreonObject
     }
 
     /**
+     * Tie host to instance (poller)
+     *
+     * @param string $parameters
+     * @throws CentreonClapiException
+     */
+    public function setinstance($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 2) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $hostId = $this->getObjectId($params[self::ORDER_UNIQUENAME]);
+        $instanceObj = new Centreon_Object_Instance();
+        $tmp = $instanceObj->getIdByParameter($instanceObj->getUniqueLabelField(), $params[1]);
+        if (!count($tmp)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[1]);
+        }
+        $instanceId = $tmp[0];
+        $relationObj = new Centreon_Object_Relation_Instance_Host();
+        $relationObj->delete(null, $hostId);
+        $relationObj->insert($instanceId, $hostId);
+    }
+
+    /**
      * Set parameters
      *
      * @param string $parameters

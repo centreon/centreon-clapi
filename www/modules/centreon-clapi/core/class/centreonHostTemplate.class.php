@@ -51,4 +51,14 @@ class CentreonHostTemplate extends CentreonHost
         $this->params['host_register'] = '0';
         $this->register = 0;
     }
+
+    /**
+     * Will throw an exception if set instance is called
+     *
+     * @throws CentreonClapiException
+     */
+    public function setinstance()
+    {
+        throw new CentreonClapiException(self::UNKNOWN_METHOD);
+    }
 }
