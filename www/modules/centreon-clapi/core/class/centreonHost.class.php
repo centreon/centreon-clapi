@@ -45,6 +45,7 @@ require_once "Centreon/Object/Timeperiod/Timeperiod.php";
 require_once "Centreon/Object/Host/Host.php";
 require_once "Centreon/Object/Host/Extended.php";
 require_once "Centreon/Object/Host/Group.php";
+require_once "Centreon/Object/Host/Category.php";
 require_once "Centreon/Object/Host/Host.php";
 require_once "Centreon/Object/Host/Macro/Custom.php";
 require_once "Centreon/Object/Service/Service.php";
@@ -54,6 +55,7 @@ require_once "Centreon/Object/Contact/Group.php";
 require_once "Centreon/Object/Relation/Host/Template/Host.php";
 require_once "Centreon/Object/Relation/Host/Parent/Host.php";
 require_once "Centreon/Object/Relation/Host/Group/Host.php";
+require_once "Centreon/Object/Relation/Host/Category/Host.php";
 require_once "Centreon/Object/Relation/Instance/Host.php";
 require_once "Centreon/Object/Relation/Contact/Host.php";
 require_once "Centreon/Object/Relation/Contact/Group/Host.php";
@@ -542,6 +544,10 @@ class CentreonHost extends CentreonObject
                 case "parent":
                     $class = "Centreon_Object_Host";
                     $relclass = "Centreon_Object_Relation_Host_Parent_Host";
+                    break;
+                case "hostcategory":
+                    $class = "Centreon_Object_Host_Category";
+                    $relclass = "Centreon_Object_Relation_Host_Category_Host";
                     break;
                 default:
                     throw new CentreonClapiException(self::UNKNOWN_METHOD);
