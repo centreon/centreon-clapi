@@ -31,8 +31,8 @@
  *
  * For more information : contact@centreon.com
  *
- * SVN : $URL$
- * SVN : $Id$
+ * SVN : $URL: http://svn.modules.centreon.com/centreon-clapi/trunk/www/modules/centreon-clapi/core/class/centreonService.class.php $
+ * SVN : $Id: centreonService.class.php 286 2012-03-08 10:44:11Z shotamchay $
  *
  */
 
@@ -59,13 +59,12 @@ require_once "Centreon/Object/Relation/Contact/Group/Service.php";
 require_once "Centreon/Object/Relation/Host/Service.php";
 require_once "Centreon/Object/Relation/Host/Group/Service/Service.php";
 
-
 /**
  * Centreon Service objects
  *
  * @author sylvestre
  */
-class CentreonService extends CentreonObject
+class CentreonHostGroupService extends CentreonObject
 {
     const ORDER_HOSTNAME = 0;
     const ORDER_SVCDESC  = 1;
@@ -125,14 +124,14 @@ class CentreonService extends CentreonObject
     /**
      * Check parameters
      *
-     * @param string $hostName
+     * @param string $hgName
      * @param string $serviceDescription
      * @return bool
      */
-    protected function serviceExists($hostName, $serviceDescription)
+    protected function serviceExists($hgName, $serviceDescription)
     {
-        $relObj = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObj->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array('host_name' => $hostName,
+        $relObj = new Centreon_Object_Relation_Host_Group_Service();
+        $elements = $relObj->getMergedParameters(array('hg_id'), array('service_id'), -1, 0, null, null, array('hg_name' => $hgName,
         																										 'service_description' => $serviceDescription), "AND");
         if (count($elements)) {
             return true;
@@ -153,12 +152,12 @@ class CentreonService extends CentreonObject
             $filters["service_description"] = "%".$parameters."%";
         }
         $commandObject = new Centreon_Object_Command();
-        $paramsHost = array('host_id', 'host_name');
+        $paramsHost = array('hg_id', 'hg_name');
         $paramsSvc = array('service_id', 'service_description', 'command_command_id', 'command_command_id_arg',
                         'service_normal_check_interval', 'service_retry_check_interval', 'service_max_check_attempts',
                         'service_active_checks_enabled', 'service_passive_checks_enabled');
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters($paramsHost, $paramsSvc, -1, 0, "host_name,service_description", "ASC", $filters, "AND");
+        $relObject = new Centreon_Object_Relation_Host_Group_Service();
+        $elements = $relObject->getMergedParameters($paramsHost, $paramsSvc, -1, 0, "hg_name,service_description", "ASC", $filters, "AND");
         $paramHostString = str_replace("_", " ", implode($this->delim, $paramsHost));
         echo $paramHostString . $this->delim;
         $paramSvcString = str_replace("service_", "", implode($this->delim, $paramsSvc));
@@ -190,10 +189,10 @@ class CentreonService extends CentreonObject
         if (count($params) < 2) {
             throw new Exception(self::MISSINGPARAMETER);
         }
-        $hostName = $params[0];
+        $hgName = $params[0];
         $serviceDesc = $params[1];
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array("host_id"), array("service_id"), -1, 0, null, null, array("host_name" => $hostName,
+        $relObject = new Centreon_Object_Relation_Host_Group_Service();
+        $elements = $relObject->getMergedParameters(array("hg_id"), array("service_id"), -1, 0, null, null, array("hg_name" => $hgName,
                                                                                                                     "service_description" => $serviceDesc), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
@@ -217,12 +216,12 @@ class CentreonService extends CentreonObject
         if ($this->serviceExists($params[self::ORDER_HOSTNAME], $params[self::ORDER_SVCDESC]) == true) {
             throw new CentreonClapiException(self::OBJECTALREADYEXISTS);
         }
-        $hostObject = new Centreon_Object_Host();
-        $tmp = $hostObject->getIdByParameter($hostObject->getUniqueLabelField(), $params[self::ORDER_HOSTNAME]);
+        $hgObject = new Centreon_Object_Host_Group();
+        $tmp = $hgObject->getIdByParameter($hgObject->getUniqueLabelField(), $params[self::ORDER_HOSTNAME]);
         if (!count($tmp)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $params[self::ORDER_HOSTNAME]);
         }
-        $hostId = $tmp[0];
+        $hgId = $tmp[0];
         $addParams = array();
         $addParams['service_description'] = $params[self::ORDER_SVCDESC];
         $template = $params[self::ORDER_SVCTPL];
@@ -234,8 +233,8 @@ class CentreonService extends CentreonObject
         $this->params = array_merge($this->params, $addParams);
         $serviceId = parent::add();
 
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $relObject->insert($hostId, $serviceId);
+        $relObject = new Centreon_Object_Relation_Host_Group_Service();
+        $relObject->insert($hgId, $serviceId);
 
         $extended = new Centreon_Object_Service_Extended();
         $extended->insert(array($extended->getUniqueLabelField() => $serviceId));
@@ -273,10 +272,10 @@ class CentreonService extends CentreonObject
         if (count($params) < self::NB_UPDATE_PARAMS) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $hostName = $params[0];
+        $hgName = $params[0];
         $serviceDesc = $params[1];
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array("host_id"), array("service_id"), -1, 0, null, null, array("host_name" => $hostName,
+        $relObject = new Centreon_Object_Relation_Host_Group_Service();
+        $elements = $relObject->getMergedParameters(array("hg_id"), array("service_id"), -1, 0, null, null, array("hg_name" => $hgName,
                                                                                                                     "service_description" => $serviceDesc), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
@@ -384,10 +383,10 @@ class CentreonService extends CentreonObject
         if (count($tmp) < 2) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $hostName = $tmp[0];
+        $hgName = $tmp[0];
         $serviceDescription = $tmp[1];
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $hostName,
+        $relObject = new Centreon_Object_Relation_Host_Group_Service();
+        $elements = $relObject->getMergedParameters(array('hg_id'), array('service_id'), -1, 0, null, null, array("hg_name" => $hgName,
                                                                                                                     "service_description" => $serviceDescription), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
@@ -413,10 +412,10 @@ class CentreonService extends CentreonObject
         if (count($params) < 4) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $hostName = $params[0];
+        $hgName = $params[0];
         $serviceDescription = $params[1];
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $hostName,
+        $relObject = new Centreon_Object_Relation_Host_Group_Service();
+        $elements = $relObject->getMergedParameters(array('hg_id'), array('service_id'), -1, 0, null, null, array("hg_name" => $hgName,
                                                                                                                     "service_description" => $serviceDescription), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
@@ -447,10 +446,10 @@ class CentreonService extends CentreonObject
         if (count($params) < 3) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $hostName = $params[0];
+        $hgName = $params[0];
         $serviceDescription = $params[1];
         $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $hostName,
+        $elements = $relObject->getMergedParameters(array('hg_id'), array('service_id'), -1, 0, null, null, array("hg_name" => $hgName,
                                                                                                                     "service_description" => $serviceDescription), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
@@ -495,8 +494,8 @@ class CentreonService extends CentreonObject
         if (count($tmp) != 2) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $tmp[0],
+        $relObject = new Centreon_Object_Relation_Host_Group_Service();
+        $elements = $relObject->getMergedParameters(array('hg_id'), array('service_id'), -1, 0, null, null, array("hg_name" => $tmp[0],
                                                                                                                     "service_description" => $tmp[1]), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
@@ -521,8 +520,8 @@ class CentreonService extends CentreonObject
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         $args = explode($this->delim, $arg[0]);
-        $relObject = new Centreon_Object_Relation_Host_Service();
-        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $args[0],
+        $relObject = new Centreon_Object_Relation_Host_Group_Service();
+        $elements = $relObject->getMergedParameters(array('hg_id'), array('service_id'), -1, 0, null, null, array("hg_name" => $args[0],
                                                                                                                     "service_description" => $args[1]), "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
@@ -530,9 +529,9 @@ class CentreonService extends CentreonObject
         $serviceId = $elements[0]['service_id'];
         if (preg_match("/^(get|set|add|del)([a-zA-Z_]+)/", $name, $matches)) {
             switch ($matches[2]) {
-                case "host":
-                    $class = "Centreon_Object_Host";
-                    $relclass = "Centreon_Object_Relation_Host_Service";
+                case "hostgroup":
+                    $class = "Centreon_Object_Host_Group";
+                    $relclass = "Centreon_Object_Relation_Host_Group_Service";
                     break;
                 case "contact":
                     $class = "Centreon_Object_Contact";
@@ -569,7 +568,7 @@ class CentreonService extends CentreonObject
                     $relations = explode("|", $relation);
                     $relationTable = array();
                     foreach($relations as $rel) {
-                        if ($matches[1] != "del" && $matches[2] == "host" && $this->serviceExists($rel, $args[1])) {
+                        if ($matches[1] != "del" && $matches[2] == "hostgroup" && $this->serviceExists($rel, $args[1])) {
                             throw new CentreonClapiException(self::OBJECTALREADYEXISTS);
                         }
                         $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
