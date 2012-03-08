@@ -41,7 +41,12 @@ require_once "centreonACL.class.php";
 require_once "centreonHost.class.php";
 require_once "Centreon/Object/Host/Group.php";
 require_once "Centreon/Object/Host/Host.php";
+require_once "Centreon/Object/Service/Group.php";
+require_once "Centreon/Object/Service/Service.php";
+require_once "Centreon/Object/Relation/Host/Service.php";
 require_once "Centreon/Object/Relation/Host/Group/Host.php";
+require_once "Centreon/Object/Relation/Host/Group/Service/Service.php";
+require_once "Centreon/Object/Relation/Host/Group/Service/Group.php";
 
 /**
  * Class for managing host groups
@@ -181,9 +186,14 @@ class CentreonHostGroup extends CentreonObject
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND .":".$args[0]);
         }
         $groupId = $hgIds[0];
-        if (preg_match("/^(get|set|add|del)member/", $name, $matches)) {
-            $relobj = new Centreon_Object_Relation_Host_Group_Host();
-            $obj = new Centreon_Object_Host();
+        if (preg_match("/^(get|set|add|del)(member|host|servicegroup)$/", $name, $matches)) {
+            if ($matches[2] == "host" || $matches[2] == "member") {
+                $relobj = new Centreon_Object_Relation_Host_Group_Host();
+                $obj = new Centreon_Object_Host();
+            } elseif ($matches[2] == "servicegroup") {
+                $relobj = new Centreon_Object_Relation_Host_Group_Service_Group();
+                $obj = new Centreon_Object_Service_Group();
+            }
             if ($matches[1] == "get") {
                 $tab = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), $hgIds);
                 echo "id".$this->delim."name"."\n";

@@ -57,6 +57,7 @@ require_once "Centreon/Object/Relation/Host/Template/Host.php";
 require_once "Centreon/Object/Relation/Contact/Service.php";
 require_once "Centreon/Object/Relation/Contact/Group/Service.php";
 require_once "Centreon/Object/Relation/Host/Service.php";
+require_once "Centreon/Object/Relation/Host/Group/Service/Service.php";
 
 
 /**
@@ -479,6 +480,33 @@ class CentreonService extends CentreonObject
     }
 
     /**
+     * Set the activate field
+     *
+     * @param string $objectName
+     * @param int $value
+     * @throws CentreonClapiException
+     */
+    protected function activate($objectName, $value)
+    {
+        if (!isset($objectName) || !$objectName) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $tmp = explode($this->delim, $objectName);
+        if (count($tmp) != 2) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $relObject = new Centreon_Object_Relation_Host_Service();
+        $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $tmp[0],
+                                                                                                                    "service_description" => $tmp[1]), "AND");
+        if (!count($elements)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+        if (isset($this->activateField)) {
+            $this->object->update($elements[0]['service_id'], array($this->activateField => $value));
+        }
+    }
+
+    /**
      * Magic method
      *
      * @param string $name
@@ -506,6 +534,10 @@ class CentreonService extends CentreonObject
                     $class = "Centreon_Object_Host";
                     $relclass = "Centreon_Object_Relation_Host_Service";
                     break;
+                case "hostgroup":
+                    $class = "Centreon_Object_Host_Group";
+                    $relclass = "Centreon_Object_Relation_Host_Group_Service";
+                    break;
                 case "contact":
                     $class = "Centreon_Object_Contact";
                     $relclass = "Centreon_Object_Relation_Contact_Service";
@@ -525,8 +557,10 @@ class CentreonService extends CentreonObject
                     $tab = $relobj->getTargetIdFromSourceId($relobj->getFirstKey(), $relobj->getSecondKey(), $serviceId);
                     echo "id".$this->delim."name"."\n";
                     foreach($tab as $value) {
-                        $tmp = $obj->getParameters($value, array($obj->getUniqueLabelField()));
-                        echo $value . $this->delim . $tmp[$obj->getUniqueLabelField()] . "\n";
+                        if ($value) {
+                            $tmp = $obj->getParameters($value, array($obj->getUniqueLabelField()));
+                            echo $value . $this->delim . $tmp[$obj->getUniqueLabelField()] . "\n";
+                        }
                     }
                 } else {
                     if (!isset($args[1]) || !isset($args[2])) {
@@ -548,10 +582,18 @@ class CentreonService extends CentreonObject
                         }
                         $relationTable[] = $tab[0];
                     }
-                    if ($matches[1] == "set") {
-                        $relobj->delete(null, $serviceId);
-                    }
                     $existingRelationIds = $relobj->getTargetIdFromSourceId($relobj->getFirstKey(), $relobj->getSecondKey(), $serviceId);
+                    if ($matches[1] == "set") {
+                        if ($matches[2] == "host" || $matches[2] == "hostgroup") {
+                            foreach ($existingRelationIds as $relId) {
+                                if ($relId) {
+                                    $relobj->delete($relId, $serviceId);
+                                }
+                            }
+                        } else {
+                            $relobj->delete(null, $serviceId);
+                        }
+                    }
                     foreach($relationTable as $relationId) {
                         if ($matches[1] == "del") {
                             $relobj->delete($relationId, $serviceId);
