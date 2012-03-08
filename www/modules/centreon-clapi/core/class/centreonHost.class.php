@@ -479,6 +479,7 @@ class CentreonHost extends CentreonObject
                     $hostSvcRel->insert($hostId, $svcId);
                     $svcExtended->insert(array($svcExtended->getUniqueLabelField() => $svcId));
                 }
+                unset($res);
             }
             $this->deployServices($hostId, $templateId);
         }
