@@ -185,11 +185,13 @@ class CentreonHost extends CentreonObject
         $hostgroupIds = array();
         $hostgroupObject = new Centreon_Object_Host_Group();
         foreach ($hostgroups as $hostgroup) {
-            $tmp = $hostgroupObject->getIdByParameter($hostgroupObject->getUniqueLabelField(), $hostgroup);
-            if (count($tmp)) {
-                $hostgroupIds[] = $tmp[0];
-            } else {
-                throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $hostgroup);
+            if ($hostgroup) {
+                $tmp = $hostgroupObject->getIdByParameter($hostgroupObject->getUniqueLabelField(), $hostgroup);
+                if (count($tmp)) {
+                    $hostgroupIds[] = $tmp[0];
+                } else {
+                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $hostgroup);
+                }
             }
         }
         $this->params = array_merge($this->params, $addParams);
