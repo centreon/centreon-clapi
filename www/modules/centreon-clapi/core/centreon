@@ -38,8 +38,7 @@
  */
 	$debug = 0;
 	
-	ini_set("display_errors", "Off");
-	error_reporting(E_ALL ^ E_NOTICE);
+	ini_set("display_errors", "Off");	
 		
 	define('APPLICATION_PATH', realpath(dirname(__FILE__)));
 	set_include_path(implode(PATH_SEPARATOR, array(realpath(APPLICATION_PATH . '/lib'),    											   
@@ -71,6 +70,8 @@
 	}
 	if ($debug) {
 		print_r($options);
+	} else {
+		error_reporting(E_ALL ^ E_NOTICE);
 	}
 	
 	if (!file_exists("../etc/api.conf.php")) {
