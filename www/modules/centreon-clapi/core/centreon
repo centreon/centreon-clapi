@@ -39,6 +39,7 @@
 	$debug = 0;
 	
 	ini_set("display_errors", "Off");
+	error_reporting(E_ALL ^ E_NOTICE);
 		
 	define('APPLICATION_PATH', realpath(dirname(__FILE__)));
 	set_include_path(implode(PATH_SEPARATOR, array(realpath(APPLICATION_PATH . '/lib'),    											   

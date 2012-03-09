@@ -2,8 +2,16 @@
 
 class CentreonUtils
 {
+    /**
+     * @var string
+     */
     private static $centreonPath;
 
+    /**
+     * Get centreon application path
+     *
+     * @return string
+     */
     public static function getCentreonPath()
     {
         if (isset(self::$centreonPath)) {
