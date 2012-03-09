@@ -37,6 +37,7 @@
  */
 
 require_once "centreonObject.class.php";
+require_once "centreonUtils.class.php";
 require_once "centreonTimePeriod.class.php";
 require_once "centreonCommand.class.php";
 require_once "Centreon/Object/Contact/Contact.php";
@@ -62,6 +63,7 @@ class CentreonContact extends CentreonObject
     const SVC_NOTIF_TP     = "svcnotifperiod";
     const HOST_NOTIF_CMD   = "hostnotifcmd";
     const SVC_NOTIF_CMD    = "svcnotifcmd";
+    const UNKNOWN_LOCALE   = "Invalid locale";
     protected $register;
 
     /**
@@ -132,6 +134,27 @@ class CentreonContact extends CentreonObject
 	}
 
 	/**
+	 * Checks if language exists
+	 *
+	 * @param string $locale
+	 * @return bool
+	 */
+	protected function checkLang($locale)
+	{
+        if (!$locale) {
+            return false;
+        }
+	    if (strtolower($locale) == "en_us") {
+            return true;
+        }
+	    $dir = CentreonUtils::getCentreonPath() . "/www/locale/$locale";
+        if (is_dir($dir)) {
+            return true;
+        }
+        return false;
+	}
+
+	/**
 	 * Delete action
 	 *
 	 * @param string $parameters
@@ -170,6 +193,7 @@ class CentreonContact extends CentreonObject
 	 * Add a contact
 	 *
 	 * @param string $parameters
+	 * @throws CentreonClapiException
 	 */
 	public function add($parameters)
 	{
@@ -185,6 +209,9 @@ class CentreonContact extends CentreonObject
         $addParams['contact_passwd'] = $params[self::ORDER_PASS];
         $addParams['contact_admin'] = $params[self::ORDER_ADMIN];
         $addParams['contact_oreon'] = $params[self::ORDER_ACCESS];
+        if ($this->checkLang($params[self::ORDER_LANG]) == false) {
+            throw new CentreonClapiException(self::UNKNOWN_LOCALE);
+        }
         $addParams['contact_lang'] = $params[self::ORDER_LANG];
         $addParams['contact_auth_type'] = $params[self::ORDER_AUTHTYPE];
         $this->params = array_merge($this->params, $addParams);
@@ -229,7 +256,10 @@ class CentreonContact extends CentreonObject
                     $params[2] = $contactId;
                 } elseif ($params[1] == "authtype") {
                     $params[1] = "auth_type";
-                } elseif ($params[1] == "language") {
+                } elseif ($params[1] == "lang" || $params[1] == "language" || $params[1] == "locale") {
+                    if ($this->checkLang($params[2]) == false) {
+                        throw new CentreonClapiException(self::UNKNOWN_LOCALE);
+                    }
                     $params[1] = "lang";
                 } elseif ($params[1] == "password") {
                     $params[1] = "passwd";
