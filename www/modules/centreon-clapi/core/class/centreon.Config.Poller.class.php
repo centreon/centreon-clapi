@@ -438,7 +438,7 @@ class CentreonConfigPoller {
 				$msg_copy .= _("OK: All configuration files copied with success.");
 			}
 		} else {
-			exec(escapeshellcmd("echo 'SENDCFGFILE:".$host['id']."' >> ".$this->centcore_pipe), $stdout, $return);
+			exec("echo 'SENDCFGFILE:".$host['id']."' >> ".$this->centcore_pipe, $stdout, $return);
 			if (!isset($msg_copy)) {
 				$msg_copy = "";
 			}
