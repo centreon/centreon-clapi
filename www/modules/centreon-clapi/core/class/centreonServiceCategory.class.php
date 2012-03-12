@@ -36,502 +36,193 @@
  *
  */
 
-require_once "centreonHost.class.php";
-require_once "centreonService.class.php";
+require_once "centreonObject.class.php";
+require_once "centreonACL.class.php";
+require_once "Centreon/Object/Service/Category.php";
+require_once "Centreon/Object/Service/Service.php";
 require_once "Centreon/Object/Relation/Host/Service.php";
+require_once "Centreon/Object/Relation/Service/Category/Service.php";
 
-class CentreonServiceCategory {
-	private $DB;
-	private $access;
-	private $obj;
-	private $svc;
-	private $host;
+/**
+ * Class for managing service categories
+ *
+ * @author sylvestre
+ */
+class CentreonServiceCategory extends CentreonObject
+{
+    const ORDER_UNIQUENAME        = 0;
+    const ORDER_ALIAS             = 1;
 
-	protected $version;
-
-	public function __construct($DB) {
-		$this->DB = $DB;
-
-		/**
-		 * Enable Access Object
-		 */
-		$this->access = new CentreonACLResources($this->DB);
-
-		$this->obj = "SC";
-		$this->host = new CentreonHost();
-		$this->svc = new CentreonService();
+    /**
+     * Constructor
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->object = new Centreon_Object_Service_Category();
+        $this->params = array('sc_activate' => '1');
+        $this->nbOfCompulsoryParams = 2;
+        $this->activateField = "sc_activate";
 	}
 
 	/**
+	 * Display list of service categories
 	 *
-	 * Get Version of Centreon
+	 * @param string $parameters
 	 */
-	protected function getVersion() {
-		$request = "SELECT * FROM informations";
-		$DBRESULT = $this->DB->query($request);
-		$info = $DBRESULT->fetchRow();
-		return $info["value"];
+	public function show($parameters = null)
+	{
+	    $filters = array();
+        if (isset($parameters)) {
+            $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
+        }
+        $params = array('sc_id', 'sc_name', 'sc_description');
+        $paramString = str_replace("sc_", "", implode($this->delim, $params));
+        echo $paramString . "\n";
+        $elements = $this->object->getList($params, -1, 0, null, null, $filters);
+        foreach ($elements as $tab) {
+            echo implode($this->delim, $tab) . "\n";
+        }
 	}
 
 	/**
+	 * Add Service category
 	 *
-	 * encode with htmlentities a string
-	 * @param unknown_type $string
+	 * @param string $parameters
 	 */
-	protected function encodeInHTML($string) {
-	    if (!strncmp($this->version, "2.1", 3)) {
-            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
-	    }
-	    return $string;
+	public function add($parameters)
+	{
+        $params = explode($this->delim, $parameters);
+        if (count($params) < $this->nbOfCompulsoryParams) {
+            throw new Exception(self::MISSINGPARAMETER);
+        }
+        $addParams = array();
+        $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
+        $addParams['sc_description'] = $params[self::ORDER_ALIAS];
+        $this->params = array_merge($this->params, $addParams);
+        $this->checkParameters();
+        parent::add();
 	}
 
-
-	/*
-	 * Check host existance
-	 */
-	protected function serviceCategoryExists($name) {
-		if (!isset($name))
-			return 0;
-
-		/*
-		 * Get informations
-		 */
-		$DBRESULT =& $this->DB->query("SELECT sc_name, sc_id FROM service_categories WHERE sc_name = '".$this->encodeInHTML($name)."'");
-		if ($DBRESULT->numRows() >= 1) {
-			$sc =& $DBRESULT->fetchRow();
-			$DBRESULT->free();
-			return $sc["sc_id"];
-		} else {
-			return 0;
-		}
-	}
-
-	protected function checkParameters($options) {
-		if (!isset($options) || $options == "") {
-			print "No options defined.\n";
-			$this->return_code = 1;
-			return 1;
-		}
-	}
-
-	public function getServiceCategoryID($sc_name = NULL) {
-		if (!isset($sc_name))
-			return;
-
-		$request = "SELECT sc_id FROM service_categories WHERE sc_name LIKE '$sc_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["sc_id"];
-	}
-
-	protected function validateName($name) {
-		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
-			return $this->checkNameformat($name);
-		} else {
-			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);
-		}
-	}
-
-	protected function checkNameformat($name) {
-		if (strlen($name) > 40) {
-			print "Warning: host name reduce to 40 caracters.\n";
-		}
-		return sprintf("%.40s", $name);
-	}
-
-	/* ****************************************
-	 *  Delete Action
-	 */
-
-	public function del($name) {
-		$request = "DELETE FROM service_categories WHERE sc_name LIKE '".$this->encodeInHTML($name)."'";
-		$DBRESULT =& $this->DB->query($request);
-
-		/**
-		 * Update ACL
-		 */
-		$this->access->updateACL();
-
-		return 0;
-	}
-
-	/* ****************************************
-	 * Dislay all SG
-	 */
-	public function show($search = NULL) {
-		/*
-		 *  * Set Search
-		 */
-		$searchStr = "";
-		if (isset($search) && $search != "") {
-			$searchStr = " WHERE sc_name LIKE '%".$this->encodeInHTML($search)."%' OR sc_description LIKE '%".$this->encodeInHTML($search)."%'";
-		}
-
-		/*
-		 * Get Child informations
-		 */
-
-		$request = "SELECT sc_id, sc_name, sc_description FROM service_categories $searchStr ORDER BY sc_name";
-		$DBRESULT =& $this->DB->query($request);
-		if (isset($DBRESULT) && $DBRESULT->numRows()) {
-			$i = 0;
-			while ($data =& $DBRESULT->fetchRow()) {
-				if ($i == 0) {
-					print "Name;Alias;Members\n";
-				}
-				print html_entity_decode($data["sc_name"]).";".html_entity_decode($data["sc_description"]).";";
-
-				/*
-				 * Get Childs informations
-				 */
-				$request = "SELECT service_service_id FROM service_categories_relation WHERE sc_id = '".$data["sc_id"]."'";
-				$DBRESULT2 =& $this->DB->query($request);
-				$i2 = 0;
-				$relObject = new Centreon_Object_Relation_Host_Service();
-				while ($m =& $DBRESULT2->fetchRow()) {
-					$type = $this->svc->hostTypeLink($m["service_service_id"]);
-					if ($type == 1) {
-						$elements = $relObject->getMergedParameters(array("host_name"), array("service_description"), -1, 0, null, null, array("service_id" => $m['service_service_id']), "AND");
-						foreach ($elements as $element) {
-							if ($i2) {
-								print ",";
-							}
-							print $element['host_name'].",".$element['service_description'];
-							$i2++;
-						}
-					} else if ($type == 2) {
-						/*$hg = new CentreonHostGroup($this->DB);
-						foreach ($hg as $hg_id) {
-							$hostList = $svc->getServiceHosts($m["service_service_id"]);
-							foreach ($hostList as $host_id) {
-								if ($i2) {
-									print ",";
-								}
-								print $this->host->getHostName($host_id).",".$this->svc->getServiceName($m["service_service_id"]);
-								$i2++;
-							}
-						}*/
-					} else {
-						;
-					}
-				}
-				$DBRESULT2->free();
-				print "\n";
-				$i++;
-			}
-			$DBRESULT->free();
-		}
+    /**
+     * Set parameter
+     *
+     * @param string $parameters
+     * @throws CentreonClapiException
+     */
+	public function setparam($parameters)
+	{
+	    $params = explode($this->delim, $parameters);
+        if (count($params) < self::NB_UPDATE_PARAMS) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            if (!preg_match("/^sc_/", $params[1])) {
+                $params[1] = "sc_".$params[1];
+            }
+            $updateParams = array($params[1] => $params[2]);
+            parent::setparam($objectId, $updateParams);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
 	}
 
 	/**
+	 * Magic method for get/set/add/del relations
 	 *
-	 * Export Service categories informations.
+	 * @param string $name
+	 * @param array $arg
 	 */
-	public function export() {
-		$request = "SELECT * FROM service_categories ORDER BY sc_name";
-		$DBRESULT = $this->DB->query($request);
-		while ($data = $DBRESULT->fetchRow()) {
-			print $this->obj.";ADD;".$data["sc_name"].";".$data["sc_description"]."\n";
-			$this->exportChild($data["sc_id"], $data["sc_name"]);
-		}
-		$DBRESULT->free();
-	}
-
-	/**
-	 *
-	 * export child links
-	 * @param $sc_id
-	 */
-	private function exportChild($sc_id, $sc_name) {
-		$request = "SELECT service_service_id, service_register FROM `service_categories_relation`, service WHERE sc_id = '".$sc_id."' AND service_service_id = service_id";
-		$DBRESULT = $this->DB->query($request);
-		while ($data = $DBRESULT->fetchRow()) {
-			$hostList = $this->svc->getServiceHosts($data["service_service_id"]);
-			foreach ($hostList as $host_id) {
-				if (isset($data["service_register"]) && $data["service_register"] == 1) {
-					print $this->obj.";ADDCHILD;$sc_name;".$this->host->getHostName($host_id).";".$this->svc->getServiceName($data["service_service_id"], 1)."\n";
-				} else {
-					print $this->obj.";ADDCHILD;$sc_name;".$this->svc->getServiceName($data["service_service_id"], 1)."\n";
-				}
-			}
-		}
-		$DBRESULT->free();
-	}
-
-
-	/* ****************************************
-	 * Add Action
-	 */
-
-	public function add($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $options);
-
-		$info[0] = $this->validateName($info[0]);
-
-		if (!$this->serviceCategoryExists($info[0])) {
-			$convertionTable = array(0 => "sc_name", 1 => "sc_description");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}
-			return $this->addServiceCategory($informations);
-		} else {
-			print "Service category ".$info[0]." already exists.\n";
-			return 1;
-		}
-	}
-
-	protected function addServiceCategory($information) {
-		if (!isset($information["sc_name"])) {
-			return 0;
-		} else {
-			if (!isset($information["sc_description"]) || $information["sc_description"] == "")
-				$information["sc_description"] = $information["sc_name"];
-
-			$request = "INSERT INTO service_categories (sc_name, sc_description, sc_activate) VALUES ('".$this->encodeInHTML($information["sc_name"])."', '".$this->encodeInHTML($information["sc_description"])."', '1')";
-			$DBRESULT =& $this->DB->query($request);
-
-			$sc_id = $this->getServiceCategoryID($information["sc_name"]);
-
-			/**
-			 * Update ACL
-			 */
-			$this->access->updateACL();
-
-			return $sc_id;
-		}
-	}
-
-	/* ****************************************
-	 * Add Action
-	 */
-
-	public function setParam($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		return $this->setParamServiceCategory($elem[0], $elem[1], $elem[2]);
-	}
-
-	protected function setParamServiceCategory($sc_name, $parameter, $value) {
-
-		$value = $this->encodeInHTML($value);
-
-		if ($parameter == "alias") {
-			$parameter = "description";
-		}
-
-		if ($parameter != "name" && $parameter != "description") {
-			print "Unknown parameters.\n";
-			return 1;
-		}
-
-		$sc_id = $this->getServiceCategoryID($sc_name);
-		if ($sc_id) {
-			$request = "UPDATE service_categories SET sc_$parameter = '$value' WHERE sc_id = '$sc_id'";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Service category doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
-
-	/* **************************************
-	 * Add childs
-	 */
-
-	public function addChild($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		if (count($elem) == 2) {
-			$id = $this->addTemplateChildServiceCategory($elem[0], $elem[1]);
-
-			/**
-			 * Update ACL
-			 */
-			$this->access->updateACL();
-
-			return $id;
-		} else {
-			$id =  $this->addChildServiceCategory($elem[0], $elem[1], $elem[2]);
-
-			/**
-			 * Update ACL
-			 */
-			$this->access->updateACL();
-
-			return $id;
-		}
-	}
-
-	protected function addChildServiceCategory($sc_name, $child_host, $child_service) {
-
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-
-		/*
-		 * Get host Child informations
-		 */
-		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID($this->encodeInHTML($child_host));
-
-		/*
-		 * Get service Child information
-		 */
-		$service = new CentreonService($this->DB, "SERVICE");
-		$service_id = $service->getServiceID($host_id, $this->encodeInHTML($child_service));
-
-		/*
-		 * Add link.
-		 */
-		$sc_id = $this->getServiceCategoryID($sc_name);
-		if ($sc_id && $host_id && $service_id) {
-			$request = "DELETE FROM service_categories_relation WHERE service_service_id = '$service_id' AND sc_id = '$sc_id'";
-			$DBRESULT =& $this->DB->query($request);
-			$request = "INSERT INTO service_categories_relation (service_service_id, sc_id) VALUES ('$service_id', '$sc_id')";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Service category or host doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
-
-	protected function addTemplateChildServiceCategory($sc_name, $child_service) {
-
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-
-		/*
-		 * Get service Child information
-		 */
-		$service = new CentreonService($this->DB, "STPL");
-		$service_id = $service->getServiceTplID($this->encodeInHTML($child_service));
-
-		/*
-		 * Add link.
-		 */
-		$sc_id = $this->getServiceCategoryID($sc_name);
-		if ($sc_id && $service_id) {
-			$request = "DELETE FROM service_categories_relation WHERE service_service_id = '$service_id' AND sc_id = '$sc_id'";
-			$DBRESULT =& $this->DB->query($request);
-			$request = "INSERT INTO service_categories_relation (service_service_id, sc_id) VALUES ('$service_id', '$sc_id')";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Service category or service doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
-
-	/* **************************************
-	 * Add childs
-	 */
-
-	public function delChild($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		if (count($elem) == 2) {
-			return $this->delTemplateChildServiceCategory($elem[0], $elem[1]);
-		} else {
-			return $this->delChildServiceCategory($elem[0], $elem[1], $elem[2]);
-		}
-	}
-
-	protected function delChildServiceCategory($sc_name, $child_host, $child_service) {
-
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-
-		/*
-		 * Get host Child informations
-		 */
-		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID($this->encodeInHTML($child_host));
-
-		/*
-		 * Get service Child information
-		 */
-		$service = new CentreonService($this->DB, "SERVICE");
-		$service_id = $service->getServiceID($host_id, $this->encodeInHTML($child_service));
-
-		/*
-		 * Add link.
-		 */
-		$sc_id = $this->getServiceCategoryID($sc_name);
-		if ($sc_id && $host_id && $service_id) {
-			$request = "DELETE FROM service_categories_relation WHERE service_service_id = '$service_id' AND sc_id = '$sc_id'";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Service category or service doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
-
-	protected function delTemplateChildServiceCategory($sc_name, $child_service) {
-
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-
-		/*
-		 * Get service Child information
-		 */
-		$service = new CentreonService($this->DB, "SERVICE");
-		$service_id = $service->getServiceTplID($this->encodeInHTML($child_service));
-
-		/*
-		 * Add link.
-		 */
-		$sc_id = $this->getServiceCategoryID($sc_name);
-		if ($sc_id && $service_id) {
-			$request = "DELETE FROM service_categories_relation WHERE service_service_id = '$service_id' AND sc_id = '$sc_id'";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Service category or service doesn't exists. Please check your arguments\n";
-			return 1;
-		}
+	public function __call($name, $arg)
+	{
+	    $name = strtolower($name);
+        if (!isset($arg[0])) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $args = explode($this->delim, $arg[0]);
+        $hcIds = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($args[0]));
+        if (!count($hcIds)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND .":".$args[0]);
+        }
+        $categoryId = $hcIds[0];
+        if (preg_match("/^(get|add|del)(service|servicetemplate)\$/", $name, $matches)) {
+            $obj = new Centreon_Object_Service();
+            $relobj = new Centreon_Object_Relation_Service_Category_Service();
+            $hostServiceRel = new Centreon_Object_Relation_Host_Service();
+            if ($matches[1] == "get") {
+                $tab = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), $hcIds);
+                if ($matches[2] == "servicetemplate") {
+                    echo "template id".$this->delim."service template description\n";
+                } elseif ($matches[2] == "service") {
+                    echo "host id".$this->delim."host name".$this->delim."service id".$this->delim."service description\n";
+                }
+                foreach($tab as $value) {
+                    $p = $obj->getParameters($value, array('service_description', 'service_register'));
+                    if ($p['service_register'] == 1 && $matches[2] == "service") {
+                        $elements = $hostServiceRel->getMergedParameters(array('host_name', 'host_id'),
+                                                                         array('service_description'),
+                                                                         -1,
+                                                                         0,
+                                                                         "host_name,service_description",
+                                                                         "ASC",
+                                                                         array("service_id" => $value), "AND");
+                        if (isset($elements[0])) {
+                            echo $elements[0]['host_id'] . $this->delim . $elements[0]['host_name'] . $this->delim . $value . $this->delim . $elements[0]['service_description'] . "\n";
+                        }
+                    } elseif ($p['service_register'] == 0 && $matches[2] == "servicetemplate") {
+                        echo $value . $this->delim . $p['service_description'] . "\n";
+                    }
+                }
+            } else {
+                if (!isset($args[1])) {
+                    throw new CentreonClapiException(self::MISSINGPARAMETER);
+                }
+                $relation = $args[1];
+                $relations = explode("|", $relation);
+                $relationTable = array();
+                foreach($relations as $rel) {
+                    if ($matches[2] == "service") {
+                        $tmp = explode(",", $rel);
+                        if (count($tmp) < 2) {
+                            throw new CentreonClapiException(self::MISSINGPARAMETER);
+                        }
+                        $elements = $hostServiceRel->getMergedParameters(array('host_id'),
+                                                                         array('service_id'),
+                                                                         -1,
+                                                                         0,
+                                                                         null,
+                                                                         null,
+                                                                         array("host_name" => $tmp[0], "service_description" => $tmp[1]), "AND");
+                        if (!count($elements)) {
+                            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":". $tmp[0]."/".$tmp[1]);
+                        }
+                        $relationTable[] = $elements[0]['service_id'];
+                    } elseif ($matches[2] == "servicetemplate") {
+                        $tab = $obj->getList("service_id", -1, 0, null, null, array('service_description' => $rel, 'service_register' => 0), "AND");
+                        if (!count($tab)) {
+                            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":".$rel);
+                        }
+                        $relationTable[] = $tab[0]['service_id'];
+                    }
+                }
+                $existingRelationIds = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), array($categoryId));
+                foreach($relationTable as $relationId) {
+                    if ($matches[1] == "del") {
+                        $relobj->delete($categoryId, $relationId);
+                    } elseif ($matches[1] == "add") {
+                        if (!in_array($relationId, $existingRelationIds)) {
+                            $relobj->insert($categoryId, $relationId);
+                        }
+                    }
+                }
+                $acl = new CentreonACL();
+                $acl->reload(true);
+            }
+        } else {
+            throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
 	}
 }
 ?>
