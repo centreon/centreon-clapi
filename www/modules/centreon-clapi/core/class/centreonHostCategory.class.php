@@ -36,352 +36,159 @@
  *
  */
 
-class CentreonHostCategory {
-	private $DB;
-	private $access;
-	protected $version;
-	
-	public function __construct($DB) {
-		$this->DB = $DB;
+require_once "centreonObject.class.php";
+require_once "centreonACL.class.php";
+require_once "Centreon/Object/Host/Host.php";
+require_once "Centreon/Object/Host/Category.php";
+require_once "Centreon/Object/Relation/Host/Category/Host.php";
 
-		/**
-		 * Enable Access Object
-		 */
-		$this->access = new CentreonACLResources($this->DB);
-		$this->version = $this->getVersion();
-	}
+
+/**
+ * Class for managing host categories
+ *
+ * @author sylvestre
+ */
+class CentreonHostCategory extends CentreonObject
+{
+	const ORDER_UNIQUENAME        = 0;
+    const ORDER_ALIAS             = 1;
 
 	/**
+	 * Constructor
 	 *
-	 * Get Version of Centreon
+	 * @return void
 	 */
-	protected function getVersion() {
-		$request = "SELECT * FROM informations";
-		$DBRESULT = $this->DB->query($request);
-		$info = $DBRESULT->fetchRow();
-		return $info["value"];
+    public function __construct()
+    {
+        parent::__construct();
+        $this->object = new Centreon_Object_Host_Category();
+        $this->params = array('hc_activate' => '1');
+        $this->nbOfCompulsoryParams = 2;
+        $this->activateField = "hc_activate";
 	}
 
 	/**
+	 * List host categories
 	 *
-	 * encode with htmlentities a string
-	 * @param unknown_type $string
+	 * @param $string $parameters
 	 */
-	protected function encodeInHTML($string) {
-	    if (!strncmp($this->version, "2.1", 3)) {
-            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
-	    }
-	    return $string;
+	public function show($parameters = null)
+	{
+	    $filters = array();
+        if (isset($parameters)) {
+            $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
+        }
+        $params = array('hc_id', 'hc_name', 'hc_alias');
+        $paramString = str_replace("hc_", "", implode($this->delim, $params));
+        echo $paramString . "\n";
+        $elements = $this->object->getList($params, -1, 0, null, null, $filters);
+        foreach ($elements as $tab) {
+            echo implode($this->delim, $tab) . "\n";
+        }
 	}
-	
+
 	/**
-	 * Check host existance
+	 * Add host category
+	 *
+	 * @param string $parameters
 	 */
-	protected function _hostCategoryExists($name) {
-		if (!isset($name))
-			return 0;
-
-		/**
-		 * Get informations
-		 */
-		$DBRESULT =& $this->DB->query("SELECT hc_name, hc_id FROM hostcategories WHERE hc_name LIKE '".$this->encodeInHTML($name)."'");
-		if ($DBRESULT->numRows() >= 1) {
-			$host =& $DBRESULT->fetchRow();
-			$DBRESULT->free();
-			return $host["hc_id"];
-		} else {
-			return 0;
-		}
+	public function add($parameters)
+	{
+        $params = explode($this->delim, $parameters);
+        if (count($params) < $this->nbOfCompulsoryParams) {
+            throw new Exception(self::MISSINGPARAMETER);
+        }
+        $addParams = array();
+        $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
+        $addParams['hc_alias'] = $params[self::ORDER_ALIAS];
+        $this->params = array_merge($this->params, $addParams);
+        $this->checkParameters();
+        parent::add();
 	}
 
-	protected function checkParameters($options) {
-		if (!isset($options) || $options == "") {
-			print "No options defined.\n";
-			$this->return_code = 1;
-			return 1;
-		}
-	}
-
-	protected function validateName($name) {
-		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
-			return $this->checkNameformat($name);
-		} else {
-			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);
-		}
-	}
-
-	protected function checkNameformat($name) {
-		if (strlen($name) > 40) {
-			print "Warning: host name reduce to 40 caracters.\n";
-		}
-		return sprintf("%.40s", $name);
-	}
-
-	protected function getHostCategoryID($hc_name = NULL) {
-		if (!isset($hc_name))
-			return;
-
-		$request = "SELECT hc_id FROM hostcategories WHERE hc_name LIKE '$hc_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["hc_id"];
-	}
-
-	public function del($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$request = "DELETE FROM hostcategories WHERE hc_name LIKE '".$this->encodeInHTML($options)."'";
-		$DBRESULT =& $this->DB->query($request);
-		$this->return_code = 0;
-		return;
-	}
-
-	public function show($search = NULL) {
-		$searchStr = "";
-		if (isset($search) && $search != "") {
-			$searchStr = " WHERE hc_name LIKE '%".$this->encodeInHTML($search)."%'";
-		}
-		$request = "SELECT hc_id, hc_name, hc_alias FROM hostcategories $searchStr ORDER BY hc_name";
-		$DBRESULT =& $this->DB->query($request);
-		$i = 0;
-		while ($data =& $DBRESULT->fetchRow()) {
-			if ($i == 0) {
-				print "id;name;alias;members\n";
-			}
-			print $data["hc_id"].";".html_entity_decode($data["hc_name"]).";".html_entity_decode($data["hc_alias"]).";";
-
-			$members = "";
-			$request = "SELECT host_name FROM host, hostcategories_relation WHERE hostcategories_hc_id = '".$data["hc_id"]."' AND host_host_id = host_id ORDER BY host_name";
-			$DBRESULT2 =& $this->DB->query($request);
-			while ($m =& $DBRESULT2->fetchRow()) {
-				if ($members != "") {
-					$members .= ",";
-				}
-				$members .= $m["host_name"];
-			}
-			$DBRESULT2->free();
-			print $members."\n";
-
-			$i++;
-		}
-		$DBRESULT->free();
-	}
-
-	/** *************************************
-	 * Add functions
+	/**
+	 * Update host category
+	 *
+	 * @param string $parameters
 	 */
-	public function add($options) {
-		/*
-		 * Split options
-		 */
-		$info = split(";", $options);
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$info[0] = $this->validateName($info[0]);
-
-		if (!$this->_hostCategoryExists($info[0])) {
-			$convertionTable = array(0 => "hc_name", 1 => "hc_alias");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}
-			$this->addHostCategory($informations);
-			unset($informations);
-		} else {
-			print "Hostgroup ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return;
-		}
+	public function setparam($parameters)
+	{
+	    $params = explode($this->delim, $parameters);
+        if (count($params) < self::NB_UPDATE_PARAMS) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            if (!preg_match("/^hc_/", $params[1])) {
+                $params[1] = "hc_".$params[1];
+            }
+            $updateParams = array($params[1] => $params[2]);
+            parent::setparam($objectId, $updateParams);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
 	}
 
-	protected function addHostCategory($information) {
-		if (!isset($information["hc_name"])) {
-			print "No information received\n";
-			return 0;
-		} else {
-			if (!isset($information["hc_alias"]) || $information["hc_alias"] == "")
-				$information["hc_alias"] = $information["hc_name"];
-
-			$request = "INSERT INTO hostcategories (hc_name, hc_alias, hc_activate) VALUES ('".$this->encodeInHTML($information["hc_name"])."', '".$this->encodeInHTML($information["hc_alias"])."', '1')";
-			$DBRESULT =& $this->DB->query($request);
-
-			$hc_id = $this->getHostCategoryID($information["hc_name"]);
-			return $hc_id;
-		}
-	}
-
-	/** ***************************************
-	 * Set params
+	/**
+	 * Magic method for get/set/add/del relations
+	 *
+	 * @param string $name
+	 * @param array $arg
 	 */
-	public function setParam($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		return $this->setParamHostCategory($elem[0], $elem[1], $elem[2]);
-	}
-
-	protected function setParamHostCategory($hc_name, $parameter, $value) {
-
-		$value = $this->encodeInHTML($value);
-
-		$hc_id = $this->getHostCategoryID($hc_name);
-		if ($hc_id) {
-			$request = "UPDATE hostcategories SET $parameter = '$value' WHERE hc_id = '$hc_id'";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Host category doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
-
-	/** ************************************
-	 * Add Child
-	 */
-
-	public function addChild($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		return $this->return_code = $this->addChildHostCategory($elem[0], $elem[1]);
-	}
-
-	protected function addChildHostCategory($hc_name, $child) {
-
-		require_once "./class/centreonHost.class.php";
-
-		/**
-		 * Get Child informations
-		 */
-		$host = new CentreonHost($this->DB, "HOST");
-		$htpl = new CentreonHost($this->DB, "HTPL");
-
-		/**
-		 * Check if host exists
-		 */
-		if (!$host->hostExists($child) && !$htpl->hostTemplateExists($child)) {
-			print "Host doesn't exists.\n";
-			return 1;
-		}
-
-		/**
-		 * Check if host exists
-		 */
-		if (!$this->_hostCategoryExists($hc_name)) {
-			print "Host category doesn't exists.\n";
-			return 1;
-		}
-
-		/**
-		 * Get Host ID
-		 */
-		$host_id = $host->getHostID($child);
-		if ($host_id == 0) {
-			$host_id = $htpl->getHostID($child);
-		}
-
-		/**
-		 * Get Host category ID
-		 */
-		$hc_id = $this->getHostCategoryID($hc_name);
-
-		if ($hc_id && $host_id) {
-			$request = "DELETE FROM hostcategories_relation WHERE host_host_id = '$host_id' AND hostcategories_hc_id = '$hc_id'";
-			$DBRESULT =& $this->DB->query($request);
-			$request = "INSERT INTO hostcategories_relation (host_host_id, hostcategories_hc_id) VALUES ('$host_id', '$hc_id')";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Host category or host doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
-
-	/** ************************************
-	 * Del Child
-	 */
-
-	public function delChild($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		return $this->return_code = $this->delChildHostCategory($elem[0], $elem[1]);
-	}
-
-	protected function delChildHostCategory($hc_name, $child) {
-
-		require_once "./class/centreonHost.class.php";
-
-		/**
-		 * Get Child informations
-		 */
-		$host = new CentreonHost($this->DB, "HOST");
-
-		/**
-		 * Check if host exists
-		 */
-		if (!$host->hostExists($child)) {
-			print "Host doesn't exists.\n";
-			return 1;
-		}
-
-		/**
-		 * Check if host exists
-		 */
-		if (!$this->_hostCategoryExists($hc_name)) {
-			print "Host category doesn't exists.\n";
-			return 1;
-		}
-
-		/**
-		 * Get Host ID
-		 */
-		$host_id = $host->getHostID($child);
-
-		/**
-		 * Get Host category ID
-		 */
-		$hc_id = $this->getHostCategoryID($hc_name);
-
-		if ($hc_id && $host_id) {
-			$request = "DELETE FROM hostcategories_relation WHERE host_host_id = '$host_id' AND hostcategories_hc_id = '$hc_id'";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Host category or host doesn't exists. Please check your arguments\n";
-			return 1;
-		}
+	public function __call($name, $arg)
+	{
+	    $name = strtolower($name);
+        if (!isset($arg[0])) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $args = explode($this->delim, $arg[0]);
+        $hcIds = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($args[0]));
+        if (!count($hcIds)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND .":".$args[0]);
+        }
+        $categoryId = $hcIds[0];
+        if (preg_match("/^(get|set|add|del)member$/", $name, $matches)) {
+            $relobj = new Centreon_Object_Relation_Host_Category_Host();
+            $obj = new Centreon_Object_Host();
+            if ($matches[1] == "get") {
+                $tab = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), $hcIds);
+                echo "id".$this->delim."name"."\n";
+                foreach($tab as $value) {
+                    $tmp = $obj->getParameters($value, array($obj->getUniqueLabelField()));
+                    echo $value . $this->delim . $tmp[$obj->getUniqueLabelField()] . "\n";
+                }
+            } else {
+                if (!isset($args[1])) {
+                    throw new CentreonClapiException(self::MISSINGPARAMETER);
+                }
+                $relation = $args[1];
+                $relations = explode("|", $relation);
+                $relationTable = array();
+                foreach($relations as $rel) {
+                    $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
+                    if (!count($tab)) {
+                        throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":".$rel);
+                    }
+                    $relationTable[] = $tab[0];
+                }
+                if ($matches[1] == "set") {
+                    $relobj->delete($categoryId);
+                }
+                $existingRelationIds = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), array($categoryId));
+                foreach($relationTable as $relationId) {
+                    if ($matches[1] == "del") {
+                        $relobj->delete($categoryId, $relationId);
+                    } elseif ($matches[1] == "set" || $matches[1] == "add") {
+                        if (!in_array($relationId, $existingRelationIds)) {
+                            $relobj->insert($categoryId, $relationId);
+                        }
+                    }
+                }
+                $acl = new CentreonACL();
+                $acl->reload(true);
+            }
+        } else {
+            throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
 	}
 }
 ?>
