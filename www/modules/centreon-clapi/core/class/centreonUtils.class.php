@@ -23,4 +23,18 @@ class CentreonUtils
         self::$centreonPath = $row['value'];
         return self::$centreonPath = $row['value'];
     }
+
+    /**
+     * Converts strings such as #S# #BS# #BR#
+     *
+     * @param string $pattern
+     * @return string
+     */
+    public function convertSpecialPattern($pattern)
+    {
+        $pattern = str_replace("#S#", "/", $pattern);
+        $pattern = str_replace("#BS#", "\\", $pattern);
+        $pattern = str_replace("#BR#", "\n", $pattern);
+        return $pattern;
+    }
 }

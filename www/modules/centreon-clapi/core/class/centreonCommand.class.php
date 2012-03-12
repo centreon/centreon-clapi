@@ -36,392 +36,147 @@
  *
  */
 
+require_once "centreonObject.class.php";
+require_once "centreonUtils.class.php";
+require_once "Centreon/Object/Command/Command.php";
+require_once "Centreon/Object/Graph/Template/Template.php";
+
 /**
  *
  * Centreon Command Class
  * @author jmathis
  *
  */
-class CentreonCommand {
-	private $DB;
-	private $maxLen;
-	private $type;
-	private $params;
-	private $graphTemplates;
-	private $version;
-	private $debug;
+class CentreonCommand extends CentreonObject
+{
+    const ORDER_UNIQUENAME        = 0;
+    const ORDER_TYPE              = 1;
+    const ORDER_COMMAND           = 2;
+    const UNKNOWN_CMD_TYPE        = "Unknown command type";
+    protected $typeConversion;
 
-	/**
+    /**
+	 * Constructor
 	 *
-	 * Centreon command Constructor
-	 * @param unknown_type $DB
+	 * @return void
 	 */
-	public function __construct($DB) {
-		$this->DB = $DB;
-		$this->maxLen = 50;
-		$this->type = array("notif" => 1, "check" => 2, "misc" => 3, 1 => "notif", 2 => "check", 3 => "misc");
-		$this->params = array("name" => 1, "line" => 1, "example" => 1, "type" => 1, "template" => 1);
-		$this->graphTemplates = array('id' => array(0 => "", NULL => ""), 'name' => array(0 => "", NULL => ""));
-		$this->version = $this->getVersion();
-		$this->debug = 0;
-	}
-
-	/**
-	 *
-	 * Get Version of Centreon
-	 */
-	protected function getVersion() {
-		$request = "SELECT * FROM informations";
-		$DBRESULT = $this->DB->query($request);
-		$info = $DBRESULT->fetchRow();
-		return $info["value"];
-	}
-
-	/**
-	 *
-	 * encode with htmlentities a string
-	 * @param unknown_type $string
-	 */
-	protected function encodeInHTML($string) {
-	    if (!strncmp($this->version, "2.1", 3)) {
-            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
-	    }
-	    return $string;
-	}
-
-	/**
-	 * Check command existance
-	 */
-	public function commandExists($name) {
-		if (!isset($name)) {
-			return 0;
-		}
-
-		/**
-		 * Get informations
-		 */
-		$DBRESULT =& $this->DB->query("SELECT command_name, command_id FROM command WHERE command_name = '".$this->encodeInHTML($name)."'");
-		if ($DBRESULT->numRows() >= 1) {
-			$sg =& $DBRESULT->fetchRow();
-			$DBRESULT->free();
-			return $sg["command_id"];
-		} else {
-			return 0;
-		}
-	}
-
-	/**
-	 *
-	 * Decode a specific string
-	 * @param unknown_type $str
-	 */
-	protected function decode($str) {
-		if (!strncmp($this->version, "2.1", 3)) {
-			$str = str_replace("#S#", "/", $str);
-			$str = str_replace("#BS#", "\\", $str);
-			$str = str_replace("#R#", "\t", $str);
-		}
-		return $str;
-	}
-
-	/**
-	 *
-	 * Encode a specific string
-	 * @param unknown_type $name
-	 */
-	protected function encode($name) {
-		if (!strncmp($this->version, "2.1", 3)) {
-			$name = str_replace("$", "\$", $name);
-			$name = str_replace("/", "#S#", $this->encodeInHTML($name));
-			$name = str_replace("\\", "#BS#", $name);
-			$name = str_replace("\t", "#R#", $name);
-		}
-		return $name;
+	public function __construct()
+	{
+		parent::__construct();
+        $this->object = new Centreon_Object_Command();
+        $this->params = array();
+        $this->nbOfCompulsoryParams = 3;
+		$this->typeConversion = array("notif" => 1, "check" => 2, "misc" => 3, 1 => "notif", 2 => "check", 3 => "misc");
 	}
 
 	/**
 	 *
 	 * Get command id
+	 *
 	 * @param unknown_type $command_name
+	 * @todo gotta remove this, but it is called in CentreonContact, fix it first
 	 */
-	public function getCommandID($command_name = NULL) {
-		if (!isset($command_name)) {
-			return 0;
-		}
-
-		$request = "SELECT command_id FROM command WHERE command_name LIKE '$command_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["command_id"];
-	}
-
-	/**
-	 *
-	 * Get Command name
-	 * @param unknown_type $command_id
-	 */
-	public function getCommandName($command_id = NULL) {
-		if (!isset($command_id)) {
-			return 0;
-		}
-
-		$request = "SELECT command_name FROM command WHERE command_id = '$command_id'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["command_name"];
+	public function getCommandID($command_name = NULL)
+	{
+	    $filters = array();
+        if (isset($parameters)) {
+            $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
+        }
+        $params = array('hc_id', 'hc_name', 'hc_alias');
+        $paramString = str_replace("hc_", "", implode($this->delim, $params));
+        echo $paramString . "\n";
+        $elements = $this->object->getList($params, -1, 0, null, null, $filters);
+        foreach ($elements as $tab) {
+            echo implode($this->delim, $tab) . "\n";
+        }
 	}
 
     /**
+     * Display all commands
      *
-     * Check parameters
-     * @param $options
+     * @param string $parameters
      */
-	private function checkParameters($options) {
-		if (!isset($options) || (isset($options) && $options == "")) {
-			print "No options defined.\n";
-			return 1;
-		}
+	public function show($parameters = null)
+	{
+	    $filters = array();
+        if (isset($parameters)) {
+            $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
+        }
+        $params = array('command_id', 'command_name', 'command_type', 'command_line');
+        $paramString = str_replace("command_", "", implode($this->delim, $params));
+        echo $paramString . "\n";
+        $elements = $this->object->getList($params, -1, 0, null, null, $filters);
+        foreach ($elements as $tab) {
+            $tab['command_line'] = CentreonUtils::convertSpecialPattern(html_entity_decode($tab['command_line']));
+            $tab['command_type'] = $this->typeConversion[$tab['command_type']];
+            echo implode($this->delim, $tab) . "\n";
+        }
 	}
 
 	/**
-	 *
-	 * Check the validity of the name format
-	 * @param unknown_type $name
-	 */
-	private function validateName($name) {
-		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches)) {
-			return $this->checkNameformat($name);
-		} else {
-			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);
-		}
-	}
-
-	/**
-	 *
-	 * Check the validity of the name format
-	 * @param unknown_type $name
-	 */
-	private function checkNameformat($name) {
-		if (strlen($name) > $this->maxLen) {
-			print "Warning: host name reduce to ".$this->maxLen." caracters.\n";
-		}
-		return sprintf("%.".$this->maxLen."s", $name);
-	}
-
-	/**
-	 *
-	 * Check return a defautl type of a command if the type is not defined.
-	 * @param unknown_type $information
-	 */
-	private function setDefaultType($information) {
-		if (!isset($information["command_type"]) || $information["command_type"] == "") {
-			$information["command_type"] = 2;
-		}
-		return $information;
-	}
-
-	/**
-	 *
-	 * Delete in DB the current command
-	 * @param unknown_type $name
-	 */
-	public function del($name) {
-
-		$check = $this->checkParameters($name);
-		if ($check) {
-			return $check;
-		}
-
-		$request = "DELETE FROM command WHERE command_name LIKE '".$this->encodeInHTML($name)."'";
-		$DBRESULT =& $this->DB->query($request);
-		$this->return_code = 0;
-		return 0;
-	}
-
-    /**
-     *
-     * display all commands
-     * @param $search
-     */
-	public function show($search = NULL) {
-		$searchStr = "";
-		if (isset($search) && $search != "") {
-			$searchStr = " WHERE command_name LIKE '%".$this->encodeInHTML($search)."%' ";
-		}
-
-		$request = "SELECT command_id, command_name, command_type, command_line FROM command $searchStr ORDER BY command_name";
-		$DBRESULT =& $this->DB->query($request);
-		$i = 0;
-		while ($data =& $DBRESULT->fetchRow()) {
-			if ($i == 0) {
-				print "id;name;type;line\n";
-			}
-			print html_entity_decode($data["command_id"]).";".html_entity_decode($this->decode($data["command_name"])).";".$this->type[html_entity_decode($data["command_type"])].";".html_entity_decode($this->decode($data["command_line"]))."\n";
-			$i++;
-		}
-		$DBRESULT->free();
-		return 0;
-	}
-
-    /**
-     *
-     * export all commands
-     */
-	public function export() {
-
-		$this->getTemplateGraph();
-
-		$request = "SELECT command_name, command_type, command_line, command_example, graph_id FROM command ORDER BY command_name";
-		$DBRESULT =& $this->DB->query($request);
-		$i = 0;
-		while ($data =& $DBRESULT->fetchRow()) {
-			print "CMD;ADD;".html_entity_decode($this->decode($data["command_name"])).";".$this->type[html_entity_decode($data["command_type"])].";".html_entity_decode($this->decode($data["command_line"])).";".html_entity_decode($this->decode($data["command_example"])).";".html_entity_decode($this->decode($this->graphTemplates['id'][$data["graph_id"]]))."\n";
-			$i++;
-		}
-		$DBRESULT->free();
-		return 0;
-	}
-
-	/**
-	 *
-	 * Get the full list of graph templates
-	 */
-	private function getTemplateGraph() {
-		$request = "SELECT name, graph_id FROM giv_graphs_template";
-		$DBRESULT =& $this->DB->query($request);
-		while ($data =& $DBRESULT->fetchRow()) {
-			$this->graphTemplates["id"][$data["graph_id"]] = $data['name'];
-			$this->graphTemplates["name"][$data["name"]] = $data['graph_id'];
-		}
-		$DBRESULT->free();
-		return 0;
-	}
-
-	/**
-	 *
 	 * Add a command
-	 * @param $options
+	 *
+	 * @param string $parameters
+	 * @throws CentreonClapiException
 	 */
-	public function add($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $options);
-		$info[0] = $this->validateName($info[0]);
-
-		if ($this->debug) {
-			print "INFO : ".$options."\n";
-		}
-
-		$this->getTemplateGraph();
-
-		if (!$this->commandExists($info[0])) {
-
-			$convertionTable = array(0 => "command_name", 1 => "command_type", 2 => "command_line", 3 => "command_example", 4 => "graph_template");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				if ($this->debug) {
-					print "VALUES : ".$key. "=>" . $value . "\n";
-				}
-
-				if ($key != 1) {
-					$informations[$convertionTable[$key]] = $value;
-				} else {
-					if (isset($this->type[$value])) {
-						$informations[$convertionTable[$key]] = $this->type[$value];
-					} else {
-						$informations[$convertionTable[$key]] = 2;
-					}
-				}
-			}
-			$ret = $this->addCommand($informations);
-			if ($ret) {
-				return 0;
-			} else {
-				return $ret;
-			}
-		} else {
-			print "Command ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return 1;
-		}
+	public function add($parameters)
+	{
+        $params = explode($this->delim, $parameters);
+        if (count($params) < $this->nbOfCompulsoryParams) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $addParams = array();
+        $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
+        if (!isset($this->typeConversion[$params[self::ORDER_TYPE]])) {
+            throw new CentreonClapiException(self::UNKNOWN_CMD_TYPE . ":" . $params[self::ORDER_TYPE]);
+        }
+        $addParams['command_type'] = is_numeric($params[self::ORDER_TYPE]) ? $params[self::ORDER_TYPE] : $this->typeConversion[$params[self::ORDER_TYPE]];
+        $addParams['command_line'] = $params[self::ORDER_COMMAND];
+        $this->params = array_merge($this->params, $addParams);
+        $this->checkParameters();
+        parent::add();
 	}
 
 	/**
-	 *
-	 * Add a command
-	 * @param unknown_type $information
-	 */
-	private function addCommand($information) {
-		if (!isset($information["command_name"])) {
-			return 0;
-		} else {
-			$information = $this->setDefaultType($information);
-
-			if (count($information) == 3) {
-				$information["command_name"] = $this->encode($information["command_name"]);
-				$information["command_line"] = $this->encode($information["command_line"]);
-
-				$request = 	"INSERT INTO command " .
-							"(command_name, command_line, command_type) VALUES " .
-							"('".$this->encodeInHTML($information["command_name"])."', '".$information["command_line"]."'" .
-							", '".$this->encodeInHTML($information["command_type"])."')";
-
-				$DBRESULT =& $this->DB->query($request);
-				$command_id = $this->getCommandID($information["command_name"]);
-			} else if (count($information) == 5) {
-				$information["command_name"] = $this->encode($information["command_name"]);
-				$information["command_line"] = $this->encode($information["command_line"]);
-				$information["command_example"] = $this->encode($information["command_example"]);
-				$information["graph_id"] = $this->encode($information["graph_template"]);
-
-				$request = 	"INSERT INTO command " .
-							"(command_name, command_line, command_type, command_example, graph_id) VALUES " .
-							"('".$this->encodeInHTML($information["command_name"])."', '".$information["command_line"]."'" .
-							", '".$this->encodeInHTML($information["command_type"])."', '".$this->encodeInHTML($information["command_example"])."'" .
-							", '".$this->encodeInHTML($this->graphTemplates['name'][$information["graph_template"]])."' )";
-				$DBRESULT =& $this->DB->query($request);
-				$command_id = $this->getCommandID($information["command_name"]);
-			}
-			return $command_id;
-		}
-	}
-
-	/**
-	 *
 	 * Set parameters
-	 * @param $options
+	 *
+	 * @param string $parameters
+	 * @throws CentreonClapiException
 	 */
-	public function setParam($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $options);
-		if ($this->commandExists($info[0])) {
-			if ($info[1] != "template" && $info[1] != "type") {
-				$request = "UPDATE command SET command_".$info[1]." = '".$info[2]."' WHERE command_name LIKE '".$info[0]."'";
-				$DBRESULT =& $this->DB->query($request);
-				return 0;
-			} else if ($info[1] == "type") {
-				$request = "UPDATE command SET command_".$info[1]." = '".$this->type[$info[2]]."' WHERE command_name LIKE '".$info[0]."'";
-				$DBRESULT =& $this->DB->query($request);
-				return 0;
-			} else {
-				$request = "UPDATE command SET graph_id = (SELECT graph_id FROM giv_graphs_template WHERE name LIKE '".$this->encodeInHTML($info[2])."') WHERE command_name = '".$this->encodeInHTML($info[0])."'";
-				$DBRESULT =& $this->DB->query($request);
-				return 0;
-			}
-		} else {
-			print "Command '".$info[0]."' doesn't exists.\n";
-			return 1;
-		}
+	public function setparam($parameters)
+	{
+	    $params = explode($this->delim, $parameters);
+        if (count($params) < self::NB_UPDATE_PARAMS) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            if (!preg_match("/^command_/", $params[1])) {
+                if ($params[1] != "graph") {
+                    $params[1] = "command_".$params[1];
+                } else {
+                    $params[1] = "graph_id";
+                }
+            }
+            if ($params[1] == "command_type") {
+                if (!isset($this->typeConversion[$params[2]])) {
+                    throw new CentreonClapiException(self::UNKNOWN_CMD_TYPE . ":" . $params[2]);
+                }
+                if (!is_numeric($params[2])) {
+                    $params[2] = $this->typeConversion[$params[2]];
+                }
+            } elseif ($params[1] == "graph_id") {
+                $graphObject = new Centreon_Object_Graph_Template();
+                $tmp = $graphObject->getIdByParameter($graphObject->getUniqueLabelField(), $params[2]);
+                if (!count($tmp)) {
+                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $params[2]);
+                }
+                $params[2] = $tmp[0];
+            }
+            $updateParams = array($params[1] => $params[2]);
+            parent::setparam($objectId, $updateParams);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
 	}
 }
 ?>
