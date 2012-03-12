@@ -69,28 +69,6 @@ class CentreonCommand extends CentreonObject
 		$this->typeConversion = array("notif" => 1, "check" => 2, "misc" => 3, 1 => "notif", 2 => "check", 3 => "misc");
 	}
 
-	/**
-	 *
-	 * Get command id
-	 *
-	 * @param unknown_type $command_name
-	 * @todo gotta remove this, but it is called in CentreonContact, fix it first
-	 */
-	public function getCommandID($command_name = NULL)
-	{
-	    $filters = array();
-        if (isset($parameters)) {
-            $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
-        }
-        $params = array('hc_id', 'hc_name', 'hc_alias');
-        $paramString = str_replace("hc_", "", implode($this->delim, $params));
-        echo $paramString . "\n";
-        $elements = $this->object->getList($params, -1, 0, null, null, $filters);
-        foreach ($elements as $tab) {
-            echo implode($this->delim, $tab) . "\n";
-        }
-	}
-
     /**
      * Display all commands
      *

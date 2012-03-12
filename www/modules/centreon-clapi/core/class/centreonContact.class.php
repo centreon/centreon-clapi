@@ -39,8 +39,8 @@
 require_once "centreonObject.class.php";
 require_once "centreonUtils.class.php";
 require_once "centreonTimePeriod.class.php";
-require_once "centreonCommand.class.php";
 require_once "Centreon/Object/Contact/Contact.php";
+require_once "Centreon/Object/Command/Command.php";
 require_once "Centreon/Object/Relation/Contact/Command/Host.php";
 require_once "Centreon/Object/Relation/Contact/Command/Service.php";
 
@@ -66,12 +66,6 @@ class CentreonContact extends CentreonObject
     const UNKNOWN_LOCALE   = "Invalid locale";
     protected $register;
 
-    /**
-     *
-     * @var CentreonCommand
-     */
-	protected $cmdObject;
-
 	/**
 	 *
 	 * @var CentreonTimePeriod
@@ -87,7 +81,6 @@ class CentreonContact extends CentreonObject
 	public function __construct($db)
 	{
         parent::__construct();
-	    $this->cmdObject = new CentreonCommand($db);
 		$this->tpObject = new CentreonTimePeriod();
 		$this->object = new Centreon_Object_Contact();
         $this->params = array('contact_host_notification_options'     => 'n',
@@ -292,9 +285,11 @@ class CentreonContact extends CentreonObject
     {
         $cmds = explode("|", $commands);
         $cmdIds = array();
+        $cmdObject = new Centreon_Object_Command();
         foreach ($cmds as $commandName) {
-            if (($cmdId = $this->cmdObject->getCommandID($commandName))) {
-                $cmdIds[] = $cmdId;
+            $tmp = $cmdObject->getIdByParameter($cmdObject->getUniqueLabelField(), $commandName);
+            if (count($tmp)) {
+                $cmdIds[] = $tmp[0];
             } else {
                 throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$commandName);
             }
