@@ -90,7 +90,10 @@ class CentreonContact extends CentreonObject
                               'contact_type_msg'                      => 'txt',
                               'contact_activate'			          => '1',
         					  'contact_register'                      => '1');
-        $this->nbOfCompulsoryParams = 8;
+        $this->insertParams = array('contact_name', 'contact_alias', 'contact_email', 'contact_pager', 'contact_oreon', 'contact_admin', 'contact_activate');
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), "contact_template_id"));
+        $this->action = "CONTACT";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->register = 1;
         $this->activateField = 'contact_activate';
 	}
@@ -172,7 +175,7 @@ class CentreonContact extends CentreonObject
             $parameters = str_replace(" ", "_", $parameters);
             $filters[$this->object->getUniqueLabelField()] = "%".$parameters."%";
         }
-        $params = array('contact_name', 'contact_alias', 'contact_email', 'contact_pager', 'contact_oreon', 'contact_admin', 'contact_activate');
+        $params = array('contact_id', 'contact_name', 'contact_alias', 'contact_email', 'contact_pager', 'contact_oreon', 'contact_admin', 'contact_activate');
         $paramString = str_replace("contact_", "", implode($this->delim, $params));
         $paramString = str_replace("oreon", "gui access", $paramString);
         echo $paramString . "\n";
@@ -305,50 +308,63 @@ class CentreonContact extends CentreonObject
         }
     }
 
+    /**
+     * Export notification commands
+     *
+     * @param string $objType
+     * @param int $contactId
+     * @param string $contactName
+     * @return void
+     */
+    private function exportNotifCommands($objType, $contactId, $contactName)
+    {
+        $commandObj = new Centreon_Object_Command();
+        if ($objType == self::HOST_NOTIF_CMD) {
+            $obj = new Centreon_Object_Relation_Contact_Command_Host();
+        } else {
+            $obj = new Centreon_Object_Relation_Contact_Command_Service();
+        }
+
+        $cmds = $obj->getMergedParameters(array(), array($commandObj->getUniqueLabelField()), -1, 0, null, null, array($this->object->getPrimaryKey() => $contactId), "AND");
+        $str = "";
+        foreach ($cmds as $element) {
+            if ($str != "") {
+                $str .= "|";
+            }
+            $str .= $element[$commandObj->getUniqueLabelField()];
+        }
+        if ($str) {
+            echo $this->action.$this->delim."setparam".$this->delim.$contactName.$this->delim.$objType.$this->delim.$str."\n";
+        }
+    }
+
 	/**
+	 * Export data
 	 *
-	 * Export all contacts
+	 * @param string $parameters
+	 * @return void
 	 */
 	public function export()
 	{
-		$request = "SELECT contact_id, contact_name, contact_activate, contact_alias, contact_email, contact_passwd, contact_admin, contact_oreon, contact_lang, contact_auth_type, contact_host_notification_options, contact_service_notification_options, timeperiod_tp_id, timeperiod_tp_id2 FROM contact ORDER BY contact_name";
-		$DBRESULT =& $this->DB->query($request);
-		while ($data =& $DBRESULT->fetchRow()) {
-			print "CONTACT;ADD;".html_entity_decode($data["contact_name"]).";".html_entity_decode($data["contact_alias"]).";".html_entity_decode($data["contact_email"]).";{MD5}".html_entity_decode($data["contact_passwd"]).";".html_entity_decode($data["contact_admin"]).";".html_entity_decode($data["contact_oreon"]).";".html_entity_decode($data["contact_lang"]).";".html_entity_decode($data["contact_auth_type"])."\n";
-
-			if (isset($data["timeperiod_tp_id"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";hostnotifperiod;".html_entity_decode($this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id"]))."\n";
-			if (isset($data["timeperiod_tp_id2"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";servicenotifperiod;".html_entity_decode($this->_timeperiod->getTimeperiodName($data["timeperiod_tp_id2"]))."\n";
-			if (isset($data["contact_host_notification_options"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";hostnotifopt;".html_entity_decode($data["contact_host_notification_options"])."\n";
-			if (isset($data["contact_host_notification_options"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";servicenotifopt;".html_entity_decode($data["contact_host_notification_options"])."\n";
-
-			if (isset($data["contact_activate"]))
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";enable;".html_entity_decode($data["contact_activate"])."\n";
-
-			/*
-			 * Host Command
-			 */
-			$request2 = "SELECT command_command_id FROM contact_hostcommands_relation WHERE contact_contact_id = '".$data["contact_id"]."'";
-			$DBRESULT2 =& $this->DB->query($request2);
-			while ($dataCMD =& $DBRESULT2->fetchRow()) {
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";hostnotifcmd;".html_entity_decode($this->_cmd->getCommandName($dataCMD["command_command_id"]))."\n";
-			}
-			$DBRESULT2->free();
-			/*
-			 * Service Command
-			 */
-			$request2 = "SELECT command_command_id FROM contact_servicecommands_relation WHERE contact_contact_id = '".$data["contact_id"]."'";
-			$DBRESULT2 =& $this->DB->query($request2);
-			while ($dataCMD =& $DBRESULT2->fetchRow()) {
-				print "CONTACT;SETPARAM;".html_entity_decode($data["contact_name"]).";servicenotifcmd;".html_entity_decode($this->_cmd->getCommandName($dataCMD["command_command_id"]))."\n";
-			}
-			$DBRESULT2->free();
-
-		}
-		$DBRESULT->free();
-		return 0;
+	    $elements = $this->object->getList("*", -1, 0);
+        foreach ($elements as $element) {
+            $addStr = $this->action.$this->delim."ADD";
+            foreach ($this->insertParams as $param) {
+                $addStr .= $this->delim.$element[$param];
+            }
+            $addStr .= "\n";
+            echo $addStr;
+            foreach ($element as $parameter => $value) {
+                if (!in_array($parameter, $this->exportExcludedParams)) {
+                    if ($parameter == "timeperiod_tp_id" || $parameter == "timeperiod_tp_id2") {
+                        $value = $this->tpObject->getObjectName($value);
+                    }
+                    echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$parameter.$this->delim.$value."\n";
+                }
+            }
+            $objId = $element[$this->object->getPrimaryKey()];
+            $this->exportNotifCommands(self::HOST_NOTIF_CMD, $objId, $element[$this->object->getUniqueLabelField()]);
+            $this->exportNotifCommands(self::SVC_NOTIF_CMD, $objId, $element[$this->object->getUniqueLabelField()]);
+        }
 	}
 }

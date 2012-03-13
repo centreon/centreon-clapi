@@ -46,13 +46,60 @@ abstract class CentreonObject
     const UNKNOWN_METHOD = "Method not implemented into Centreon API";
     const NAMEALREADYINUSE = "Name is already in use";
     const NB_UPDATE_PARAMS = 3;
+    /**
+     * Db adapter
+     *
+     * @var Zend_Db_Adapter
+     */
     protected $db;
+    /**
+     * Version of Centreon
+     *
+     * @var string
+     */
     protected $version;
+    /**
+     * Centreon Configuration object type
+     *
+     * @var Centreon_Object
+     */
     protected $object;
+    /**
+     * Default params
+     *
+     * @var array
+     */
     protected $params;
+    /**
+     * Number of compulsory parameters when adding a new object
+     *
+     * @var int
+     */
     protected $nbOfCompulsoryParams;
+    /**
+     * Delimiter
+     *
+     * @var string
+     */
     protected $delim;
+    /**
+     * Table column used for activating and deactivating object
+     *
+     * @var string
+     */
     protected $activateField;
+    /**
+     * Export : Table columns that are used for 'add' action
+     *
+     * @var array
+     */
+    protected $insertParams;
+    /**
+     * Export : Table columns which will not be exported for 'setparam' action
+     *
+     * @var array
+     */
+    protected $exportExcludedParams;
 
     /**
      * Constructor
@@ -67,7 +114,7 @@ abstract class CentreonObject
         $this->version = $row['value'];
         $this->params = array();
         $this->insertParams = array();
-        $this->exportParams = array();
+        $this->exportExcludedParams = array();
         $this->action = "";
         $this->delim = ";";
     }

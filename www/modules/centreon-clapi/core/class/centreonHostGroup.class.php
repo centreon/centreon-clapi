@@ -141,32 +141,6 @@ class CentreonHostGroup extends CentreonObject
     }
 
     /**
-     * Export all HG
-     *
-     * @param unknown_type $search
-     */
-    public function export() {
-
-        $request = "SELECT hg_id, hg_name, hg_alias FROM hostgroup ORDER BY hg_name";
-        $DBRESULT =& $this->DB->query($request);
-        $i = 0;
-        while ($data =& $DBRESULT->fetchRow()) {
-            print "HG;ADD;".html_entity_decode($data["hg_name"]).";".html_entity_decode($data["hg_alias"])."\n";
-            $members = "";
-            /**
-             $request = "SELECT host_name FROM host, hostgroup_relation WHERE hostgroup_hg_id = '".$data["hg_id"]."' AND host_host_id = host_id ORDER BY host_name";
-             $DBRESULT2 =& $this->DB->query($request);
-             while ($m =& $DBRESULT2->fetchRow()) {
-             print "HG;ADDCHILD;".html_entity_decode($data["hg_name"]).";".html_entity_decode($m["host_name"])."\n";
-             }
-             $DBRESULT2->free();
-             */
-            $i++;
-        }
-        $DBRESULT->free();
-    }
-
-    /**
      * Magic method
      *
      * @param string $name

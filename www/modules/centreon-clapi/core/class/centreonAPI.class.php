@@ -496,15 +496,16 @@ class CentreonAPI {
 	public function export() {
 		$this->initAllObjects();
 		$this->objectTable['CMD']->export();
+		$this->objectTable['TP']->export();
 		$this->objectTable['CONTACT']->export();
-		$this->objectTable['CG']->export();
+		/*$this->objectTable['CG']->export();
 		$this->objectTable['HG']->export();
 		$this->objectTable['HTPL']->export();
 		$this->objectTable['HOST']->export();
 		$this->objectTable['STPL']->export();
 		$this->objectTable['SERVICE']->export();
 		$this->objectTable['SG']->export();
-		$this->objectTable['SC']->export();
+		$this->objectTable['SC']->export();*/
 	}
 
 	/**
@@ -535,10 +536,10 @@ class CentreonAPI {
 		$this->iniObject('CG');
 		$this->iniObject('HTPL');
 		$this->iniObject('STPL');
-		$this->initObject('INSTANCE');
-		$this->initObject('NAGIOSCFG');
-		$this->initObject('NDO2DBCFG');
-		$this->initObject('NDOMODCFG');
+		/*$this->iniObject('INSTANCE');
+		$this->iniObject('NAGIOSCFG');
+		$this->iniObject('NDO2DBCFG');
+		$this->iniObject('NDOMODCFG');*/
 	}
 
 	/**
