@@ -36,397 +36,238 @@
  *
  */
 
-class CentreonServiceGroup {
-	private $DB;
-	private $access;
+require_once "centreonObject.class.php";
+require_once "centreonACL.class.php";
+require_once "Centreon/Object/Service/Group.php";
+require_once "Centreon/Object/Relation/Host/Service.php";
+require_once "Centreon/Object/Relation/Host/Group/Service/Service.php";
+require_once "Centreon/Object/Relation/Service/Group/Service.php";
+require_once "Centreon/Object/Relation/Service/Group/Host/Group/Service.php";
 
-	protected $version;
+/**
+ * Class for managing Service groups
+ *
+ * @author sylvestre
+ */
+class CentreonServiceGroup extends CentreonObject
+{
+	const ORDER_UNIQUENAME        = 0;
+    const ORDER_ALIAS             = 1;
 
-	public function __construct($DB) {
-		$this->DB = $DB;
-
-		/**
-		 * Enable Access Object
-		 */
-		$this->access = new CentreonACLResources($this->DB);
-
+	/**
+	 * Constructor
+	 *
+	 * @return void
+	 */
+    public function __construct()
+	{
+        parent::__construct();
+        $this->object = new Centreon_Object_Service_Group();
+        $this->params = array('sg_activate' => '1');
+        $this->nbOfCompulsoryParams = 2;
+        $this->activateField = "sg_activate";
 	}
 
 	/**
+	 * Display service groups
 	 *
-	 * Get Version of Centreon
+	 * @param string $parameters
 	 */
-	protected function getVersion() {
-		$request = "SELECT * FROM informations";
-		$DBRESULT = $this->DB->query($request);
-		$info = $DBRESULT->fetchRow();
-		return $info["value"];
+	public function show($parameters = null)
+	{
+    	$filters = array();
+        if (isset($parameters)) {
+            $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
+        }
+        $params = array('sg_id', 'sg_name', 'sg_alias');
+        $paramString = str_replace("sg_", "", implode($this->delim, $params));
+        echo $paramString . "\n";
+        $elements = $this->object->getList($params, -1, 0, null, null, $filters);
+        foreach ($elements as $tab) {
+            echo implode($this->delim, $tab) . "\n";
+        }
 	}
 
 	/**
+	 * Add service group
 	 *
-	 * encode with htmlentities a string
-	 * @param unknown_type $string
+	 * @param string $parameters
 	 */
-	protected function encodeInHTML($string) {
-	    if (!strncmp($this->version, "2.1", 3)) {
-            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
-	    }
-	    return $string;
+	public function add($parameters)
+	{
+        $params = explode($this->delim, $parameters);
+        if (count($params) < $this->nbOfCompulsoryParams) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $addParams = array();
+        $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
+        $addParams['sg_alias'] = $params[self::ORDER_ALIAS];
+        $this->params = array_merge($this->params, $addParams);
+        $this->checkParameters();
+        parent::add();
 	}
 
-	/*
-	 * Check host existance
+
+	/**
+	 * Set parameters
+	 *
+	 * @param string $parameteres
+	 * @throws CentreonClapiException
 	 */
-	protected function serviceGroupExists($name) {
-		if (!isset($name))
-			return 0;
-
-		/*
-		 * Get informations
-		 */
-		$DBRESULT =& $this->DB->query("SELECT sg_name, sg_id FROM servicegroup WHERE sg_name = '".$this->encodeInHTML($name)."'");
-		if ($DBRESULT->numRows() >= 1) {
-			$sg =& $DBRESULT->fetchRow();
-			$DBRESULT->free();
-			return $sg["sg_id"];
-		} else {
-			return 0;
-		}
+	public function setparam($parameters)
+	{
+	    $params = explode($this->delim, $parameters);
+        if (count($params) < self::NB_UPDATE_PARAMS) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            if (!preg_match("/^sg_/", $params[1])) {
+                $params[1] = "sg_".$params[1];
+            }
+            $updateParams = array($params[1] => $params[2]);
+            parent::setparam($objectId, $updateParams);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
 	}
 
-	protected function checkParameters($options) {
-		if (!isset($options) || $options == "") {
-			print "No options defined.\n";
-			$this->return_code = 1;
-			return 1;
-		}
-	}
-
-	protected function validateName($name) {
-		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
-			return $this->checkNameformat($name);
-		} else {
-			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);
-		}
-	}
-
-	protected function checkNameformat($name) {
-		if (strlen($name) > 40) {
-			print "Warning: host name reduce to 40 caracters.\n";
-		}
-		return sprintf("%.40s", $name);
-	}
-
-	public function getServiceGroupID($sg_name = NULL) {
-		if (!isset($sg_name))
-			return;
-
-		$request = "SELECT sg_id FROM servicegroup WHERE sg_name LIKE '$sg_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["sg_id"];
-	}
-
-	/* ****************************************
-	 *  Delete Action
+	/**
+	 * Magic method for get/set/add/del relations
+	 *
+	 * @param string $name
+	 * @param array $arg
+	 * @throws CentreonClapiException
 	 */
-
-	public function del($name) {
-		$request = "DELETE FROM servicegroup WHERE sg_name LIKE '".$this->encodeInHTML($name)."'";
-		$DBRESULT =& $this->DB->query($request);
-
-		/**
-		 * Update ACL
-		 */
-		$this->access->updateACL();
-
-		return 0;
-	}
-
-	/** ****************************************
-	 * Dislay all SG
-	 */
-	public function show($search = NULL) {
-		/*
-		 * Set Search
-		 */
-		$searchStr = "";
-		if (isset($search) && $search != "") {
-			$searchStr = " WHERE sg_name LIKE '%".$this->encodeInHTML($search)."%'";
-		}
-
-
-		/*
-		 * Get Child informations
-		 */
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-		$host = new CentreonHost();
-		$svc = new CentreonService();
-
-		$request = "SELECT sg_id, sg_name, sg_alias FROM servicegroup $searchStr ORDER BY sg_name";
-		$DBRESULT =& $this->DB->query($request);
-		$i = 0;
-		while ($data =& $DBRESULT->fetchRow()) {
-			if ($i == 0) {
-				print "Name;Alias;Members\n";
-			}
-			print html_entity_decode($data["sg_name"]).";".html_entity_decode($data["sg_alias"]).";";
-
-			/*
-			 * Get Childs informations
-			 */
-			$request = "SELECT host_host_id, service_service_id FROM servicegroup_relation WHERE servicegroup_sg_id = '".$data["sg_id"]."'";
-			$DBRESULT2 =& $this->DB->query($request);
-			$i2 = 0;
-			while ($m =& $DBRESULT2->fetchRow()) {
-				if ($i2) {
-					print ",";
-				}
-				print $host->getObjectName($m["host_host_id"]).",".$svc->getObjectName($m["service_service_id"]);
-				$i2++;
-			}
-			$DBRESULT2->free();
-			print "\n";
-			$i++;
-		}
-		$DBRESULT->free();
-
-	}
-
-	/** ****************************************
-	 * Export all SG
-	 */
-	public function export() {
-
-		/*
-		 * Get Child informations
-		 */
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-		$host = new CentreonHost($this->DB, "HOST");
-		$svc = new CentreonService($this->DB, "SERVICE");
-
-		$request = "SELECT sg_id, sg_name, sg_alias FROM servicegroup ORDER BY sg_name";
-		$DBRESULT =& $this->DB->query($request);
-		while ($data =& $DBRESULT->fetchRow()) {
-			print "SG;ADD;".html_entity_decode($data["sg_name"]).";".html_entity_decode($data["sg_alias"])."\n";
-
-			/*
-			 * Get Childs informations
-			 */
-			$request = "SELECT host_host_id, service_service_id FROM servicegroup_relation WHERE servicegroup_sg_id = '".$data["sg_id"]."'";
-			$DBRESULT2 =& $this->DB->query($request);
-			while ($m =& $DBRESULT2->fetchRow()) {
-				print "SG;ADDCHILD;".html_entity_decode($data["sg_name"]).";".$host->getHostName($m["host_host_id"]).";".$svc->getServiceName($m["service_service_id"], 1)."\n";
-			}
-			$DBRESULT2->free();
-		}
-		$DBRESULT->free();
-
-	}
-
-	/* ****************************************
-	 * Add Action
-	 */
-
-	public function add($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $options);
-
-		$info[0] = $this->validateName($info[0]);
-
-		if (!$this->serviceGroupExists($info[0])) {
-			$convertionTable = array(0 => "sg_name", 1 => "sg_alias");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}
-			$this->addServiceGroup($informations);
-		} else {
-			print "Servicegroup ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return;
-		}
-	}
-
-	protected function addServiceGroup($information) {
-		if (!isset($information["sg_name"])) {
-			return 0;
-		} else {
-			if (!isset($information["sg_alias"]) || $information["sg_alias"] == "") {
-				$information["sg_alias"] = $information["sg_name"];
-			}
-
-			$request = "INSERT INTO servicegroup (sg_name, sg_alias, sg_activate) VALUES ('".$this->encodeInHTML($information["sg_name"])."', '".$this->encodeInHTML($information["sg_alias"])."', '1')";
-			$DBRESULT =& $this->DB->query($request);
-
-			$sg_id = $this->getServiceGroupID($information["sg_name"]);
-
-			/**
-			 * Update ACL
-			 */
-			$this->access->updateACL();
-
-			return $sg_id;
-		}
-	}
-
-	/* ****************************************
-	 * Add Action
-	 */
-
-	public function setParam($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		return $this->setParamServiceGroup($elem[0], $elem[1], $elem[2]);
-	}
-
-	protected function setParamServiceGroup($sg_name, $parameter, $value) {
-
-		$value = $this->encodeInHTML($value);
-
-		if ($parameter != "name" && $parameter != "alias" && $parameter != "comment") {
-			print "Unknown parameters.\n";
-			return 1;
-		}
-
-		$sg_id = $this->getServiceGroupID($sg_name);
-		if ($sg_id) {
-			$request = "UPDATE servicegroup SET sg_$parameter = '$value' WHERE sg_id = '$sg_id'";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Service group doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
-
-	/* **************************************
-	 * Add childs
-	 */
-
-	public function addChild($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		if (!isset($elem[2])) {
-			$elem[2] = "";
-		}
-		return $this->addChildServiceGroup($elem[0], $elem[1], $elem[2]);
-	}
-
-	protected function addChildServiceGroup($sg_name, $child_host, $child_service) {
-
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-
-		/*
-		 * Get host Child informations
-		 */
-		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID($this->encodeInHTML($child_host));
-
-		/*
-		 * Get service Child information
-		 */
-		$service = new CentreonService($this->DB, "SERVICE");
-		$service_id = $service->getServiceID($host_id, $this->encodeInHTML($child_service));
-
-		/*
-		 * Add link.
-		 */
-		$sg_id = $this->getServiceGroupID($sg_name);
-		if ($sg_id && $host_id && $service_id) {
-			$request = "DELETE FROM servicegroup_relation WHERE host_host_id = '$host_id' AND service_service_id = '$service_id' AND servicegroup_sg_id = '$sg_id'";
-			$DBRESULT =& $this->DB->query($request);
-			$request = "INSERT INTO servicegroup_relation (host_host_id, service_service_id, servicegroup_sg_id) VALUES ('$host_id', '$service_id', '$sg_id')";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT) {
-				/**
-				 * Update ACL
-				 */
-				$this->access->updateACL();
-
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Servicegroup or host doesn't exists. Please check your arguments\n";
-			return 1;
-		}
-	}
-
-	/* **************************************
-	 * Add childs
-	 */
-
-	public function delChild($options) {
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$elem = split(";", $options);
-		return $this->delChildServiceGroup($elem[0], $elem[1], $elem[2]);
-	}
-
-	protected function delChildServiceGroup($sg_name, $child_host, $child_service) {
-
-		require_once "./class/centreonHost.class.php";
-		require_once "./class/centreonService.class.php";
-
-		/*
-		 * Get host Child informations
-		 */
-		$host = new CentreonHost($this->DB, "HOST");
-		$host_id = $host->getHostID($this->encodeInHTML($child_host));
-
-		/*
-		 * Get service Child information
-		 */
-		$service = new CentreonService($this->DB, "SERVICE");
-		$service_id = $service->getServiceID($host_id, $this->encodeInHTML($child_service));
-
-		/*
-		 * Add link.
-		 */
-		$sg_id = $this->getServiceGroupID($sg_name);
-		if ($sg_id && $host_id && $service_id) {
-			$request = "DELETE FROM servicegroup_relation WHERE host_host_id = '$host_id' AND service_service_id = '$service_id' AND servicegroup_sg_id = '$sg_id'";
-			$DBRESULT =& $this->DB->query($request);
-				/**
-				 * Update ACL
-				 */
-				$this->access->updateACL();
-
-				if ($DBRESULT) {
-				return 0;
-			} else {
-				return 1;
-			}
-		} else {
-			print "Servicegroup or host doesn't exists. Please check your arguments\n";
-			return 1;
-		}
+	public function __call($name, $arg)
+	{
+	    $name = strtolower($name);
+        if (!isset($arg[0])) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $args = explode($this->delim, $arg[0]);
+        $sgIds = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($args[0]));
+        if (!count($sgIds)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND .":".$args[0]);
+        }
+        $sgId = $sgIds[0];
+        if (preg_match("/^(get|add|del|set)(service|hostgroupservice)\$/", $name, $matches)) {
+            if ($matches[2] == "service") {
+                $relobj = new Centreon_Object_Relation_Service_Group_Service();
+                $obj = new Centreon_Object_Relation_Host_Service();
+                $existingRelationIds = $relobj->getHostIdServiceIdFromServicegroupId($sgId);
+                $hstring = "host_id";
+            } else {
+                $relobj = new Centreon_Object_Relation_Service_Group_Host_Group_Service();
+                $obj = new Centreon_Object_Relation_Host_Group_Service();
+                $existingRelationIds = $relobj->getHostGroupIdServiceIdFromServicegroupId($sgId);
+                $hstring = "hostgroup_id";
+            }
+            if ($matches[1] == "get") {
+                if ($matches[2] == "service") {
+                    echo "host id".$this->delim."host name".$this->delim."service id".$this->delim."service description\n";
+                } elseif ($matches[2] == "hostgroupservice") {
+                    echo "hostgroup id".$this->delim."hostgroup name".$this->delim."service id".$this->delim."service description\n";
+                }
+                foreach($existingRelationIds as $val) {
+                    if ($matches[2] == "service") {
+                        $elements = $obj->getMergedParameters(array('host_name', 'host_id'),
+                                                              array('service_description', 'service_id'),
+                                                              -1,
+                                                              0,
+                                                              "host_name,service_description",
+                                                              "ASC",
+                                                              array("service_id" => $val['service_id'],
+                                                                    "host_id"    => $val['host_id']), "AND");
+                        if (isset($elements[0])) {
+                            echo $elements[0]['host_id'] . $this->delim . $elements[0]['host_name'] . $this->delim . $elements[0]['service_id'] . $this->delim . $elements[0]['service_description'] . "\n";
+                        }
+                    } else {
+                        $elements = $obj->getMergedParameters(array('hg_name', 'hg_id'),
+                                                              array('service_description', 'service_id'),
+                                                              -1,
+                                                              0,
+                                                              "hg_name,service_description",
+                                                              "ASC",
+                                                              array("service_id" => $val['service_id'],
+                                                                    "hg_id"    => $val['hostgroup_id']), "AND");
+                        if (isset($elements[0])) {
+                            echo $elements[0]['hg_id'] . $this->delim . $elements[0]['hg_name'] . $this->delim . $elements[0]['service_id'] . $this->delim . $elements[0]['service_description'] . "\n";
+                        }
+                    }
+                }
+            } else {
+                if (!isset($args[1])) {
+                    throw new CentreonClapiException(self::MISSINGPARAMETER);
+                }
+                $relation = $args[1];
+                $relations = explode("|", $relation);
+                $relationTable = array();
+                $i = 0;
+                foreach($relations as $rel) {
+                    $tmp = explode(",", $rel);
+                    if (count($tmp) < 2) {
+                        throw new CentreonClapiException(self::MISSINGPARAMETER);
+                    }
+                    if ($matches[2] == "service") {
+                        $elements = $obj->getMergedParameters(array('host_id'),
+                                                              array('service_id'),
+                                                              -1,
+                                                              0,
+                                                              null,
+                                                              null,
+                                                              array("host_name"              => $tmp[0],
+                                                                    "service_description"    => $tmp[1]), "AND");
+                        if (!count($elements)) {
+                            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":". $tmp[0]."/".$tmp[1]);
+                        }
+                        $relationTable[$i]['host_id'] = $elements[0]['host_id'];
+                        $relationTable[$i]['service_id'] = $elements[0]['service_id'];
+                    } elseif ($matches[2] == "hostgroupservice") {
+                        $elements = $obj->getMergedParameters(array('hg_id'),
+                                                              array('service_id'),
+                                                              -1,
+                                                              0,
+                                                              null,
+                                                              null,
+                                                              array("hg_name"                => $tmp[0],
+                                                                    "service_description"    => $tmp[1]), "AND");
+                        if (!count($elements)) {
+                            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":". $tmp[0]."/".$tmp[1]);
+                        }
+                        $relationTable[$i]['hostgroup_id'] = $elements[0]['hg_id'];
+                        $relationTable[$i]['service_id'] = $elements[0]['service_id'];
+                    }
+                    $i++;
+                }
+                if ($matches[1] == "set") {
+                    foreach ($existingRelationIds as $key => $existrel) {
+                        $relobj->delete($sgId, $existrel[$hstring], $existrel['service_id']);
+                        unset($existingRelationIds[$key]);
+                    }
+                }
+                foreach($relationTable as $relation) {
+                    if ($matches[1] == "del") {
+                        $relobj->delete($sgId, $relation[$hstring], $relation['service_id']);
+                    } elseif ($matches[1] == "add" || $matches[1] == "set") {
+                        $insert = true;
+                        foreach ($existingRelationIds as $existrel) {
+                            if (($existrel[$hstring] == $relation[$hstring]) &&
+                                 $existrel['service_id'] == $relation['service_id']) {
+                                $insert = false;
+                                break;
+                            }
+                        }
+                        if ($insert == true) {
+                            $relobj->insert($sgId, $relation[$hstring], $relation['service_id']);
+                        }
+                    }
+                }
+                $acl = new CentreonACL();
+                $acl->reload(true);
+            }
+        } else {
+            throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
 	}
 }
 ?>
