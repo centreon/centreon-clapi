@@ -192,7 +192,7 @@ class CentreonContact extends CentreonObject
 	{
         $params = explode($this->delim, $parameters);
         if (count($params) < $this->nbOfCompulsoryParams) {
-            throw new Exception(self::MISSINGPARAMETER);
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         $addParams = array();
         $params[self::ORDER_UNIQUENAME] = str_replace(" ", "_", $params[self::ORDER_UNIQUENAME]);
@@ -269,7 +269,7 @@ class CentreonContact extends CentreonObject
                 parent::setparam($objectId, $updateParams);
             }
         } else {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
         }
     }
 

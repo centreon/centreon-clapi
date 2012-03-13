@@ -153,7 +153,7 @@ class CentreonACLResource extends CentreonObject
             $updateParams = array($params[1] => $params[2]);
             parent::setparam($objectId, $updateParams);
         } else {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
         }
     }
 
@@ -197,7 +197,7 @@ class CentreonACLResource extends CentreonObject
         }
         $aclResId = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($aclResName));
         if (!count($aclResId)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$aclResName);
         }
         $groupIds = $this->relObject->getacl_group_idFromacl_res_id($aclResId[0]);
         echo "id;name" . "\n";
@@ -225,7 +225,7 @@ class CentreonACLResource extends CentreonObject
         }
         $aclResId = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($params[0]));
         if (!count($aclResId)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]);
         }
         $resources = explode("|", $params[1]);
         $resourceIds = array();
@@ -272,7 +272,7 @@ class CentreonACLResource extends CentreonObject
             if ($resource != "*") {
                 $ids = $this->resourceTypeObject->getIdByParameter($this->resourceTypeObject->getUniqueLabelField(), array($resource));
                 if (!count($ids)) {
-                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$resource);
                 }
                 $resourceIds[] = $ids[0];
             } else {

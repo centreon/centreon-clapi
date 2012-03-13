@@ -108,7 +108,7 @@ class CentreonTimePeriod extends CentreonObject
     {
         $params = explode($this->delim, $parameters);
         if (count($params) < $this->nbOfCompulsoryParams) {
-            throw new Exception(self::MISSINGPARAMETER);
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         $addParams = array();
         $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
@@ -141,7 +141,7 @@ class CentreonTimePeriod extends CentreonObject
                 parent::setparam($objectId, $updateParams);
             }
         } else {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
         }
     }
 

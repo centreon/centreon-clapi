@@ -145,7 +145,7 @@ class CentreonACLAction extends CentreonObject
             $updateParams = array($params[1] => $params[2]);
             parent::setparam($objectId, $updateParams);
         } else {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
         }
     }
 
@@ -189,7 +189,7 @@ class CentreonACLAction extends CentreonObject
         }
         $aclActionId = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($params[0]));
         if (!count($aclActionId)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]);
         }
         return array($aclActionId[0], $params[1]);
     }
@@ -207,7 +207,7 @@ class CentreonACLAction extends CentreonObject
         }
         $aclActionId = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($aclActionName));
         if (!count($aclActionId)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$aclActionName);
         }
         $groupIds = $this->relObject->getacl_group_idFromacl_action_id($aclActionId[0]);
         echo "id;name" . "\n";

@@ -158,7 +158,7 @@ class CentreonHost extends CentreonObject
 	{
         $params = explode($this->delim, $parameters);
         if (count($params) < $this->nbOfCompulsoryParams) {
-            throw new Exception(self::MISSINGPARAMETER);
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         $addParams = array();
         $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
@@ -338,7 +338,7 @@ class CentreonHost extends CentreonObject
                 $extended->update($objectId, array($params[1] => $params[2]));
             }
         } else {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
         }
     }
 
@@ -364,7 +364,7 @@ class CentreonHost extends CentreonObject
     public function getmacro($hostName)
     {
         if (($hostId = $this->getObjectId($hostName)) == 0) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$hostName);
         }
         $macroObj = new Centreon_Object_Host_Macro_Custom();
         $macroList = $macroObj->getList(array("host_macro_name", "host_macro_value"), -1, 0, null, null, array("host_host_id"    => $hostId));
@@ -385,7 +385,7 @@ class CentreonHost extends CentreonObject
     {
         $params = explode($this->delim, $parameters);
         if (($hostId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) == 0) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
         }
         if (count($params) < self::NB_UPDATE_PARAMS) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
@@ -414,7 +414,7 @@ class CentreonHost extends CentreonObject
     {
         $params = explode($this->delim, $parameters);
         if (($hostId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) == 0) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
         }
         if (count($params) < 2) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
@@ -501,7 +501,7 @@ class CentreonHost extends CentreonObject
         }
         $params = explode($this->delim, $hostName);
         if (($hostId = $this->getObjectId($hostName)) == 0) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$hostName);
         }
         $this->deployServices($hostId);
     }

@@ -185,7 +185,7 @@ class CentreonLDAP extends CentreonObject
         }
         $ldapId = $this->getLdapId($params[0]);
         if (!isset($ldapId)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]);
         }
         if ($params[1] != "order") {
             $this->db->query("UPDATE auth_ressource_info
@@ -217,7 +217,7 @@ class CentreonLDAP extends CentreonObject
         $res = $this->db->query($sql, array($parameters));
         $row = $res->fetch();
         if (!isset($row['contact_id'])) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$parameters);
         }
         $contactId = $row['contact_id'];
         unset($res);

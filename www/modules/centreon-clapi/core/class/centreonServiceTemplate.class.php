@@ -173,7 +173,7 @@ class CentreonServiceTemplate extends CentreonObject
         $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $serviceDesc,
                                                                                   'service_register' => 0), "AND");
         if (!count($elements)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$serviceDesc);
         }
         $this->object->delete($elements[0]['service_id']);
     }
@@ -214,7 +214,7 @@ class CentreonServiceTemplate extends CentreonObject
         $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $serviceDesc,
                                                                                   'service_register' => 0), "AND");
         if (!count($elements)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$serviceDesc);
         }
         $objectId = $elements[0]['service_id'];
         $extended = false;
@@ -319,7 +319,7 @@ class CentreonServiceTemplate extends CentreonObject
         $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $serviceDesc,
                                                                                   'service_register' => 0), "AND");
         if (!count($elements)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$serviceDesc);
         }
         $macroObj = new Centreon_Object_Service_Macro_Custom();
         $macroList = $macroObj->getList(array("svc_macro_name", "svc_macro_value"), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id']));
@@ -345,7 +345,7 @@ class CentreonServiceTemplate extends CentreonObject
         $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $params[0],
                                                                                   'service_register' => 0), "AND");
         if (!count($elements)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]);
         }
         $macroObj = new Centreon_Object_Service_Macro_Custom();
         $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("svc_svc_id"      => $elements[0]['service_id'],
@@ -376,7 +376,7 @@ class CentreonServiceTemplate extends CentreonObject
         $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $params[0],
                                                                                   'service_register' => 0), "AND");
         if (!count($elements)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]);
         }
         $macroObj = new Centreon_Object_Service_Macro_Custom();
         $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("svc_svc_id"      => $elements[0]['service_id'],
@@ -405,7 +405,7 @@ class CentreonServiceTemplate extends CentreonObject
         $elements = $this->object->getList("service_id", -1, 0, null, null, array('service_description' => $args[0],
                                                                                   'service_register' => 0), "AND");
         if (!count($elements)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$args[0]);
         }
         $serviceId = $elements[0]['service_id'];
         if (preg_match("/^(get|set|add|del)([a-zA-Z_]+)/", $name, $matches)) {

@@ -169,7 +169,7 @@ abstract class CentreonObject
         if (count($ids)) {
             $this->object->delete($ids[0]);
         } else {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$objectName);
         }
     }
 
@@ -219,7 +219,7 @@ abstract class CentreonObject
             if (count($ids)) {
                 $this->object->update($ids[0], array($this->activateField => $value));
             } else {
-                throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+                throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$objectName);
             }
         } else {
             throw new CentreonClapiException(self::UNKNOWN_METHOD);
