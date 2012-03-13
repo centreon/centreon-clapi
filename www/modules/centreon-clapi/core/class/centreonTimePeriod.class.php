@@ -73,7 +73,10 @@ class CentreonTimePeriod extends CentreonObject
                               'tp_thursday'         => '',
                               'tp_friday'           => '',
                               'tp_saturday'         => '');
-        $this->nbOfCompulsoryParams = 2;
+        $this->insertParams = array("tp_name", "tp_alias");
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->action = "TP";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
     }
 
     /**
