@@ -36,350 +36,162 @@
  *
  */
 
-require_once "./class/centreonContact.class.php";
-require_once "./class/centreonCommand.class.php";
+require_once "centreonObject.class.php";
+require_once "centreonACL.class.php";
+require_once "Centreon/Object/Contact/Contact.php";
+require_once "Centreon/Object/Contact/Group.php";
+require_once "Centreon/Object/Relation/Contact/Group/Contact.php";
 
-class CentreonContactGroup {
-	private $DB;
-	private $nameLen;
-	protected $version;
+/**
+ * Class for managing contact groups
+ *
+ * @author sylvestre
+ */
+class CentreonContactGroup extends CentreonObject
+{
+	const ORDER_UNIQUENAME        = 0;
+    const ORDER_ALIAS             = 1;
 
-	public function __construct($DB) {
-		$this->DB = $DB;
-		$this->nameLen = 40;
-		$this->version = $this->getVersion();
+	/**
+	 * Constructor
+	 *
+	 * @return void
+	 */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->object = new Centreon_Object_Contact_Group();
+        $this->params = array('cg_activate' => '1');
+        $this->nbOfCompulsoryParams = 2;
+        $this->activateField = "cg_activate";
 	}
 
 	/**
+	 * List contact groups
 	 *
-	 * Get Version of Centreon
+	 * @param $string $parameters
 	 */
-	protected function getVersion() {
-		$request = "SELECT * FROM informations";
-		$DBRESULT = $this->DB->query($request);
-		$info = $DBRESULT->fetchRow();
-		return $info["value"];
+	public function show($parameters = null)
+	{
+	    $filters = array();
+        if (isset($parameters)) {
+            $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
+        }
+        $params = array('cg_id', 'cg_name', 'cg_alias');
+        $paramString = str_replace("cg_", "", implode($this->delim, $params));
+        echo $paramString . "\n";
+        $elements = $this->object->getList($params, -1, 0, null, null, $filters);
+        foreach ($elements as $tab) {
+            echo implode($this->delim, $tab) . "\n";
+        }
 	}
 
 	/**
+	 * Add contact group
 	 *
-	 * encode with $this->encodeInHTML a string
-	 * @param unknown_type $string
+	 * @param string $parameters
+	 * @throws CentreonClapiException
 	 */
-	protected function encodeInHTML($string) {
-	    if (!strncmp($this->version, "2.1", 3)) {
-            $string = htmlentities($string, ENT_QUOTES, "UTF-8");
-	    }
-	    return $string;
-	}
-
-	/*
-	 * Check contact existance
-	 */
-	protected function contactGroupExists($name) {
-		if (!isset($name))
-			return 0;
-
-		/*
-		 * Get informations
-		 */
-		$DBRESULT =& $this->DB->query("SELECT cg_name, cg_id FROM contactgroup WHERE cg_name = '".$this->encodeInHTML($name)."'");
-		if ($DBRESULT->numRows() >= 1) {
-			$contact =& $DBRESULT->fetchRow();
-			$DBRESULT->free();
-			return $contact["cg_id"];
-		} else {
-			return 0;
-		}
-	}
-
-	public function getContactGroupID($cg_name = NULL) {
-		if (!isset($cg_name))
-			return;
-
-		$request = "SELECT cg_id FROM contactgroup WHERE cg_name LIKE '$cg_name'";
-		$DBRESULT =& $this->DB->query($request);
-		$data =& $DBRESULT->fetchRow();
-		return $data["cg_id"];
-	}
-
-	protected function checkParameters($options) {
-		if (!isset($options) || $options == "") {
-			print "No options defined.\n";
-			return 1;
-		}
-	}
-
-	protected function validateName($name) {
-		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches)) {
-			return $this->checkNameformat($name);
-		} else {
-			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);
-		}
-	}
-
-	protected function checkNameformat($name) {
-		if (strlen($name) > $this->nameLen) {
-			print "Warning: contact group name reduce to 40 caracters.\n";
-		}
-		return sprintf("%.".$this->nameLen."s", $name);
-	}
-
-	protected function checkRequestStatus() {
-		if (PEAR::isError($this->DB)) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-
-	/* *********************************************
-	 * delete contact group functions
-	 */
-
-	public function del($name) {
-		$request = "DELETE FROM contactgroup WHERE cg_name LIKE '".$this->encodeInHTML($name)."'";
-		$DBRESULT =& $this->DB->query($request);
-		$this->return_code = 0;
-		return 0;
-	}
-
-	/* *********************************************
-	 * show contacts
-	 */
-	public function show($search = NULL) {
-		$searchStr = "";
-		if (isset($search) && $search != "") {
-			$searchStr = " WHERE cg_name LIKE '%".$this->encodeInHTML($search)."%' OR cg_alias LIKE '%".$this->encodeInHTML($search)."%' ";
-		}
-		$request = "SELECT cg_id, cg_name, cg_alias FROM contactgroup $searchStr ORDER BY cg_name";
-		$DBRESULT =& $this->DB->query($request);
-		$i = 0;
-		while ($data =& $DBRESULT->fetchRow()) {
-			if ($i == 0) {
-				print "id;name;alias;members\n";
-			}
-			print html_entity_decode($data["cg_name"]).";".html_entity_decode($data["cg_alias"]).";";
-
-			$request = "SELECT contact_name FROM contact, contactgroup_contact_relation WHERE contactgroup_cg_id = '".$data["cg_id"]."' AND contact.contact_id = contactgroup_contact_relation.contact_contact_id";
-			$DBRESULT2 =& $this->DB->query($request);
-			$members = "";
-			while ($dataC =& $DBRESULT2->fetchRow()) {
-				if ($members != "") {
-					$members .= ",";
-				}
-				$members .= $dataC["contact_name"];
-			}
-			$DBRESULT2->free();
-			print html_entity_decode($members)."\n";
-			$i++;
-		}
-		$DBRESULT->free();
-
+	public function add($parameters)
+	{
+        $params = explode($this->delim, $parameters);
+        if (count($params) < $this->nbOfCompulsoryParams) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $addParams = array();
+        $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
+        $addParams['cg_alias'] = $params[self::ORDER_ALIAS];
+        $this->params = array_merge($this->params, $addParams);
+        $this->checkParameters();
+        parent::add();
 	}
 
 	/**
+	 * Update contact groups
 	 *
-	 * export contacts
+	 * @param string $parameters
+	 * @throws CentreonClapiException
 	 */
-	public function export() {
-		$request = "SELECT cg_id, cg_name, cg_alias FROM contactgroup ORDER BY cg_name";
-		$DBRESULT =& $this->DB->query($request);
-		while ($data =& $DBRESULT->fetchRow()) {
-			print "CG;ADD;".html_entity_decode($data["cg_name"]).";".html_entity_decode($data["cg_alias"])."\n";
-
-			$request = "SELECT contact_name FROM contact, contactgroup_contact_relation WHERE contactgroup_cg_id = '".$data["cg_id"]."' AND contact.contact_id = contactgroup_contact_relation.contact_contact_id";
-			$DBRESULT2 =& $this->DB->query($request);
-			while ($dataC =& $DBRESULT2->fetchRow()) {
-				print "CG;SETCHILD;". html_entity_decode($data["cg_name"]). ";" . $dataC["contact_name"] . "\n";
-			}
-			$DBRESULT2->free();
-		}
-		$DBRESULT->free();
+	public function setparam($parameters)
+	{
+	    $params = explode($this->delim, $parameters);
+        if (count($params) < self::NB_UPDATE_PARAMS) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            if (!preg_match("/^cg_/", $params[1])) {
+                $params[1] = "cg_".$params[1];
+            }
+            $updateParams = array($params[1] => $params[2]);
+            parent::setparam($objectId, $updateParams);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
+        }
 	}
 
-	/* *********************************************
-	 * Add functions
+	/**
+	 * Magic method for get/set/add/del relations
+	 *
+	 * @param string $name
+	 * @param array $arg
+	 * @throws CentreonClapiException
 	 */
-	public function add($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-
-		$info = split(";", $options);
-
-		$info[0] = $this->validateName($info[0]);
-
-		if (!$this->contactGroupExists($info[0])) {
-			$convertionTable = array(0 => "cg_name", 1 => "cg_alias");
-			$informations = array();
-			foreach ($info as $key => $value) {
-				$informations[$convertionTable[$key]] = $value;
-			}
-			$ret = $this->addContactGroup($informations);
-			if ($ret) {
-				return 0;
-			} else {
-				return $ret;
-			}
-		} else {
-			print "Contactgroup ".$info[0]." already exists.\n";
-			$this->return_code = 1;
-			return 1;
-		}
-	}
-
-	protected function addContactGroup($information) {
-		if (!isset($information["cg_name"])) {
-			return 0;
-		} else {
-			if (!isset($information["cg_alias"]) || $information["cg_alias"] == "")
-				$information["cg_alias"] = $information["cg_name"];
-
-			$request = "INSERT INTO contactgroup (cg_name, cg_alias, cg_activate) VALUES ('".$this->encodeInHTML($information["cg_name"])."', '".$this->encodeInHTML($information["cg_alias"])."', '1')";
-			$DBRESULT =& $this->DB->query($request);
-
-			$cg_id = $this->getContactGroupID($information["cg_name"]);
-			return $cg_id;
-		}
-	}
-
-	/* ***************************************
-	 * Set contact child
-	 */
-	public function setChild($options) {
-		$info = split(";", $options);
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		if ($this->contactGroupExists($info[0])) {
-			$contact = new CentreonContact($this->DB);
-
-			$contact_id = $contact->getContactID($info[1]);
-			$cg_id = $this->getContactGroupID($info[0]);
-
-			$request = "SELECT * FROM contactgroup_contact_relation WHERE contact_contact_id = '".$contact_id."' AND contactgroup_cg_id = '".$cg_id."'";
-			$DBRESULT =& $this->DB->query($request);
-			if ($DBRESULT->numRows() == 0) {
-				$request = "INSERT INTO contactgroup_contact_relation (contactgroup_cg_id, contact_contact_id) VALUES ('".$cg_id."', '".$contact_id."')";
-				$DBRESULT2 =& $this->DB->query($request);
-				return $this->checkRequestStatus();
-			}
-		} else {
-			print "Contact group 'options' doesn't exists.\n";
-			return 1;
-		}
-	}
-
-	/* ***************************************
-	 * UnSet contact child
-	 */
-	public function unsetChild($options) {
-		$info = split(";", $options);
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		if ($this->contactGroupExists($info[0])) {
-			$contact = new CentreonContact($this->DB);
-
-			$contact_id = $contact->getContactID($info[1]);
-			$cg_id = $this->getContactGroupID($info[0]);
-
-			$request = "DELETE FROM contactgroup_contact_relation WHERE contact_contact_id = '".$contact_id."' AND contactgroup_cg_id = '".$cg_id."'";
-			$DBRESULT =& $this->DB->query($request);
-			return $this->checkRequestStatus();
-		} else {
-			print "Contact group 'options' doesn't exists.\n";
-			return 1;
-		}
-	}
-
-	/*
-	 * Enable contactgroup
-	 */
-	public function enable($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		if ($this->contactGroupExists($options)) {
-			$cg_id = $this->getContactGroupID($options);
-
-			$request = "UPDATE contactgroup SET cg_activate = '1' WHERE cg_id = '".$cg_id."'";
-			$DBRESULT =& $this->DB->query($request);
-			return $this->checkRequestStatus();
-		} else {
-			print "Contact group 'options' doesn't exists.\n";
-			return 1;
-		}
-	}
-
-	/*
-	 * Enable contactgroup
-	 */
-	public function disable($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		if ($this->contactGroupExists($options)) {
-			$cg_id = $this->getContactGroupID($options);
-
-			$request = "UPDATE contactgroup SET cg_activate = '0' WHERE cg_id = '".$cg_id."'";
-			$DBRESULT =& $this->DB->query($request);
-			return $this->checkRequestStatus();
-		} else {
-			print "Contact group 'options' doesn't exists.\n";
-			return 1;
-		}
-	}
-
-	public function setParam($options) {
-
-		$check = $this->checkParameters($options);
-		if ($check) {
-			return $check;
-		}
-
-		$info = split(";", $options);
-
-		if ($this->contactGroupExists($info[0])) {
-
-			if (count($info) == 3) {
-				$cg_id = $this->getContactGroupID($info[0]);
-
-				if ($cg_id == 0) {
-					print "Unknown contact group.\n";
-					return 1;
-				}
-
-				if ($info[1] == "name" || $info[1] == "alias") {
-					$request = "UPDATE contactgroup SET cg_".$info[1] . " = '".$info[2]."' WHERE cg_id = '".$cg_id."'";
-					$DBRESULT =& $this->DB->query($request);
-					return $this->checkRequestStatus();
-				}
-			} else {
-				print "No enought parameters for modifiing contactgroup.\n";
-				return 1;
-			}
-		} else {
-			print "Contact group '$options' doesn't exists.\n";
-			return 1;
-		}
+	public function __call($name, $arg)
+	{
+	    $name = strtolower($name);
+        if (!isset($arg[0])) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $args = explode($this->delim, $arg[0]);
+        $cgIds = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($args[0]));
+        if (!count($cgIds)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND .":".$args[0]);
+        }
+        $cgId = $cgIds[0];
+        if (preg_match("/^(get|set|add|del)contact$/", $name, $matches)) {
+            $relobj = new Centreon_Object_Relation_Contact_Group_Contact();
+            $obj = new Centreon_Object_Contact();
+            if ($matches[1] == "get") {
+                $tab = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), $cgIds);
+                echo "id".$this->delim."name"."\n";
+                foreach($tab as $value) {
+                    $tmp = $obj->getParameters($value, array($obj->getUniqueLabelField()));
+                    echo $value . $this->delim . $tmp[$obj->getUniqueLabelField()] . "\n";
+                }
+            } else {
+                if (!isset($args[1])) {
+                    throw new CentreonClapiException(self::MISSINGPARAMETER);
+                }
+                $relation = $args[1];
+                $relations = explode("|", $relation);
+                $relationTable = array();
+                foreach($relations as $rel) {
+                    $rel = str_replace(" ", "_", $rel);
+                    $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
+                    if (!count($tab)) {
+                        throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":".$rel);
+                    }
+                    $relationTable[] = $tab[0];
+                }
+                if ($matches[1] == "set") {
+                    $relobj->delete($cgId);
+                }
+                $existingRelationIds = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), array($cgId));
+                foreach($relationTable as $relationId) {
+                    if ($matches[1] == "del") {
+                        $relobj->delete($cgId, $relationId);
+                    } elseif ($matches[1] == "set" || $matches[1] == "add") {
+                        if (!in_array($relationId, $existingRelationIds)) {
+                            $relobj->insert($cgId, $relationId);
+                        }
+                    }
+                }
+                $acl = new CentreonACL();
+                $acl->reload(true);
+            }
+        } else {
+            throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
 	}
 }
 ?>
