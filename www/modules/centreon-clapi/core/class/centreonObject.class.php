@@ -66,6 +66,9 @@ abstract class CentreonObject
         $row = $res->fetch();
         $this->version = $row['value'];
         $this->params = array();
+        $this->insertParams = array();
+        $this->exportParams = array();
+        $this->action = "";
         $this->delim = ";";
     }
 
@@ -247,4 +250,28 @@ abstract class CentreonObject
     {
         $this->activate($objectName, 0);
     }
+
+	/**
+	 * Export data
+	 *
+	 * @param string $parameters
+	 * @return void
+	 */
+	public function export()
+	{
+        $elements = $this->object->getList("*", -1, 0);
+        foreach ($elements as $element) {
+            $addStr = $this->action.$this->delim."ADD";
+            foreach ($this->insertParams as $param) {
+                $addStr .= $this->delim.$element[$param];
+            }
+            $addStr .= "\n";
+            echo $addStr;
+            foreach ($element as $parameter => $value) {
+                if (!in_array($parameter, $this->exportExcludedParams)) {
+                    echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$parameter.$this->delim.$value."\n";
+                }
+            }
+        }
+	}
 }

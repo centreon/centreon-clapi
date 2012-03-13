@@ -65,7 +65,10 @@ class CentreonCommand extends CentreonObject
 		parent::__construct();
         $this->object = new Centreon_Object_Command();
         $this->params = array();
-        $this->nbOfCompulsoryParams = 3;
+        $this->insertParams = array("command_name", "command_type", "command_line");
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), "graph_id", "cmd_cat_id"));
+        $this->action = "CMD";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
 		$this->typeConversion = array("notif" => 1, "check" => 2, "misc" => 3, 1 => "notif", 2 => "check", 3 => "misc");
 	}
 
