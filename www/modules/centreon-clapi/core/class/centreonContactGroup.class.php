@@ -62,7 +62,10 @@ class CentreonContactGroup extends CentreonObject
         parent::__construct();
         $this->object = new Centreon_Object_Contact_Group();
         $this->params = array('cg_activate' => '1');
-        $this->nbOfCompulsoryParams = 2;
+        $this->insertParams = array('cg_name', 'cg_alias');
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->action = "CG";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->activateField = "cg_activate";
 	}
 
@@ -191,6 +194,21 @@ class CentreonContactGroup extends CentreonObject
             }
         } else {
             throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
+	}
+
+	/**
+	 * Export
+	 *
+	 * @return void
+	 */
+	public function export()
+	{
+        parent::export();
+        $obj = new Centreon_Object_Relation_Contact_Group_Contact();
+        $elements = $obj->getMergedParameters(array("cg_name"), array("contact_name"), -1, 0, "cg_name");
+        foreach ($elements as $element) {
+            echo $this->action.$this->delim."addcontact".$this->delim.$element['cg_name'].$this->delim.$element['contact_name']."\n";
         }
 	}
 }
