@@ -70,7 +70,10 @@ class CentreonHostGroup extends CentreonObject
         $this->params = array('hg_snmp_community'           => 'public',
                               'hg_snmp_version'             => '2c',
                               'hg_activate'                 => '1');
-        $this->nbOfCompulsoryParams = 2;
+        $this->insertParams = array('hg_name', 'hg_alias');
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->action = "HG";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->activateField = "hg_activate";
     }
 
@@ -207,6 +210,24 @@ class CentreonHostGroup extends CentreonObject
             }
         } else {
             throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
+    }
+
+    /**
+     * Export
+     *
+     * @return void
+     */
+    public function export()
+    {
+        parent::export();
+        $relObj = new Centreon_Object_Relation_Host_Group_Host();
+        $hostObj = new Centreon_Object_Host();
+        $hgFieldName = $this->object->getUniqueLabelField();
+        $hFieldName = $hostObj->getUniqueLabelField();
+        $elements = $relObj->getMergedParameters(array($hgFieldName), array($hFieldName), -1, 0, $hgFieldName, null);
+        foreach ($elements as $element) {
+            echo $this->action.$this->delim."addhost".$this->delim.$element[$hgFieldName].$this->delim.$element[$hFieldName]."\n";
         }
     }
 }
