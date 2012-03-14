@@ -50,6 +50,7 @@ class CentreonHostTemplate extends CentreonHost
         parent::__construct();
         $this->params['host_register'] = '0';
         $this->register = 0;
+        $this->action = "HTPL";
     }
 
     /**

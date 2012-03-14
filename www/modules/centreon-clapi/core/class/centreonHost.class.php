@@ -99,9 +99,37 @@ class CentreonHost extends CentreonObject
                               'host_register'						 => '1',
                               'host_activate'						 => '1'
                               );
-        $this->nbOfCompulsoryParams = 6;
+        $this->insertParams = array('host_name', 'host_alias', 'host_address', 'template', 'instance', 'hostgroup');
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->action = "HOST";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->register = 1;
         $this->activateField = 'host_activate';
+	}
+
+	/**
+	 * Get clapi action name from db column name
+	 *
+	 * @param string $columnName
+	 * @return string
+	 */
+	protected function getClapiActionName($columnName)
+	{
+        static $table;
+
+        if (!isset($table)) {
+            $table = array("command_command_id"   => "check_command",
+                           "command_command_id2"  => "event_handler",
+                           "timeperiod_tp_id"     => "check_period",
+                           "timeperiod_tp_id2"    => "notification_period");
+        }
+        if (preg_match("/^ehi_/", $columnName)) {
+            return ltrim($columnName, "ehi_");
+        }
+        if (isset($table[$columnName])) {
+            return $table[$columnName];
+        }
+        return $columnName;
 	}
 
 	/**
@@ -352,6 +380,19 @@ class CentreonHost extends CentreonObject
     {
         $wrappedMacro = "\$_HOST".strtoupper($macroName)."\$";
         return $wrappedMacro;
+    }
+
+    /**
+     * Strip macro
+     *
+     * @param string $macroName
+     * @return string
+     */
+    protected function stripMacro($macroName)
+    {
+        $strippedMacro = ltrim($macroName, "\$_HOST");
+        $strippedMacro = rtrim($strippedMacro, "\$");
+        return strtolower($strippedMacro);
     }
 
     /**
@@ -606,6 +647,78 @@ class CentreonHost extends CentreonObject
             }
         } else {
             throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
+    }
+
+    /**
+     * Export
+     *
+     * @return void
+     */
+    public function export()
+    {
+        $elements = $this->object->getList("*", -1, 0, null, null, array("host_register" => $this->register), "AND");
+        $extendedObj = new Centreon_Object_Host_Extended();
+        $commandObj = new Centreon_Object_Command();
+        $tpObj = new Centreon_Object_Timeperiod();
+        $macroObj = new Centreon_Object_Host_Macro_Custom();
+        foreach ($elements as $element) {
+            $addStr = $this->action.$this->delim."ADD";
+            foreach ($this->insertParams as $param) {
+                $addStr .= $this->delim;
+                if ($param != "instance" && $param != "hostgroup" && $param != "template") {
+                    $addStr .= $element[$param];
+                }
+            }
+            $addStr .= "\n";
+            echo $addStr;
+            foreach ($element as $parameter => $value) {
+                if (!in_array($parameter, $this->exportExcludedParams) && !is_null($value) && $value != "") {
+                    if ($parameter == "timeperiod_tp_id" || $parameter == "timeperiod_tp_id2") {
+                        $tmpObj = $tpObj;
+                    } elseif ($parameter == "command_command_id" || $parameter == "command_command_id2") {
+                        $tmpObj = $commandObj;
+                    }
+                    if (isset($tmpObj)) {
+                        $tmp = $tmpObj->getParameters($value, $tmpObj->getUniqueLabelField());
+                        if (isset($tmp) && isset($tmp[$tmpObj->getUniqueLabelField()])) {
+                            $value = $tmp[$tmpObj->getUniqueLabelField()];
+                        }
+                        unset($tmpObj);
+                    }
+                    echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$this->getClapiActionName($parameter).$this->delim.$value."\n";
+                }
+            }
+            $params = $extendedObj->getParameters($element[$this->object->getPrimaryKey()],
+                                                  array("ehi_notes", "ehi_notes_url", "ehi_action_url", "ehi_icon_image",
+                                                    	"ehi_icon_image_alt", "ehi_vrml_image", "ehi_statusmap_image", "ehi_2d_coords", "ehi_3d_coords"));
+            if (isset($params) && is_array($params)) {
+                foreach ($params as $k => $v) {
+                    if (!is_null($v) && $v != "") {
+                        echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$this->getClapiActionName($k).$this->delim.$v."\n";
+                    }
+                }
+            }
+            $macros = $macroObj->getList("*", -1, 0, null, null, array($macroObj->getPrimaryKey() => $element[$this->object->getPrimaryKey()]), "AND");
+            foreach ($macros as $macro) {
+                echo $this->action.$this->delim."setmacro".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$this->stripMacro($macro['host_macro_name']).$this->delim.$macro['host_macro_value']."\n";
+            }
+        }
+        //@todo instance
+        $cgRel = new Centreon_Object_Relation_Contact_Group_Host();
+        $elements = $cgRel->getMergedParameters(array("cg_name"), array($this->object->getUniqueLabelField()), -1, 0, null, null, array("host_register" => $this->register), "AND");
+        foreach ($elements as $element) {
+            echo $this->action.$this->delim."addcontactgroup".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$element['cg_name']."\n";
+        }
+        $contactRel = new Centreon_Object_Relation_Contact_Host();
+        $elements = $contactRel->getMergedParameters(array("contact_name"), array($this->object->getUniqueLabelField()), -1, 0, null, null, array("host_register" => $this->register), "AND");
+        foreach ($elements as $element) {
+            echo $this->action.$this->delim."addcontact".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$element['contact_name']."\n";
+        }
+        $htplRel = new Centreon_Object_Relation_Host_Template_Host();
+        $elements = $htplRel->getMergedParameters(array("host_name as host"), array("host_name as template"), -1, 0, "host,`order`", "ASC", array("h.host_register"=>$this->register), "AND");
+        foreach ($elements as $element) {
+            echo $this->action.$this->delim."addtemplate".$this->delim.$element['host'].$this->delim.$element['template']."\n";
         }
     }
 }

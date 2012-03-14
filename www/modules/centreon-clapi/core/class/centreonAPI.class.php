@@ -499,11 +499,12 @@ class CentreonAPI {
 		$this->objectTable['TP']->export();
 		$this->objectTable['CONTACT']->export();
 		$this->objectTable['CG']->export();
-		/*$this->objectTable['HG']->export();
 		$this->objectTable['HTPL']->export();
 		$this->objectTable['HOST']->export();
+		/*$this->objectTable['HG']->export();
 		$this->objectTable['STPL']->export();
 		$this->objectTable['SERVICE']->export();
+		$this->objectTable['HG']->export();
 		$this->objectTable['SG']->export();
 		$this->objectTable['SC']->export();*/
 	}
