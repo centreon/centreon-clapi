@@ -74,7 +74,10 @@ class CentreonServiceTemplate extends CentreonObject
                               'service_register'					   => '0',
                               'service_activate'				       => '1'
                               );
-        $this->nbOfCompulsoryParams = 3;
+        $this->insertParams = array('service_description', 'service_alias', 'service_template_model_stm_id');
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->action = "STPL";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->register = 0;
         $this->activateField = 'service_activate';
     }
@@ -127,6 +130,31 @@ class CentreonServiceTemplate extends CentreonObject
             echo implode($this->delim, $tab) . "\n";
         }
     }
+
+	/**
+	 * Get clapi action name from db column name
+	 *
+	 * @param string $columnName
+	 * @return string
+	 */
+	protected function getClapiActionName($columnName)
+	{
+        static $table;
+
+        if (!isset($table)) {
+            $table = array("command_command_id"   => "check_command",
+                           "command_command_id2"  => "event_handler",
+                           "timeperiod_tp_id"     => "check_period",
+                           "timeperiod_tp_id2"    => "notification_period");
+        }
+        if (preg_match("/^esi_/", $columnName)) {
+            return ltrim($columnName, "ehi_");
+        }
+        if (isset($table[$columnName])) {
+            return $table[$columnName];
+        }
+        return $columnName;
+	}
 
 	/**
      * Add a service template
@@ -292,6 +320,19 @@ class CentreonServiceTemplate extends CentreonObject
             $extended = new Centreon_Object_Service_Extended();
             $extended->update($objectId, array($params[1] => $params[2]));
         }
+    }
+
+	/**
+     * Strip macro
+     *
+     * @param string $macroName
+     * @return string
+     */
+    protected function stripMacro($macroName)
+    {
+        $strippedMacro = ltrim($macroName, "\$_SERVICE");
+        $strippedMacro = rtrim($strippedMacro, "\$");
+        return strtolower($strippedMacro);
     }
 
     /**
@@ -472,6 +513,79 @@ class CentreonServiceTemplate extends CentreonObject
             }
         } else {
             throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
+    }
+
+    /**
+     * Export
+     *
+     * @return void
+     */
+    public function export()
+    {
+        $elements = $this->object->getList("*", -1, 0, null, null, array("service_register" => $this->register), "AND");
+        $extendedObj = new Centreon_Object_Service_Extended();
+        $commandObj = new Centreon_Object_Command();
+        $tpObj = new Centreon_Object_Timeperiod();
+        $macroObj = new Centreon_Object_Service_Macro_Custom();
+        foreach ($elements as $element) {
+            $addStr = $this->action.$this->delim."ADD";
+            foreach ($this->insertParams as $param) {
+                $addStr .= $this->delim;
+                if ($param == "service_template_model_stm_id") {
+                    $tmp = $this->object->getParameters($element[$param], 'service_description');
+                    if (isset($tmp) && isset($tmp['service_description']) && $tmp['service_description']) {
+                        $element[$param] = $tmp['service_description'];
+                    }
+                    if (!$element[$param]) {
+                        $element[$param] = "";
+                    }
+                }
+                $addStr .= $element[$param];
+            }
+            $addStr .= "\n";
+            echo $addStr;
+            foreach ($element as $parameter => $value) {
+                if (!in_array($parameter, $this->exportExcludedParams) && !is_null($value) && $value != "") {
+                    if ($parameter == "timeperiod_tp_id" || $parameter == "timeperiod_tp_id2") {
+                        $tmpObj = $tpObj;
+                    } elseif ($parameter == "command_command_id" || $parameter == "command_command_id2") {
+                        $tmpObj = $commandObj;
+                    }
+                    if (isset($tmpObj)) {
+                        $tmp = $tmpObj->getParameters($value, $tmpObj->getUniqueLabelField());
+                        if (isset($tmp) && isset($tmp[$tmpObj->getUniqueLabelField()])) {
+                            $value = $tmp[$tmpObj->getUniqueLabelField()];
+                        }
+                        unset($tmpObj);
+                    }
+                    echo $this->action.$this->delim."setparam".$this->delim.$element['service_description'].$this->delim.$this->getClapiActionName($parameter).$this->delim.$value."\n";
+                }
+            }
+            $params = $extendedObj->getParameters($element[$this->object->getPrimaryKey()],
+                                                  array("esi_notes", "esi_notes_url", "esi_action_url", "esi_icon_image", "esi_icon_image_alt"));
+            if (isset($params) && is_array($params)) {
+                foreach ($params as $k => $v) {
+                    if (!is_null($v) && $v != "") {
+                        echo $this->action.$this->delim."setparam".$this->delim.$element['service_description'].$this->delim.$this->getClapiActionName($k).$this->delim.$v."\n";
+                    }
+                }
+            }
+            $macros = $macroObj->getList("*", -1, 0, null, null, array($macroObj->getPrimaryKey() => $element[$this->object->getPrimaryKey()]), "AND");
+            foreach ($macros as $macro) {
+                echo $this->action.$this->delim."setmacro".$this->delim.$element['service_description'].$this->delim.$this->stripMacro($macro['svc_macro_name']).$this->delim.$macro['svc_macro_value']."\n";
+            }
+        }
+        //@todo instance
+        $cgRel = new Centreon_Object_Relation_Contact_Group_Service();
+        $elements = $cgRel->getMergedParameters(array("cg_name"), array($this->object->getUniqueLabelField()), -1, 0, null, null, array("service_register" => $this->register), "AND");
+        foreach ($elements as $element) {
+            echo $this->action.$this->delim."addcontactgroup".$this->delim.$element['service_description'].$this->delim.$element['cg_name']."\n";
+        }
+        $contactRel = new Centreon_Object_Relation_Contact_Service();
+        $elements = $contactRel->getMergedParameters(array("contact_name"), array($this->object->getUniqueLabelField()), -1, 0, null, null, array("service_register" => $this->register), "AND");
+        foreach ($elements as $element) {
+            echo $this->action.$this->delim."addcontact".$this->delim.$element['service_description'].$this->delim.$element['contact_name']."\n";
         }
     }
 }

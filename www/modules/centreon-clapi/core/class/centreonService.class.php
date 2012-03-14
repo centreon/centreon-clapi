@@ -359,6 +359,20 @@ class CentreonService extends CentreonObject
         }
     }
 
+	/**
+     * Strip macro
+     *
+     * @param string $macroName
+     * @return string
+     */
+    protected function stripMacro($macroName)
+    {
+        $strippedMacro = ltrim($macroName, "\$_SERVICE");
+        $strippedMacro = rtrim($strippedMacro, "\$");
+        return strtolower($strippedMacro);
+    }
+
+
     /**
      * Wrap macro
      *

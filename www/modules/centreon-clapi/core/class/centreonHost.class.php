@@ -704,7 +704,6 @@ class CentreonHost extends CentreonObject
                 echo $this->action.$this->delim."setmacro".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$this->stripMacro($macro['host_macro_name']).$this->delim.$macro['host_macro_value']."\n";
             }
         }
-        //@todo instance
         $cgRel = new Centreon_Object_Relation_Contact_Group_Host();
         $elements = $cgRel->getMergedParameters(array("cg_name"), array($this->object->getUniqueLabelField()), -1, 0, null, null, array("host_register" => $this->register), "AND");
         foreach ($elements as $element) {
@@ -719,6 +718,11 @@ class CentreonHost extends CentreonObject
         $elements = $htplRel->getMergedParameters(array("host_name as host"), array("host_name as template"), -1, 0, "host,`order`", "ASC", array("h.host_register"=>$this->register), "AND");
         foreach ($elements as $element) {
             echo $this->action.$this->delim."addtemplate".$this->delim.$element['host'].$this->delim.$element['template']."\n";
+        }
+        $instanceRel = new Centreon_Object_Relation_Instance_Host();
+        $elements = $instanceRel->getMergedParameters(array("name"), array("host_name"));
+        foreach ($elements as $element) {
+            echo $this->action.$this->delim."setinstance".$this->delim.$element['host_name'].$this->delim.$element['name']."\n";
         }
     }
 }
