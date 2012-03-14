@@ -576,7 +576,6 @@ class CentreonServiceTemplate extends CentreonObject
                 echo $this->action.$this->delim."setmacro".$this->delim.$element['service_description'].$this->delim.$this->stripMacro($macro['svc_macro_name']).$this->delim.$macro['svc_macro_value']."\n";
             }
         }
-        //@todo instance
         $cgRel = new Centreon_Object_Relation_Contact_Group_Service();
         $elements = $cgRel->getMergedParameters(array("cg_name"), array($this->object->getUniqueLabelField()), -1, 0, null, null, array("service_register" => $this->register), "AND");
         foreach ($elements as $element) {

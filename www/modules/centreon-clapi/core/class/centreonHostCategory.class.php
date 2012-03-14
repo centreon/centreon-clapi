@@ -63,7 +63,10 @@ class CentreonHostCategory extends CentreonObject
         parent::__construct();
         $this->object = new Centreon_Object_Host_Category();
         $this->params = array('hc_activate' => '1');
-        $this->nbOfCompulsoryParams = 2;
+        $this->insertParams = array('hc_name', 'hc_alias');
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->action = "HC";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->activateField = "hc_activate";
 	}
 
@@ -188,6 +191,21 @@ class CentreonHostCategory extends CentreonObject
             }
         } else {
             throw new CentreonClapiException(self::UNKNOWN_METHOD);
+        }
+	}
+
+	/**
+	 * Export
+	 *
+	 * @return void
+	 */
+	public function export()
+	{
+        parent::export();
+        $relobj = new Centreon_Object_Relation_Host_Category_Host();
+        $elements = $relobj->getMergedParameters(array($this->object->getUniqueLabelField()), array("host_name"));
+        foreach ($elements as $element) {
+            echo $this->action.$this->delim."addmember".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$element['host_name']."\n";
         }
 	}
 }
