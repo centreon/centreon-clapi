@@ -118,10 +118,12 @@ class CentreonHost extends CentreonObject
         static $table;
 
         if (!isset($table)) {
-            $table = array("command_command_id"   => "check_command",
-                           "command_command_id2"  => "event_handler",
-                           "timeperiod_tp_id"     => "check_period",
-                           "timeperiod_tp_id2"    => "notification_period");
+            $table = array("command_command_id"      => "check_command",
+                           "command_command_id2"     => "event_handler",
+                           "timeperiod_tp_id"        => "check_period",
+                           "timeperiod_tp_id2"       => "notification_period",
+            			   "command_command_id_arg"  => "check_command_arguments",
+                           "command_command_id_arg2" => "event_handler_arguments");
         }
         if (preg_match("/^ehi_/", $columnName)) {
             return ltrim($columnName, "ehi_");

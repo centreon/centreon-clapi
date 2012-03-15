@@ -142,10 +142,12 @@ class CentreonServiceTemplate extends CentreonObject
         static $table;
 
         if (!isset($table)) {
-            $table = array("command_command_id"   => "check_command",
-                           "command_command_id2"  => "event_handler",
-                           "timeperiod_tp_id"     => "check_period",
-                           "timeperiod_tp_id2"    => "notification_period");
+            $table = array("command_command_id"       => "check_command",
+                           "command_command_id2"      => "event_handler",
+                           "timeperiod_tp_id"         => "check_period",
+                           "timeperiod_tp_id2"        => "notification_period",
+            			   "command_command_id_arg"   => "check_command_arguments",
+                           "command_command_id_arg2"  => "event_handler_arguments");
         }
         if (preg_match("/^esi_/", $columnName)) {
             return ltrim($columnName, "ehi_");
@@ -523,7 +525,7 @@ class CentreonServiceTemplate extends CentreonObject
      */
     public function export()
     {
-        $elements = $this->object->getList("*", -1, 0, null, null, array("service_register" => $this->register), "AND");
+        $elements = $this->object->getList("*", -1, 0, "service_template_model_stm_id", null, array("service_register" => $this->register), "AND");
         $extendedObj = new Centreon_Object_Service_Extended();
         $commandObj = new Centreon_Object_Command();
         $tpObj = new Centreon_Object_Timeperiod();
