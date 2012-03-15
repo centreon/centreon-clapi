@@ -64,7 +64,10 @@ class CentreonServiceGroup extends CentreonObject
         parent::__construct();
         $this->object = new Centreon_Object_Service_Group();
         $this->params = array('sg_activate' => '1');
-        $this->nbOfCompulsoryParams = 2;
+        $this->insertParams = array('sg_name', 'sg_alias');
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->action = "SG";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->activateField = "sg_activate";
 	}
 
@@ -268,6 +271,54 @@ class CentreonServiceGroup extends CentreonObject
         } else {
             throw new CentreonClapiException(self::UNKNOWN_METHOD);
         }
+	}
+
+	/**
+	 * Export
+	 *
+	 * @return void
+	 */
+	public function export()
+	{
+	    parent::export();
+	    $sgs = $this->object->getList(array($this->object->getPrimaryKey(), $this->object->getUniqueLabelField()));
+	    $relobjSvc = new Centreon_Object_Relation_Service_Group_Service();
+        $objSvc = new Centreon_Object_Relation_Host_Service();
+        $relobjHgSvc = new Centreon_Object_Relation_Service_Group_Host_Group_Service();
+        $objHgSvc = new Centreon_Object_Relation_Host_Group_Service();
+
+	    foreach ($sgs as $sg) {
+    	    $sgId = $sg[$this->object->getPrimaryKey()];
+    	    $sgName = $sg[$this->object->getUniqueLabelField()];
+            $existingRelationIds = $relobjSvc->getHostIdServiceIdFromServicegroupId($sgId);
+            foreach($existingRelationIds as $val) {
+                $elements = $objSvc->getMergedParameters(array('host_name'),
+                                                         array('service_description'),
+                                                      -1,
+                                                      0,
+                                                      "host_name,service_description",
+                                                      "ASC",
+                                                      array("service_id" => $val['service_id'],
+    														"host_id"    => $val['host_id']), "AND");
+                foreach ($elements as $element) {
+                    echo $this->action.$this->delim."addservice".$this->delim.$sgName.$this->delim.$element['host_name'].$this->delim.$element['service_description']."\n";
+                }
+            }
+            $existingRelationIds = $relobjHgSvc->getHostGroupIdServiceIdFromServicegroupId($sgId);
+            foreach($existingRelationIds as $val) {
+                $elements = $objHgSvc->getMergedParameters(array('hg_name'),
+                                                           array('service_description'),
+                                                           -1,
+                                                           0,
+                                                           null,
+                                                           null,
+                                                           array("hg_id"               => $val['hostgroup_id'],
+                                                      			 "service_id"	       => $val['service_id']), "AND");
+                foreach ($elements as $element) {
+                    echo $this->action.$this->delim."addhostgroupservice".$this->delim.$sgName.$this->delim.$element['hg_name'].$this->delim.$element['service_description']."\n";
+                }
+            }
+	    }
 	}
 }
 ?>

@@ -507,8 +507,8 @@ class CentreonAPI {
 		$this->objectTable['HC']->export();
 		$this->objectTable['SERVICE']->export();
 		$this->objectTable['HGSERVICE']->export();
-		/*
 		$this->objectTable['SG']->export();
+		/*
 		$this->objectTable['SC']->export();
 		*/
 	}
