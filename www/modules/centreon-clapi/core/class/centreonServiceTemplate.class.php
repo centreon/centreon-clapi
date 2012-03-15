@@ -577,12 +577,12 @@ class CentreonServiceTemplate extends CentreonObject
             }
         }
         $cgRel = new Centreon_Object_Relation_Contact_Group_Service();
-        $elements = $cgRel->getMergedParameters(array("cg_name"), array($this->object->getUniqueLabelField()), -1, 0, null, null, array("service_register" => $this->register), "AND");
+        $elements = $cgRel->getMergedParameters(array("cg_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register), "AND");
         foreach ($elements as $element) {
             echo $this->action.$this->delim."addcontactgroup".$this->delim.$element['service_description'].$this->delim.$element['cg_name']."\n";
         }
         $contactRel = new Centreon_Object_Relation_Contact_Service();
-        $elements = $contactRel->getMergedParameters(array("contact_name"), array($this->object->getUniqueLabelField()), -1, 0, null, null, array("service_register" => $this->register), "AND");
+        $elements = $contactRel->getMergedParameters(array("contact_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register), "AND");
         foreach ($elements as $element) {
             echo $this->action.$this->delim."addcontact".$this->delim.$element['service_description'].$this->delim.$element['contact_name']."\n";
         }
