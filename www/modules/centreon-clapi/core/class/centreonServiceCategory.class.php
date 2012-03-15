@@ -63,7 +63,10 @@ class CentreonServiceCategory extends CentreonObject
         parent::__construct();
         $this->object = new Centreon_Object_Service_Category();
         $this->params = array('sc_activate' => '1');
-        $this->nbOfCompulsoryParams = 2;
+        $this->insertParams = array('sc_name', 'sc_description');
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->action = "SC";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->activateField = "sc_activate";
 	}
 
@@ -223,6 +226,36 @@ class CentreonServiceCategory extends CentreonObject
         } else {
             throw new CentreonClapiException(self::UNKNOWN_METHOD);
         }
+	}
+
+	/**
+	 * Export
+	 *
+	 * @return void
+	 */
+	public function export()
+	{
+	    parent::export();
+	    $scs = $this->object->getList(array($this->object->getPrimaryKey(), $this->object->getUniqueLabelField()));
+	    $relobj = new Centreon_Object_Relation_Service_Category_Service();
+	    $hostServiceRel = new Centreon_Object_Relation_Host_Service();
+	    $svcObj = new Centreon_Object_Service();
+	    foreach ($scs as $sc) {
+	        $scId = $sc[$this->object->getPrimaryKey()];
+	        $scName = $sc[$this->object->getUniqueLabelField()];
+	        $relations = $relobj->getTargetIdFromSourceId($relobj->getSecondKey(), $relobj->getFirstKey(), $scId);
+	        foreach ($relations as $serviceId) {
+	            $svcParam = $svcObj->getParameters($serviceId, array('service_description', 'service_register'));
+	            if ($svcParam['service_register'] == 1) {
+    	            $elements = $hostServiceRel->getMergedParameters(array('host_name'), array('service_description'), -1, 0, null, null, array("service_id" => $serviceId), "AND");
+    	            foreach ($elements as $element) {
+                        echo $this->action.$this->delim."addservice".$this->delim.$scName.$this->delim.$element['host_name'].$this->delim.$element['service_description']."\n";
+    	            }
+	            } else {
+	                echo $this->action.$this->delim."addservicetemplate".$this->delim.$scName.$this->delim.$svcParam['service_description']."\n";
+	            }
+	        }
+	    }
 	}
 }
 ?>
