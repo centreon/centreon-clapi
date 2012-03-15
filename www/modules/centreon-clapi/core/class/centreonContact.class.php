@@ -90,7 +90,7 @@ class CentreonContact extends CentreonObject
                               'contact_type_msg'                      => 'txt',
                               'contact_activate'			          => '1',
         					  'contact_register'                      => '1');
-        $this->insertParams = array('contact_name', 'contact_alias', 'contact_email', 'contact_pager', 'contact_oreon', 'contact_admin', 'contact_activate');
+        $this->insertParams = array('contact_name', 'contact_alias', 'contact_email', 'contact_passwd', 'contact_admin', 'contact_oreon', 'contact_lang', 'contact_auth_type');
         $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), "contact_template_id"));
         $this->action = "CONTACT";
         $this->nbOfCompulsoryParams = count($this->insertParams);
@@ -137,8 +137,8 @@ class CentreonContact extends CentreonObject
 	 */
 	protected function checkLang($locale)
 	{
-        if (!$locale) {
-            return false;
+        if (!$locale || $locale == "") {
+            return true;
         }
 	    if (strtolower($locale) == "en_us") {
             return true;
@@ -355,9 +355,15 @@ class CentreonContact extends CentreonObject
             $addStr .= "\n";
             echo $addStr;
             foreach ($element as $parameter => $value) {
-                if (!in_array($parameter, $this->exportExcludedParams)) {
+                if (!is_null($value) && $value != "" && !in_array($parameter, $this->exportExcludedParams)) {
                     if ($parameter == "timeperiod_tp_id" || $parameter == "timeperiod_tp_id2") {
+                        $parameter = self::HOST_NOTIF_TP;
                         $value = $this->tpObject->getObjectName($value);
+                    } elseif ($parameter == "timeperiod_tp_id2") {
+                        $parameter = self::SVC_NOTIF_TP;
+                        $value = $this->tpObject->getObjectName($value);
+                    } elseif ($parameter == "contact_lang") {
+                        $parameter = "locale";
                     }
                     echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$parameter.$this->delim.$value."\n";
                 }

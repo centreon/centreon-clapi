@@ -67,7 +67,7 @@ class CentreonInstance extends CentreonObject
                               'nagios_perfdata'          => '/var/log/nagios/service-perfdata',
         					  'init_script'              => '/etc/init.d/nagios',
                               'centreonbroker_cfg_path'  => '/etc/centreon/broker');
-        $this->insertParams = array('instance_name', 'ns_ip_address', 'ssh_port', 'monitoring_engine');
+        $this->insertParams = array('name', 'ns_ip_address', 'ssh_port', 'monitoring_engine');
         $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), 'last_restart'));
         $this->action = "INSTANCE";
         $this->nbOfCompulsoryParams = count($this->insertParams);

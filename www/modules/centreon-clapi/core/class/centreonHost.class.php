@@ -122,7 +122,7 @@ class CentreonHost extends CentreonObject
                            "command_command_id2"     => "event_handler",
                            "timeperiod_tp_id"        => "check_period",
                            "timeperiod_tp_id2"       => "notification_period",
-            			   "command_command_id_arg"  => "check_command_arguments",
+            			   "command_command_id_arg1" => "check_command_arguments",
                            "command_command_id_arg2" => "event_handler_arguments");
         }
         if (preg_match("/^ehi_/", $columnName)) {
@@ -197,20 +197,24 @@ class CentreonHost extends CentreonObject
         $templates = explode("|", $params[self::ORDER_TEMPLATE]);
         $templateIds = array();
         foreach ($templates as $template) {
-            $tmp = $this->object->getIdByParameter($this->object->getUniqueLabelField(), $template);
-            if (count($tmp)) {
-                $templateIds[] = $tmp[0];
-            } else {
-                throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $template);
+            if ($template) {
+                $tmp = $this->object->getIdByParameter($this->object->getUniqueLabelField(), $template);
+                if (count($tmp)) {
+                    $templateIds[] = $tmp[0];
+                } else {
+                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $template);
+                }
             }
         }
         $instanceName = $params[self::ORDER_POLLER];
         $instanceObject = new Centreon_Object_Instance();
-        $tmp = $instanceObject->getIdByParameter($instanceObject->getUniqueLabelField(), $instanceName);
-        if (!count($tmp)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $instanceName);
+        if ($instanceName) {
+            $tmp = $instanceObject->getIdByParameter($instanceObject->getUniqueLabelField(), $instanceName);
+            if (!count($tmp)) {
+                throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $instanceName);
+            }
+            $instanceId = $tmp[0];
         }
-        $instanceId = $tmp[0];
         $hostgroups = explode("|", $params[self::ORDER_HOSTGROUP]);
         $hostgroupIds = array();
         $hostgroupObject = new Centreon_Object_Host_Group();
@@ -237,10 +241,12 @@ class CentreonHost extends CentreonObject
         foreach ($hostgroupIds as $hostgroupId) {
             $hostgroupRelationObject->insert($hostgroupId, $hostId);
         }
-        $instanceRelationObject = new Centreon_Object_Relation_Instance_Host();
-        $instanceRelationObject->insert($instanceId, $hostId);
-        $extended = new Centreon_Object_Host_Extended();
-        $extended->insert(array($extended->getUniqueLabelField() => $hostId));
+        if (isset($instanceId)) {
+            $instanceRelationObject = new Centreon_Object_Relation_Instance_Host();
+            $instanceRelationObject->insert($instanceId, $hostId);
+            $extended = new Centreon_Object_Host_Extended();
+            $extended->insert(array($extended->getUniqueLabelField() => $hostId));
+        }
     }
 
     /**
@@ -356,7 +362,9 @@ class CentreonHost extends CentreonObject
                     $extended = true;
                     break;
                 default:
-                    $params[1] = "host_".$params[1];
+                    if (!preg_match("/^host_/", $params[1])) {
+                        $params[1] = "host_".$params[1];
+                    }
                     break;
             }
             if ($extended == false) {
@@ -721,10 +729,14 @@ class CentreonHost extends CentreonObject
         foreach ($elements as $element) {
             echo $this->action.$this->delim."addtemplate".$this->delim.$element['host'].$this->delim.$element['template']."\n";
         }
-        $instanceRel = new Centreon_Object_Relation_Instance_Host();
-        $elements = $instanceRel->getMergedParameters(array("name"), array("host_name"));
-        foreach ($elements as $element) {
-            echo $this->action.$this->delim."setinstance".$this->delim.$element['host_name'].$this->delim.$element['name']."\n";
+        if ($this->register == 1) {
+            $instanceRel = new Centreon_Object_Relation_Instance_Host();
+            $elements = $instanceRel->getMergedParameters(array("name"), array("host_name"),-1, 0 , null, null, array("host_register" => $this->register));
+            foreach ($elements as $element) {
+                if (!preg_match("/^_Module_/", $element['host_name'])) {
+                    echo $this->action.$this->delim."setinstance".$this->delim.$element['host_name'].$this->delim.$element['name']."\n";
+                }
+            }
         }
     }
 }

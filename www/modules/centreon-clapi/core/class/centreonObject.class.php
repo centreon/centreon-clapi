@@ -192,7 +192,7 @@ abstract class CentreonObject
             throw new CentreonClapiException(self::MISSINGNAMEPARAMETER);
         }
         if ($this->objectExists($this->params[$this->object->getUniqueLabelField()]) === true) {
-            throw new CentreonClapiException(self::OBJECTALREADYEXISTS);
+            throw new CentreonClapiException(self::OBJECTALREADYEXISTS." (".$this->params[$this->object->getUniqueLabelField()].")");
         }
     }
 

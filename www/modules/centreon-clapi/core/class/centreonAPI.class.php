@@ -384,7 +384,7 @@ class CentreonAPI {
             	$objName = "";
             }
             if (!isset($this->relationObject[$this->object]) || !class_exists($objName)) {
-            	print "Object not found in Centreon API.\n";
+            	print "Object $this->object not found in Centreon API.\n";
            		return 1;
             }
 			$obj = new $objName($this->DB, $this->object);
@@ -419,8 +419,10 @@ class CentreonAPI {
 		 */
 		$handle = fopen($filename, 'r');
 		if ($handle) {
-			while ($string = fgets($handle)) {
-				$tab = preg_split('/;/', $string);
+			$i = 0;
+		    while ($string = fgets($handle)) {
+				$i++;
+		        $tab = preg_split('/;/', $string);
 				if (strlen(trim($string)) != 0) {
 					$this->object = trim($tab[0]);
 					$this->action = trim($tab[1]);
@@ -430,8 +432,13 @@ class CentreonAPI {
 						print "Action : ".$this->action."\n";
 						print "VARIABLES : ".$this->variables."\n\n";
 					}
-					$this->launchActionForImport();
-					print "RETURN : ".$this->return_code."\n";
+					try {
+					    $this->launchActionForImport();
+					} catch (CentreonClapiException $e) {
+					    echo "Line $i : ".$e->getMessage()."\n";
+					} catch (Exception $e) {
+					    echo "Line $i : ".$e->getMessage()."\n";
+					}
 					if ($this->return_code) {
 						$globalReturn = 1;
 					}
@@ -469,19 +476,19 @@ class CentreonAPI {
             	$objName = "";
             }
             if (!isset($this->relationObject[$this->object]) || !class_exists($objName)) {
-            	print "Object not found in Centreon API.\n";
+            	print "Object $this->object not found in Centreon API.\n";
            		return 1;
             }
 			$obj = new $objName($this->DB, $this->object);
-			if (method_exists($obj, $action)) {
+			if (method_exists($obj, $action) || method_exists($obj, "__call")) {
 				$this->return_code = $obj->$action($this->variables);
-				print "TEST : ".$this->return_code."\n";
+				//print "TEST : ".$this->return_code."\n";
 			} else {
 				print "Method not implemented into Centreon API.\n";
 				return 1;
 			}
 		} else {
-			if (method_exists($this, $action)) {
+			if (method_exists($this, $action) || method_exists($this, "__call")) {
 				$this->return_code = $this->$action();
 			} else {
 				print "Method not implemented into Centreon API.\n";

@@ -150,7 +150,7 @@ class CentreonServiceTemplate extends CentreonObject
                            "command_command_id_arg2"  => "event_handler_arguments");
         }
         if (preg_match("/^esi_/", $columnName)) {
-            return ltrim($columnName, "ehi_");
+            return ltrim($columnName, "esi_");
         }
         if (isset($table[$columnName])) {
             return $table[$columnName];
@@ -178,11 +178,13 @@ class CentreonServiceTemplate extends CentreonObject
         $addParams['service_description'] = $params[self::ORDER_SVCDESC];
         $addParams['service_alias'] = $params[self::ORDER_SVCALIAS];
         $template = $params[self::ORDER_SVCTPL];
-        $tmp = $this->object->getList($this->object->getPrimaryKey(), -1, 0, null, null, array('service_description' => $template, 'service_register' => '0'), "AND");
-        if (!count($tmp)) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $template);
+        if ($template) {
+            $tmp = $this->object->getList($this->object->getPrimaryKey(), -1, 0, null, null, array('service_description' => $template, 'service_register' => '0'), "AND");
+            if (!count($tmp)) {
+                throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $template);
+            }
+            $addParams['service_template_model_stm_id'] = $tmp[0][$this->object->getPrimaryKey()];
         }
-        $addParams['service_template_model_stm_id'] = $tmp[0][$this->object->getPrimaryKey()];
         $this->params = array_merge($this->params, $addParams);
         $serviceId = parent::add();
 
@@ -309,7 +311,9 @@ class CentreonServiceTemplate extends CentreonObject
                 $extended = true;
                 break;
             default:
-                $params[1] = "service_".$params[1];
+                if (!preg_match("/^service_/", $params[1])) {
+                    $params[1] = "service_".$params[1];
+                }
                 break;
         }
         if ($extended == false) {

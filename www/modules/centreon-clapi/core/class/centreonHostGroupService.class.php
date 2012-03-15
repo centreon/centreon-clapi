@@ -222,7 +222,7 @@ class CentreonHostGroupService extends CentreonObject
                            "command_command_id_arg2" => "event_handler_arguments");
         }
         if (preg_match("/^esi_/", $columnName)) {
-            return ltrim($columnName, "ehi_");
+            return ltrim($columnName, "esi_");
         }
         if (isset($table[$columnName])) {
             return $table[$columnName];
@@ -373,7 +373,9 @@ class CentreonHostGroupService extends CentreonObject
                 $extended = true;
                 break;
             default:
-                $params[2] = "service_".$params[2];
+                if (!preg_match("/^service_/", $params[2])) {
+                    $params[2] = "service_".$params[2];
+                }
                 break;
         }
         if ($extended == false) {

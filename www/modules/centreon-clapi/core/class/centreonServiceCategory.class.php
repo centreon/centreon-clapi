@@ -249,7 +249,7 @@ class CentreonServiceCategory extends CentreonObject
 	            if ($svcParam['service_register'] == 1) {
     	            $elements = $hostServiceRel->getMergedParameters(array('host_name'), array('service_description'), -1, 0, null, null, array("service_id" => $serviceId), "AND");
     	            foreach ($elements as $element) {
-                        echo $this->action.$this->delim."addservice".$this->delim.$scName.$this->delim.$element['host_name'].$this->delim.$element['service_description']."\n";
+                        echo $this->action.$this->delim."addservice".$this->delim.$scName.$this->delim.$element['host_name'].",".$element['service_description']."\n";
     	            }
 	            } else {
 	                echo $this->action.$this->delim."addservicetemplate".$this->delim.$scName.$this->delim.$svcParam['service_description']."\n";
