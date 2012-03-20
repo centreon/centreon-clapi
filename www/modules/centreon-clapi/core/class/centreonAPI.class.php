@@ -397,7 +397,7 @@ class CentreonAPI {
 		} else {
 			if (method_exists($this, $action)) {
 				$this->return_code = $this->$action();
-				print "Return code end : ".$this->return_code;
+				print "Return code end : ".$this->return_code . "\n";
 			} else {
 				print "Method not implemented into Centreon API.\n";
 				$this->return_code = 1;
@@ -594,7 +594,7 @@ class CentreonAPI {
 	 */
 	public function POLLERLIST() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
-		$this->return_code = $poller->getPollerList($this->format);
+		return $poller->getPollerList($this->format);
 	}
 
 	/**
