@@ -38,6 +38,7 @@
 
 require_once "centreonObject.class.php";
 require_once "Centreon/Object/Timeperiod/Timeperiod.php";
+require_once "Centreon/Object/Timeperiod/Exception.php";
 require_once "Centreon/Object/Relation/Timeperiod/Exclude.php";
 require_once "Centreon/Object/Relation/Timeperiod/Include.php";
 
@@ -47,6 +48,8 @@ class CentreonTimePeriod extends CentreonObject
     const ORDER_ALIAS             = 1;
     const TP_INCLUDE              = "include";
     const TP_EXCLUDE              = "exclude";
+    const TP_EXCEPTION            = "exception";
+
     /**
      * @var Centreon_Relation_Timeperiod_Exclude
      */
@@ -147,6 +150,80 @@ class CentreonTimePeriod extends CentreonObject
             }
         } else {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
+        }
+    }
+
+    /**
+     * Set Exception
+     *
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function setexception($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (($tpId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) == 0) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
+        }
+        if (count($params) < self::NB_UPDATE_PARAMS) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $excObj = new Centreon_Object_Timeperiod_Exception();
+        $escList = $excObj->getList($excObj->getPrimaryKey(), -1, 0, null, null, array("timeperiod_id"    => $tpId,
+                                                                                	   "days"             => $params[1]),
+                                                                                		"AND");
+        if (count($escList)) {
+            $excObj->update($escList[0][$excObj->getPrimaryKey()], array('timerange' => $params[2]));
+        } else {
+            $excObj->insert(array('timeperiod_id'    => $tpId,
+                                  'days'             => $params[1],
+                                  'timerange'        => $params[2]));
+        }
+    }
+
+    /**
+     * Delete exception
+     *
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function delexception($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (($tpId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) == 0) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
+        }
+        if (count($params) < 2) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $excObj = new Centreon_Object_Timeperiod_Exception();
+        $escList = $excObj->getList($excObj->getPrimaryKey(), -1, 0, null, null, array("timeperiod_id"    => $tpId,
+                                                                                	   "days"             => $params[1]),
+                                                                                		"AND");
+        if (count($escList)) {
+            $excObj->delete($escList[0][$excObj->getPrimaryKey()]);
+        }
+    }
+
+    /**
+     * Get exception
+     *
+     * @param string $parameters
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function getexception($parameters)
+    {
+        if (($tpId = $this->getObjectId($parameters)) == 0) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$parameters);
+        }
+        $excObj = new Centreon_Object_Timeperiod_Exception();
+        $escList = $excObj->getList(array("days", "timerange"), -1, 0, null, null, array("timeperiod_id"    => $tpId));
+        echo "days;timerange\n";
+        foreach ($escList as $exc) {
+            echo $exc['days'] . $this->delim . $exc['timerange'] . "\n";
         }
     }
 
