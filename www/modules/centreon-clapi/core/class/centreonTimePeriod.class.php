@@ -97,6 +97,8 @@ class CentreonTimePeriod extends CentreonObject
         echo $paramString . "\n";
         $elements = $this->object->getList($params, -1, 0, null, null, $filters);
         foreach ($elements as $tab) {
+            $tab = array_map('html_entity_decode', $tab);
+            $tab = array_map('utf8_encode', $tab);
             echo implode($this->delim, $tab) . "\n";
         }
     }
