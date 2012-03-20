@@ -87,6 +87,7 @@ class CentreonServiceGroup extends CentreonObject
         echo $paramString . "\n";
         $elements = $this->object->getList($params, -1, 0, null, null, $filters);
         foreach ($elements as $tab) {
+            $tab = array_map($tab, 'html_entity_decode');
             echo implode($this->delim, $tab) . "\n";
         }
 	}
