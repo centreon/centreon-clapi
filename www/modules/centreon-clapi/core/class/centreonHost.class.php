@@ -37,6 +37,7 @@
  */
 
 require_once "centreonObject.class.php";
+require_once "centreonUtils.class.php";
 require_once "centreonTimePeriod.class.php";
 require_once "centreonACL.class.php";
 require_once "Centreon/Object/Instance/Instance.php";
@@ -372,6 +373,17 @@ class CentreonHost extends CentreonObject
                 parent::setparam($objectId, $updateParams);
             } else {
                 $params[1] = "ehi_".$params[1];
+                if ($params[1] == "ehi_icon_image" || $params[1] == "ehi_statusmap_image" || $params[1] == "ehi_vrml_image") {
+                    if ($params[2]) {
+                        $id = CentreonUtils::getImageId($params[2]);
+                        if (is_null($id)) {
+                            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[2]);
+                        }
+                        $params[2] = $id;
+                    } else {
+                        $params[2] = null;
+                    }
+                }
                 $extended = new Centreon_Object_Host_Extended();
                 $extended->update($objectId, array($params[1] => $params[2]));
             }

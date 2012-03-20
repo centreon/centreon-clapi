@@ -322,6 +322,17 @@ class CentreonServiceTemplate extends CentreonObject
         } else {
             if ($params[1] != "graph_id") {
                 $params[1] = "esi_".$params[1];
+                if ($params[1] == "esi_icon_image") {
+                    if ($params[2]) {
+                        $id = CentreonUtils::getImageId($params[2]);
+                        if (is_null($id)) {
+                            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[2]);
+                        }
+                        $params[2] = $id;
+                    } else {
+                        $params[2] = null;
+                    }
+                }
             }
             $extended = new Centreon_Object_Service_Extended();
             $extended->update($objectId, array($params[1] => $params[2]));

@@ -37,6 +37,7 @@
  */
 
 require_once "centreonObject.class.php";
+require_once "centreonUtils.class.php";
 require_once "centreonTimePeriod.class.php";
 require_once "centreonACL.class.php";
 require_once "Centreon/Object/Instance/Instance.php";
@@ -385,6 +386,17 @@ class CentreonService extends CentreonObject
         } else {
             if ($params[2] != "graph_id") {
                 $params[2] = "esi_".$params[2];
+                if ($params[2] == "esi_icon_image") {
+                    if ($params[3]) {
+                        $id = CentreonUtils::getImageId($params[3]);
+                        if (is_null($id)) {
+                            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[3]);
+                        }
+                        $params[3] = $id;
+                    } else {
+                        $params[3] = null;
+                    }
+                }
             }
             $extended = new Centreon_Object_Service_Extended();
             $extended->update($objectId, array($params[2] => $params[3]));
