@@ -71,7 +71,7 @@ PHP_INI="0";
 #----
 function usage() {
 	local program=$PROGRAM
-	echo -e "Usage: $program"
+	echo -e "Usage: $program -i"
 	exit 1
 }
 
