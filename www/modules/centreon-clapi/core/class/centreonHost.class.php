@@ -745,7 +745,7 @@ class CentreonHost extends CentreonObject
         }
         if ($this->register == 1) {
             $instanceRel = new Centreon_Object_Relation_Instance_Host();
-            $elements = $instanceRel->getMergedParameters(array("name"), array("host_name"),-1, 0 , null, null, array("host_register" => $this->register));
+            $elements = $instanceRel->getMergedParameters(array("name"), array("host_name"),-1, 0 , null, null, array("host_register" => $this->register), "AND");
             foreach ($elements as $element) {
                 if (!preg_match("/^_Module_/", $element['host_name'])) {
                     echo $this->action.$this->delim."setinstance".$this->delim.$element['host_name'].$this->delim.$element['name']."\n";
