@@ -347,8 +347,10 @@ class CentreonServiceTemplate extends CentreonObject
      */
     protected function stripMacro($macroName)
     {
-        $strippedMacro = ltrim($macroName, "\$_SERVICE");
-        $strippedMacro = rtrim($strippedMacro, "\$");
+        $strippedMacro = $macroName;
+        if (preg_match('/\$_SERVICE([a-zA-Z0-9_-]+)\$/', $strippedMacro, $matches)) {
+            $strippedMacro = $matches[1];
+        }
         return strtolower($strippedMacro);
     }
 
@@ -588,7 +590,7 @@ class CentreonServiceTemplate extends CentreonObject
                     }
                 }
             }
-            $macros = $macroObj->getList("*", -1, 0, null, null, array($macroObj->getPrimaryKey() => $element[$this->object->getPrimaryKey()]), "AND");
+            $macros = $macroObj->getList("*", -1, 0, null, null, array('svc_svc_id' => $element[$this->object->getPrimaryKey()]), "AND");
             foreach ($macros as $macro) {
                 echo $this->action.$this->delim."setmacro".$this->delim.$element['service_description'].$this->delim.$this->stripMacro($macro['svc_macro_name']).$this->delim.$macro['svc_macro_value']."\n";
             }

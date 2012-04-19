@@ -412,8 +412,10 @@ class CentreonHost extends CentreonObject
      */
     protected function stripMacro($macroName)
     {
-        $strippedMacro = ltrim($macroName, "\$_HOST");
-        $strippedMacro = rtrim($strippedMacro, "\$");
+        $strippedMacro = $macroName;
+        if (preg_match('/\$_HOST([a-zA-Z0-9_-]+)\$/', $strippedMacro, $matches)) {
+            $strippedMacro = $matches[1];
+        }
         return strtolower($strippedMacro);
     }
 
@@ -721,7 +723,7 @@ class CentreonHost extends CentreonObject
                     }
                 }
             }
-            $macros = $macroObj->getList("*", -1, 0, null, null, array($macroObj->getPrimaryKey() => $element[$this->object->getPrimaryKey()]), "AND");
+            $macros = $macroObj->getList("*", -1, 0, null, null, array('host_host_id' => $element[$this->object->getPrimaryKey()]), "AND");
             foreach ($macros as $macro) {
                 echo $this->action.$this->delim."setmacro".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$this->stripMacro($macro['host_macro_name']).$this->delim.$macro['host_macro_value']."\n";
             }
