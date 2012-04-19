@@ -38,6 +38,7 @@
 require_once "centreonObject.class.php";
 require_once "centreonInstance.class.php";
 require_once "Centreon/Object/Nagios/Nagios.php";
+require_once "Centreon/Object/Command/Command.php";
 
 /**
  *
@@ -200,11 +201,32 @@ class CentreonNagiosCfg extends CentreonObject
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            $commandColumns = array('global_host_event_handler',
+            						'global_service_event_handler',
+            						'host_perfdata_command',
+            						'service_perfdata_command',
+                                    'host_perfdata_file_processing_command',
+                                    'service_perfdata_file_processing_command',
+                                    'ocsp_command',
+                                    'ochp_command');
             if ($params[1] == "instance" || $params[1] == "nagios_server_id") {
                 $params[1] = "nagios_server_id";
                 $params[2] = $this->instanceObj->getInstanceId($params[2]);
             } elseif ($params[1] == "broker_module") {
                 $this->setBrokerModule($objectId, $params[2]);
+            } elseif (preg_match('/('.implode('|', $commandColumns).')/', $params[1], $matches)) {
+                $commandName = $matches[1];
+                if ($params[2]) {
+                    $commandObj = new Centreon_Object_Command();
+                    $res = $commandObj->getIdByParameter($commandObj->getUniqueLabelField(), $params[2]);
+                    if (count($res)) {
+                        $params[2] = $res[0];
+                    } else {
+                        throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[2]);
+                    }
+                } else {
+                    $params[2] = NULL;
+                }
             }
             if ($params[1] != "broker_module") {
                 $updateParams = array($params[1] => $params[2]);
