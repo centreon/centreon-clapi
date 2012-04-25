@@ -120,7 +120,7 @@ class CentreonNagiosCfg extends CentreonObject
                                 'service_perfdata_file_mode'              => '2',
                                 'check_for_orphaned_services'             => '0',
                                 'check_for_orphaned_hosts'                => '',
-                                'check_service_freshness'                 => '1',
+                                'check_service_freshness'                 => '2',
                                 'check_host_freshness'                    => '2',
                                 'date_format'                             => 'euro',
                                 'illegal_object_name_chars'               => "~!$%^&*\"|'<>?,()=",
@@ -229,6 +229,14 @@ class CentreonNagiosCfg extends CentreonObject
                 }
             }
             if ($params[1] != "broker_module") {
+                $p = strtolower($params[1]);
+                if ($params[2] == "") {
+                    if (isset($this->params[$p]) && $this->params[$p] == 2) {
+                        $params[2] = $this->params[$p];
+                    } else {
+                        $params[2] = NULL;
+                    }
+                }
                 $updateParams = array($params[1] => $params[2]);
                 parent::setparam($objectId, $updateParams);
             }
