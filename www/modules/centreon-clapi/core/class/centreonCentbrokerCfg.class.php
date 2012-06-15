@@ -65,8 +65,10 @@ class CentreonCentbrokerCfg extends CentreonObject
         $this->params = array(  'config_filename' => 'centreon-broker.xml',
                                 'config_activate' => '1'
                                 );
-                                $this->nbOfCompulsoryParams = 2;
-                                $this->activateField = "config_activate";
+        $this->insertParams = array('name', 'ns_nagios_server');
+        $this->action = "CENTBROKERCFG";
+        $this->nbOfCompulsoryParams = count($this->insertParams);
+        $this->activateField = "config_activate";
     }
 
     /**
@@ -421,5 +423,61 @@ class CentreonCentbrokerCfg extends CentreonObject
             return false;
         }
         return true;
+    }
+
+    /**
+     * Export
+     *
+     * @return void
+     */
+    public function export()
+    {
+        $elements = $this->object->getList("*", -1, 0);
+        foreach ($elements as $element) {
+            $addStr = $this->action.$this->delim."ADD".
+                      $this->delim.$element['config_name'].
+                      $this->delim.$this->instanceObj->getInstanceName($element['ns_nagios_server']);
+            echo $addStr."\n";
+            echo $this->action.$this->delim."SETPARAM".$this->delim."filename".$this->delim.$element['config_filename']."\n";
+            $sql = "SELECT config_key, config_value, config_group, config_group_id
+            		FROM cfg_centreonbroker_info
+            		WHERE config_id = ?
+            		ORDER BY config_group_id";
+            $res = $this->db->query($sql, array($element['config_id']));
+            $blockId = array();
+            $addParamStr = array();
+            $setParamStr = array();
+            $resultSet = $res->fetchAll();
+            unset($res);
+            foreach ($resultSet as $row) {
+                    if ($row['config_key'] != 'name' && $row['config_key'] != 'blockId') {
+                        if (!isset($setParamStr[$row['config_group'].'_'.$row['config_group_id']])) {
+                            $setParamStr[$row['config_group'].'_'.$row['config_group_id']] = "";
+                        }
+                        $setParamStr[$row['config_group'].'_'.$row['config_group_id']] .= $this->action.$this->delim."SET".strtoupper($row['config_group']).
+                                                                 $this->delim.$element['config_name'].
+                                                                 $this->delim.$row['config_group_id'].
+                                                                 $this->delim.$row['config_key'].
+                                                                 $this->delim.$row['config_value']."\n";
+                    } elseif ($row['config_key'] == 'name') {
+                        $addParamStr[$row['config_group'].'_'.$row['config_group_id']] = $this->action.$this->delim."ADD".strtoupper($row['config_group']).
+                                                                                         $this->delim.$row['config_value'];
+                    } elseif ($row['config_key'] == 'blockId') {
+                        $blockId[$row['config_group'].'_'.$row['config_group_id']] = $row['config_value'];
+                    }
+            }
+            foreach ($addParamStr as $id => $add) {
+                if (isset($blockId[$id]) && isset($setParamStr[$id])) {
+                    list($tag, $type) = explode('_', $blockId[$id]);
+                    $resType = $this->db->query("SELECT type_shortname FROM cb_type WHERE cb_type_id = ?", array($type));
+                    $rowType = $resType->fetch();
+                    if (isset($rowType['type_shortname'])) {
+                        echo $add.$this->delim.$rowType['type_shortname']."\n";
+                        echo $setParamStr[$id];
+                    }
+                    unset($resType);
+                }
+            }
+        }
     }
 }
