@@ -250,6 +250,20 @@ class CentreonHost extends CentreonObject
         }
     }
 
+	/**
+     * Del Action
+     * Must delete services as well
+     *
+     * @param string $objectName
+     * @return void
+     * @throws CentreonClapiException
+     */
+    public function del($objectName)
+    {
+        parent::del($objectName);
+        $this->db->query("DELETE FROM service WHERE service_register = '1' AND service_id NOT IN (SELECT service_service_id FROM host_service_relation)");
+    }
+
     /**
      * Returns command id
      *
