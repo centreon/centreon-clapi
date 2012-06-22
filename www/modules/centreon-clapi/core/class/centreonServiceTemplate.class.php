@@ -482,6 +482,10 @@ class CentreonServiceTemplate extends CentreonObject
                     $class = "Centreon_Object_Contact_Group";
                     $relclass = "Centreon_Object_Relation_Contact_Group_Service";
                     break;
+                case "trap":
+                    $class = "Centreon_Object_Trap";
+                    $relclass = "Centreon_Object_Relation_Trap_Service";
+                    break;
                 default:
                     throw new CentreonClapiException(self::UNKNOWN_METHOD);
                     break;
@@ -604,6 +608,11 @@ class CentreonServiceTemplate extends CentreonObject
         $elements = $contactRel->getMergedParameters(array("contact_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register), "AND");
         foreach ($elements as $element) {
             echo $this->action.$this->delim."addcontact".$this->delim.$element['service_description'].$this->delim.$element['contact_name']."\n";
+        }
+        $trapRel = new Centreon_Object_Relation_Trap_Service();
+        $elements = $trapRel->getMergedParameters(array("traps_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
+        foreach ($elements as $element) {
+            echo $this->action.$this->delim."addtrap".$this->delim.$element['service_description'].$this->delim.$telement['traps_name']."\n";
         }
     }
 }

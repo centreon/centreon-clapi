@@ -54,11 +54,13 @@ require_once "Centreon/Object/Service/Macro/Custom.php";
 require_once "Centreon/Object/Service/Extended.php";
 require_once "Centreon/Object/Contact/Contact.php";
 require_once "Centreon/Object/Contact/Group.php";
+require_once "Centreon/Object/Trap/Trap.php";
 require_once "Centreon/Object/Relation/Host/Template/Host.php";
 require_once "Centreon/Object/Relation/Contact/Service.php";
 require_once "Centreon/Object/Relation/Contact/Group/Service.php";
 require_once "Centreon/Object/Relation/Host/Service.php";
 require_once "Centreon/Object/Relation/Host/Group/Service/Service.php";
+require_once "Centreon/Object/Relation/Trap/Service.php";
 
 
 /**
@@ -602,6 +604,10 @@ class CentreonService extends CentreonObject
                     $class = "Centreon_Object_Contact_Group";
                     $relclass = "Centreon_Object_Relation_Contact_Group_Service";
                     break;
+                case "trap":
+                    $class = "Centreon_Object_Trap";
+                    $relclass = "Centreon_Object_Relation_Trap_Service";
+                    break;
                 default:
                     throw new CentreonClapiException(self::UNKNOWN_METHOD);
                     break;
@@ -729,6 +735,11 @@ class CentreonService extends CentreonObject
             $celements = $contactRel->getMergedParameters(array("contact_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service_id" => $element['service_id']), "AND");
             foreach ($celements as $celement) {
                 echo $this->action.$this->delim."addcontact".$this->delim.$element['host_name'].$this->delim.$celement['service_description'].$this->delim.$celement['contact_name']."\n";
+            }
+            $trapRel = new Centreon_Object_Relation_Trap_Service();
+            $telements = $trapRel->getMergedParameters(array("traps_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
+            foreach ($telements as $telement) {
+                echo $this->action.$this->delim."addtrap".$this->delim.$element['host_name'].$this->delim.$telement['service_description'].$this->delim.$telement['traps_name']."\n";
             }
         }
     }

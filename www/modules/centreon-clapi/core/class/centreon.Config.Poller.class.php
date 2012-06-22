@@ -36,6 +36,8 @@
  *
  */
 
+require_once "centreonUtils.class.php";
+
 /**
  *
  * @author Julien Mathis
@@ -48,6 +50,7 @@ class CentreonConfigPoller {
 	private $nagiosCFGPath;
 	private $centreon_path;
 	private $centcore_pipe;
+	const MISSING_POLLER_ID = "Missing poller ID";
 
 	/**
 	 * Constructor
@@ -449,6 +452,25 @@ class CentreonConfigPoller {
 	}
 
 	/**
+	 * Send Trap configuration files to poller
+	 *
+	 * @param int $pollerId
+	 * @return void
+	 * @throws CentreonClapiException
+	 */
+	public function sendTrapCfg($pollerId = null)
+	{
+        if (is_null($pollerId)) {
+            throw new CentreonClapiException(self::MISSING_POLLER_ID);
+        }
+        $this->testPollerId($pollerId);
+        $centreonDir = CentreonUtils::getCentreonDir();
+        passthru("$centreonDir/bin/centGenSnmpttConfFile 2>&1");
+        exec("echo 'SYNCTRAP:".$pollerId."' >> ".$this->centcore_pipe, $stdout, $return);
+        return $return;
+	}
+
+	/**
 	 *
 	 * Display Copying files
 	 * @param unknown_type $filename
@@ -461,9 +483,5 @@ class CentreonConfigPoller {
 		$str = "- ".$filename." -> ".$status."\n";
 		return $str;
 	}
-
-	/**
-	 * Method for config file Generation
-	 */
 }
 ?>

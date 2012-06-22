@@ -126,6 +126,8 @@ class CentreonAPI {
 		$this->relationObject["HOST"] = "Host";
 		$this->relationObject["SERVICE"] = "Service";
         $this->relationObject["HGSERVICE"] = "HostGroupService";
+        $this->relationObject["VENDOR"] = "Manufacturer";
+        $this->relationObject["TRAP"] = "Trap";
 
 		$this->relationObject["HG"] = "HostGroup";
 		$this->relationObject["HC"] = "HostCategory";
@@ -509,10 +511,13 @@ class CentreonAPI {
 		$this->objectTable['CG']->export();
 		$this->objectTable['HTPL']->export();
 		$this->objectTable['INSTANCE']->export();
+		$this->objectTable['CENTBROKERCFG']->export();
+		$this->objectTable['TRAP']->export();
 		$this->objectTable['HOST']->export();
 		$this->objectTable['HG']->export();
 		$this->objectTable['STPL']->export();
 		$this->objectTable['HC']->export();
+		$this->objectTable['VENDOR']->export();
 		$this->objectTable['SERVICE']->export();
 		$this->objectTable['HGSERVICE']->export();
 		$this->objectTable['SG']->export();
@@ -538,6 +543,9 @@ class CentreonAPI {
 		$this->iniObject('TP');
 		$this->iniObject('CMD');
 		$this->iniObject('INSTANCE');
+		$this->iniObject('CENTBROKERCFG');
+		$this->iniObject('VENDOR');
+		$this->iniObject('TRAP');
 		$this->iniObject('HOST');
 		$this->iniObject('SERVICE');
 		$this->iniObject('HGSERVICE');
@@ -641,6 +649,15 @@ class CentreonAPI {
 	public function CFGMOVE() {
 		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
 		return $poller->cfgMove($this->variables);
+	}
+
+	/**
+	 * Send trap configuration file to poller
+	 */
+	public function SENDTRAPCFG()
+	{
+        $poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
+        return $poller->sendTrapCfg($this->variables);
 	}
 
 	/**

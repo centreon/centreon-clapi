@@ -25,6 +25,22 @@ class CentreonUtils
     }
 
     /**
+     * Get centreon directory
+     *
+     * @return string
+     */
+    public static function getCentreonDir()
+    {
+		$db = Centreon_Db_Manager::factory('centreon');
+		$res = $db->query("SELECT `value` FROM options WHERE `key` = 'oreon_path' LIMIT 1");
+		$row = $res->fetch();
+		if (isset($row['value'])) {
+		    return $row['value'];
+		}
+		return "";
+    }
+
+    /**
      * Converts strings such as #S# #BS# #BR#
      *
      * @param string $pattern
