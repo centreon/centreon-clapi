@@ -28,3 +28,5 @@ Example :
 #> ./centreon -u jmathis -p centreon -a applycfg -v 1
 #> ./centreon -u jmathis -p centreon -a pollerlist
 
+
+Find more there: http://forge.centreon.com/projects/centreon-clapi/wiki
