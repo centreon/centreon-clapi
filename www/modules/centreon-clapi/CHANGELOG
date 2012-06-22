@@ -1,0 +1,8 @@
+centreon-clapi-1.4.0
+=====================
+Bugfix: Deleting hosts used to leave orphaned services in database
+Feature: Centreon Broker configuration is now handled
+Feature: Traps configuration is now handled
+Feature: Vendor configuration is now handled
+Feature: It is now possible to generate traps from a MIB file
+Feature: It is now possible to send trap vendor configuration file to a remote poller
