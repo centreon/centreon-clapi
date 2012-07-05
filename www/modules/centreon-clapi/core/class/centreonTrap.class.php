@@ -284,7 +284,7 @@ class CentreonTrap extends CentreonObject
         if (!preg_match("/tmo_/", $key)) {
             $key = 'tmo_'.$key;
         }
-        if ($key == 'status') {
+        if ($key == 'tmo_status') {
             $value = $this->getStatusInt($value);
         }
         $matchObj = new Centreon_Object_Trap_Matching();
