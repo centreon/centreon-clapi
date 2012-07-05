@@ -76,6 +76,7 @@ class CentreonHost extends CentreonObject
     const ORDER_TEMPLATE   = 3;
     const ORDER_POLLER     = 4;
     const ORDER_HOSTGROUP  = 5;
+    const MISSING_INSTANCE = "Instance name is mandatory";
 
 	/**
 	 * Constructor
@@ -215,6 +216,8 @@ class CentreonHost extends CentreonObject
                 throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $instanceName);
             }
             $instanceId = $tmp[0];
+        } else {
+            throw new CentreonClapiException(self::MISSING_INSTANCE);
         }
         $hostgroups = explode("|", $params[self::ORDER_HOSTGROUP]);
         $hostgroupIds = array();
