@@ -383,6 +383,9 @@ class CentreonCentbrokerCfg extends CentreonObject
      */
     protected function fieldIsValid($configId, $tagName, $args)
     {
+        if ($args[2] == 'type') {
+            return true;
+        }
         $sql = "SELECT config_value
         		FROM cfg_centreonbroker_info
         		WHERE config_key = 'blockId'
@@ -396,16 +399,46 @@ class CentreonCentbrokerCfg extends CentreonObject
             return false;
         }
         list($tagId, $typeId) = explode('_', $row['config_value']);
-        $sql = "SELECT fieldtype, cf.cb_field_id
-        		FROM cb_type_field_relation ctfr, cb_field cf
+        $sql = "SELECT fieldtype, cf.cb_field_id, ct.cb_module_id
+        		FROM cb_type_field_relation ctfr, cb_field cf, cb_type ct
         		WHERE ctfr.cb_field_id = cf.cb_field_id
+        		AND ctfr.cb_type_id = ct.cb_type_id
         		AND cf.fieldname = ?
         		AND ctfr.cb_type_id = ?";
         $res = $this->db->query($sql, array($args[2], $typeId));
         $row = $res->fetch();
         unset($res);
         if (!isset($row['fieldtype'])) {
-            return false;
+            $sql = "SELECT fieldtype, cf.cb_field_id, ct.cb_module_id
+        			FROM cb_type_field_relation ctfr, cb_field cf, cb_type ct
+        			WHERE ctfr.cb_field_id = cf.cb_field_id
+        			AND ctfr.cb_type_id = ct.cb_type_id
+        			AND ctfr.cb_type_id = ?";
+            $res = $this->db->query($sql, array($typeId));
+            $rows = $res->fetchAll();
+            unset($res);
+            $found = false;
+            foreach ($rows as $row) {
+                $sql = "SELECT fieldtype, cf.cb_field_id
+    					FROM cb_module_relation cmr, cb_type ct, cb_type_field_relation ctfr, cb_field cf
+                        WHERE cmr.cb_module_id = ?
+                        AND cf.fieldname = ?
+                        AND cmr.inherit_config = 1
+                        AND cmr.module_depend_id = ct.cb_module_id
+                        AND ct.cb_type_id = ctfr.cb_type_id
+                        AND ctfr.cb_field_id = cf.cb_field_id
+                        ORDER BY fieldname";
+                $res = $this->db->query($sql, array($row['cb_module_id'], $args[2]));
+                $row = $res->fetch();
+                if (isset($row['fieldtype'])) {
+                    $found = true;
+                    break;
+                }
+                unset($res);
+            }
+            if ($found == false) {
+                return false;
+            }
         }
         if ($row['fieldtype'] != 'select') {
             return true;
