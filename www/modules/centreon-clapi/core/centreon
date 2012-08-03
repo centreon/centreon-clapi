@@ -55,9 +55,8 @@
 	$shortopts .= "d"; /* Debug mode */
 	$shortopts .= "u:"; /* Users */
 	$shortopts .= "p:"; /* Password */
-	$shortopts .= "a:"; /* Action */
 	$shortopts .= "o:"; /* Object type */
-	$shortopts .= "v:"; /* Action */
+	$shortopts .= "v:"; /* variables */
 	$shortopts .= "h"; /* Help */
 	$shortopts .= "V"; /* Version */
 	$shortopts .= "a:"; /* Action */
