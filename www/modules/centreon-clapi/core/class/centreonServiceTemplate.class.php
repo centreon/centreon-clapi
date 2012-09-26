@@ -610,9 +610,9 @@ class CentreonServiceTemplate extends CentreonObject
             echo $this->action.$this->delim."addcontact".$this->delim.$element['service_description'].$this->delim.$element['contact_name']."\n";
         }
         $trapRel = new Centreon_Object_Relation_Trap_Service();
-        $elements = $trapRel->getMergedParameters(array("traps_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
-        foreach ($elements as $element) {
-            echo $this->action.$this->delim."addtrap".$this->delim.$element['service_description'].$this->delim.$telement['traps_name']."\n";
+        $telements = $trapRel->getMergedParameters(array("traps_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
+        foreach ($telements as $telement) {
+            echo $this->action.$this->delim."addtrap".$this->delim.$telement['service_description'].$this->delim.$telement['traps_name']."\n";
         }
     }
 }
