@@ -384,7 +384,8 @@ class CentreonService extends CentreonObject
         }
         if ($extended == false) {
             $updateParams = array($params[2] => $params[3]);
-            parent::setparam($objectId, $updateParams);
+            $this->object->update($objectId, $updateParams);
+            //parent::setparam($objectId, $updateParams);
         } else {
             if ($params[2] != "graph_id") {
                 $params[2] = "esi_".$params[2];
