@@ -86,6 +86,9 @@
 	$dbConfig['username'] = $conf_centreon['user'];
 	$dbConfig['password'] = $conf_centreon['password'];
 	$dbConfig['dbname'] = $conf_centreon['db'];
+	if (isset($conf_centreon['port'])) {
+		$dbConfig['port'] = $conf_centreon['port']; 
+	}
 	Centreon_Db_Manager::factory('centreon', 'pdo_mysql', $dbConfig);
 
 	/**
