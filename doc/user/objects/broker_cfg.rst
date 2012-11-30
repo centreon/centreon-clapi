@@ -1,0 +1,665 @@
+===============
+Centreon broker
+===============
+
+Overview
+--------
+
+Object name: **CENTBROKERCFG**
+
+
+Show
+----
+
+In order to list available Centreon Broker CFG, use the **SHOW** action::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a show 
+  config id;config name;instance
+  1;Central CFG;Central
+  2;Sattelite CFG;Sattelite
+  [...]
+
+Columns are the following:
+
+======= ===========================================
+Order	Description
+======= ===========================================
+1	ID
+
+2	Name of configuration
+
+3	Instance that is linked to broker cfg
+======= ===========================================
+
+
+Add
+---
+
+In order to add a Centreon Broker CFG, use the **ADD** action::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a add -v "broker cfg for poller test;Poller test" 
+
+
+Required fields are:
+
+======= =========================================
+Order	Description
+======= =========================================
+1	Name of configuration
+
+2	Instance that is linked to broker cfg
+======= =========================================
+
+
+Del
+---
+
+If you want to remove a Centreon Broker CFG, use the **DEL** action. The Name is used for identifying the configuration to delete::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a del -v "broker cfg for poller test" 
+
+
+Setparam
+--------
+
+If you want to change a specific parameter of a Centreon Broker configuration, use the **SETPARAM** action. The configuration name is used for identifying the configuration to update::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a setparam -v "broker cfg for poller test;name;new broker cfg name" 
+
+Arguments are composed of the following columns:
+
+======== =========================================
+Order	 Column description
+======== =========================================
+1	 Name of Centreon Broker configuration
+
+2	 Parameter name
+
+3	 Parameter value
+======== =========================================
+
+Parameters that you may change are:
+
+======== ==================================================
+Column	 Description
+======== ==================================================
+filename Filename of configuration (.xml extension)
+
+name	 Name of configuration
+
+instance Instance that is linked to Centreon Broker CFG
+======== ==================================================
+
+
+Listinput, Listoutput, Listlogger and Listcorrelation
+-----------------------------------------------------
+
+If you want to list specific input output types of Centreon Broker, use one of the following commands:
+listinput
+listoutput
+listlogger
+listcorrelation
+Example:
+
+[root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a listoutput -v "broker cfg for poller test" 
+id;name
+1;Storage
+2;RRD
+3;PerfData
+Columns are the following :
+
+Column	Description
+ID	 I/O ID
+Name	 I/O Name
+
+
+Getinput, Getoutput, Getlogger and Getcorrelation
+-------------------------------------------------
+
+In order to get parameters of a specific I/O object, use one of the following commands:
+ - getinput
+ - getoutput
+ - getlogger
+ - getcorrelation
+
+Example:::
+  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a getoutput -v "broker cfg for poller test;3" 
+  parameter key;parameter value
+  db_host;localhost
+  db_name;centreon_storage
+  db_password;centreon
+  db_port;3306
+  db_type;mysql
+  db_user;centreon
+  failover;15552000
+  interval;60
+  length;
+  name;PerfData
+  type;storage
+
+The ID is used for identifying the I/O to get.
+
+Columns are the following :
+
+======== ===========================
+Order	 Description
+======== ===========================
+1	 Parameter key of the I/O
+
+2	 Parameter value of the I/O
+======== ===========================
+
+
+Addinput, Addoutput, Addlogger and Addcorrelation
+-------------------------------------------------
+
+In order to add a new I/O object, use one of the following commands:
+ - **ADDINPUT**
+ - **ADDOUTPUT**
+ - **ADDLOGGER**
+ - **ADDCORRELATION**
+
+Example:::
+  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a addlogger -v "broker cfg for poller test;/var/log/centreon-broker/central-module.log;file" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a listlogger -v "broker cfg for poller test" 
+  id;name
+  1;/var/log/centreon-broker/central-module.log
+
+
+Arguments are composed of the following columns:
+
+======== ============================
+Order	 Column description
+======== ============================
+1	 Name of Centreon Broker CFG
+
+2	 Name of the I/O object
+
+3	 Nature of I/O object
+======== ============================
+
+
+Delinput, Deloutput, Dellogger and Delcorrelation
+-------------------------------------------------
+
+In order to remove an I/O object from the Centreon Broker configuration, use one of the following commands:
+ - **DELINPUT**
+ - **DELOUTPUT**
+ - **DELLOGGER**
+ - **DELCORRELATION**
+
+Example:::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a dellogger -v "broker cfg for poller test;1" 
+
+The I/O ID is used for identifying the object to delete.
+
+
+Setintput, Setoutput, Setlogger and Setcorrelation
+--------------------------------------------------
+
+In order to set parameters of an I/O object, use one of the following commands:
+ - **SETINPUT**
+ - **SETOUTPUT**
+ - **SETLOGGER**
+ - **SETCORRELATION**
+
+Example:::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a setcorrelation -v "broker cfg for poller test;1;file;/etc/centreon-broker/correlation.xml" 
+
+Arguments are composed of the following columns:
+
+======= =============================================
+Order	Column description
+======= =============================================
+1	 Name of Centreon Broker CFG
+
+2	 ID of I/O object
+
+3	 Parameter name
+
+4	 Parameter value
+======= =============================================
+
+You may get help with the following CLAPI commands:
+ - **GETTYPELIST**
+ - **GETFIELDLIST**
+ - **GETVALUELIST**
+
+Example:::
+
+  [root@localhost core]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a gettypelist -v "output" 
+  type id;short name;name
+  16;sql;Broker SQL Database
+  11;file;File
+  3;ipv4;IPv4
+  10;ipv6;IPv6
+  15;local_client;Local Client Socket
+  12;local_server;Local Server Socket
+  14;storage;Perfdata Generator (Centreon Storage)
+  13;rrd;RRD File Generator
+
+  [root@localhost core]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a getfieldlist -v "ipv4" 
+  field id;short name;name
+  3;ca_certificate;Trusted CA's certificate;text
+  2;host;Host to connect to;text
+  1;port;Connection port;int
+  4;private_key;Private key file.;text
+  12;protocol*;Serialization Protocol;select
+  5;public_cert;Public certificate;text
+  6;tls;Enable TLS encryption;radio
+
+.. note::
+  Note that the "protocol" entry is followed by a star. This means that you have to use one of the possible values. 
+
+This is how you get the list of possible values of a given field::
+
+  [root@localhost core]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a getvaluelist -v "protocol" 
+  possible values
+  ndo
+
+
+The following chapters describes the parameters of each Object type
+
+correlation
+~~~~~~~~~~~
+
+correlation:
+
+===================================== ================================= ================================================================= ================================
+ID	                              Label	                        Description	                                                  Possible values
+===================================== ================================= ================================================================= ================================
+file	                              Correlation File	                Path to the correlation file which holds 
+                                                                        host, services, dependencies and parenting definitions.	
+
+retention                             Retention File	                File where correlation state will be stored during 
+                                                                        correlation engine restart	
+===================================== ================================= ================================================================= ================================
+
+input
+~~~~~
+
+ipv4:
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+compression	                      Compression (zlib)	        Enable or not data stream compression.	
+
+compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression. 
+                                                                        This however increase data streaming latency. 
+                                                                        Use with caution.	
+
+compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).           
+                                                                        -1 is the default	
+
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+ca_certificate	                      Trusted CA's certificate		
+
+host	                              Host to connect to		
+
+port	                              Connection port	                Port for listen or connect in TCP	
+
+private_key	                      Private key file.		
+
+protocol	                      Serialization Protocol		ndo
+
+public_cert	                      Public certificate		
+
+tls	                              Enable TLS encryption		
+===================================== ================================= ================================================================= ================================
+
+
+ipv6
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+compression	                      Compression (zlib)	        Enable or not data stream compression.	
+
+compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
+                                                                        This however increase data streaming latency.
+                                                                        Use with caution.	
+
+compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression). 
+                                                                        -1 is the default	
+
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+ca_certificate	                      Trusted CA's certificate		
+
+host	                              Host to connect to		
+
+port	                              Connection port	                Port for listen or connect in TCP	
+
+private_key	                      Private key file.		
+
+protocol	                      Serialization Protocol		                                                                  ndo
+
+public_cert	                      Public certificate		
+
+tls	                              Enable TLS encryption		
+===================================== ================================= ================================================================= ================================
+
+
+file
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+compression	                      Compression (zlib)	        Enable or not data stream compression.	
+
+compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression. 
+                                                                        This however increase data streaming latency. 
+                                                                        Use with caution.	
+
+compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression). 
+                                                                        -1 is the default	
+
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+path	                              File path		
+
+protocol	                      Serialization Protocol		                                                                  ndo
+===================================== ================================= ================================================================= ================================
+
+
+local_server
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+compression	                      Compression (zlib)	        Enable or not data stream compression.	
+
+compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression. 
+                                                                        This however increase data streaming latency.
+                                                                        Use with caution.	
+
+compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
+                                                                        -1 is the default	
+
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+path	                              File path		
+
+protocol	                      Serialization Protocol		                                                                  ndo
+===================================== ================================= ================================================================= ================================
+
+
+local_client
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+compression	                      Compression (zlib)	        Enable or not data stream compression.	
+
+compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression. 
+                                                                        This however increase data streaming latency. 
+                                                                        Use with caution.	
+
+compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
+                                                                        -1 is the default	
+
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+path	                              File path		
+
+protocol	                      Serialization Protocol		                                                                  ndo
+===================================== ================================= ================================================================= ================================
+
+
+logger
+~~~~~~
+
+file
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+config	                              Configuration messages	        Enable or not configuration messages logging.	
+
+debug	                              Debug messages	                Enable or not debug messages logging.	
+
+error	                              Error messages	                Enable or not error messages logging.	
+
+info	                              Informational messages	        Enable or not informational messages logging.	
+
+level	                              Logging level	                How much messages must be logged.	                          high,low,medium
+
+name	                              Name of the logger	        For a file logger this is the path to the file. 
+                                                                        For a standard logger, one of 'stdout' or 'stderr'.	
+===================================== ================================= ================================================================= ================================
+
+standard
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+config	                              Configuration messages	        Enable or not configuration messages logging.	
+
+debug	                              Debug messages	                Enable or not debug messages logging.	
+
+error	                              Error messages	                Enable or not error messages logging.	
+
+info	                              Informational messages	        Enable or not informational messages logging.	
+
+level	                              Logging level	                How much messages must be logged.	                          high,low,medium
+
+name	                              Name of the logger	        For a file logger this is the path to the file. 
+                                                                        For a standard logger, one of 'stdout' or 'stderr'.	
+===================================== ================================= ================================================================= ================================
+
+syslog
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+config	                              Configuration messages	        Enable or not configuration messages logging.	
+
+debug	                              Debug messages	                Enable or not debug messages logging.	
+
+error	                              Error messages	                Enable or not error messages logging.	
+
+info	                              Informational messages	        Enable or not informational messages logging.	
+
+level	                              Logging level	                How much messages must be logged.	                          high,low,medium
+===================================== ================================= ================================================================= ================================
+
+
+output
+~~~~~~
+
+ipv4
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+compression	                      Compression (zlib)	        Enable or not data stream compression.	
+
+compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
+                                                                        This however increase data streaming latency. Use with caution.	
+
+compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
+                                                                        -1 is the default	
+
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+ca_certificate	                      Trusted CA's certificate		
+
+host	                              Host to connect to		
+
+port	                              Connection port	                Port for listen or connect in TCP	
+
+private_key	                      Private key file.		
+
+protocol	                      Serialization Protocol		                                                                  ndo
+
+public_cert	                      Public certificate		
+
+tls	                              Enable TLS encryption		
+===================================== ================================= ================================================================= ================================
+
+
+ipv6
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+compression	                      Compression (zlib)	        Enable or not data stream compression.	
+
+compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
+                                                                        This however increase data streaming latency.
+ 									Use with caution.	
+
+compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
+                                                                        -1 is the default	
+
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+ca_certificate	                      Trusted CA's certificate		
+
+host	                              Host to connect to		
+
+port	                              Connection port	                Port for listen or connect in TCP	
+
+private_key	                      Private key file.		
+
+protocol	                      Serialization Protocol		                                                                   ndo
+
+public_cert	                      Public certificate		
+
+tls	                              Enable TLS encryption		
+===================================== ================================= ================================================================= ================================
+
+
+file
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+compression	                      Compression (zlib)	        Enable or not data stream compression.	
+
+compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
+                                                                        This however increase data streaming latency.
+                                                                        Use with caution.	
+
+compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
+                                                                        -1 is the default	
+
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+path	                              File path		
+
+protocol	                      Serialization Protocol		                                                                  ndo
+===================================== ================================= ================================================================= ================================
+
+
+local_server
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+compression	                      Compression (zlib)	        Enable or not data stream compression.	
+
+compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
+                                                                        This however increase data streaming latency.
+                                                                        Use with caution.	
+
+compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
+                                                                        -1 is the default	
+
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+path	                              File path		
+
+protocol	                      Serialization Protocol		                                                                  ndo
+===================================== ================================= ================================================================= ================================
+
+rrd
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+metrics_path	                      Metrics RRD Directory		
+
+path	                              File path		
+
+port	                              Connection port	                Port for listen or connect in TCP	
+
+status_path	                      Status RRD Directory		
+===================================== ================================= ================================================================= ================================
+
+
+storage
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+db_host	                              DB host		
+
+db_name	                              DB name		
+
+db_password	                      DB password		
+
+db_port	                              DB Port	                        Port on which the DB server listens	
+
+db_type	                              DB type		                                                                                   db2,ibase,mysql,oci,odbc,
+                                                                                                                                           postgresql,sqlite,tds
+
+db_user	                              DB user		
+
+interval	                      Interval Length	                Interval Length in seconds	
+
+length	                              RRD Length	                RRD storage duration.	
+===================================== ================================= ================================================================= ================================
+
+
+local_client
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+compression	                      Compression (zlib)	        Enable or not data stream compression.	
+
+compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
+                                                                        This however increase data streaming latency.
+                                                                        Use with caution.	
+
+compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
+                                                                        -1 is the default	
+
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+path	                              File path		
+
+protocol	                      Serialization Protocol		                                                                  ndo
+===================================== ================================= ================================================================= ================================
+
+
+sql
+
+===================================== ================================= ================================================================= ================================
+ID                                    Label                             Description                                                       Possible values
+===================================== ================================= ================================================================= ================================
+failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+
+db_host	                              DB host		
+
+db_name	                              DB name		
+
+db_password	                      DB password		
+
+db_port	                              DB Port	                        Port on which the DB server listens	
+
+db_type	                              DB type		                                                                                  db2,ibase,mysql,oci,odbc,
+                                                                                                                                          postgresql,sqlite,tds
+
+db_user	                              DB user		
+===================================== ================================= ================================================================= ================================
+
