@@ -118,6 +118,7 @@ class CentreonAPI {
   		 * Centreon DB Connexion
 		 */
 		$this->DB = new CentreonDB();
+                $this->DBC = new CentreonDB('centstorage');
 		$this->dateStart = time();
 
 		$this->relationObject = array();
@@ -602,7 +603,7 @@ class CentreonAPI {
 	 * List all poller declared in Centreon
 	 */
 	public function POLLERLIST() {
-		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
+		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path, $this->DBC);
 		return $poller->getPollerList($this->format);
 	}
 
@@ -611,7 +612,7 @@ class CentreonAPI {
 	 * Launch poller restart
 	 */
 	public function POLLERRESTART() {
-		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
+		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path, $this->DBC);
 		return $poller->pollerRestart($this->variables);
 	}
 
@@ -620,7 +621,7 @@ class CentreonAPI {
 	 * Launch poller reload
 	 */
 	public function POLLERRELOAD() {
-		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
+		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path, $this->DBC);
 		return $poller->pollerReload($this->variables);
 	}
 
@@ -629,7 +630,7 @@ class CentreonAPI {
 	 * Launch poller configuration files generation
 	 */
 	public function POLLERGENERATE() {
-		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
+		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path, $this->DBC);
 		return $poller->pollerGenerate($this->variables, $this->login, $this->password);
 	}
 
@@ -638,7 +639,7 @@ class CentreonAPI {
 	 * Launch poller configuration test
 	 */
 	public function POLLERTEST() {
-		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
+		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path, $this->DBC);
 		return $poller->pollerTest($this->format, $this->variables);
 	}
 
@@ -647,7 +648,7 @@ class CentreonAPI {
 	 * move configuration files into final directory
 	 */
 	public function CFGMOVE() {
-		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
+		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path, $this->DBC);
 		return $poller->cfgMove($this->variables);
 	}
 
@@ -656,7 +657,7 @@ class CentreonAPI {
 	 */
 	public function SENDTRAPCFG()
 	{
-        $poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
+        $poller = new CentreonConfigPoller($this->DB, $this->centreon_path, $this->DBC);
         return $poller->sendTrapCfg($this->variables);
 	}
 
@@ -673,7 +674,7 @@ class CentreonAPI {
 		/**
 		 * Launch Actions
 		 */
-		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path);
+		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path, $this->DBC);
 		$this->return_code = $poller->pollerGenerate($this->variables, $this->login, $this->password);
 		$this->endOfLine();
 		if ($this->return_code == 0) {

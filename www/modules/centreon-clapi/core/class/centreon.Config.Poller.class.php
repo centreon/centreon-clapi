@@ -45,6 +45,7 @@ require_once "centreonUtils.class.php";
  */
 class CentreonConfigPoller {
 	private $_DB;
+        private $_DBC;
 	private $resultTest;
 	private $optGen;
 	private $nagiosCFGPath;
@@ -54,12 +55,14 @@ class CentreonConfigPoller {
 
 	/**
 	 * Constructor
-	 * @param unknown_type $DB
-	 * @param unknown_type $centreon_path
-	 * @return unknown_type
+	 * @param CentreonDB $DB
+	 * @param string $centreon_path
+         * @param CentreonDB $DBC
+	 * @return void
 	 */
-	public function __construct($DB, $centreon_path) {
+	public function __construct($DB, $centreon_path, $DBC) {
 		$this->_DB = $DB;
+                $this->_DBC = $DBC;
 		$this->resultTest = 0;
 		$this->nagiosCFGPath = "$centreon_path/filesGeneration/nagiosCFG/";
 		$this->centreon_path = $centreon_path;
@@ -274,8 +277,9 @@ class CentreonConfigPoller {
 		$tab["localhost"] = $this->isPollerLocalhost($variables);
 
 		$centreon_path = $this->centreon_path;
-		global $pearDB;
+		global $pearDB, $pearDBO;
 		$pearDB = $this->_DB;
+                $pearDBO = $this->_DBC;
 
 		$nagiosCFGPath = $this->nagiosCFGPath;
 		$DebugPath = "filesGeneration/nagiosCFG/";
