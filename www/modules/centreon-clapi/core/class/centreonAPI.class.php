@@ -76,9 +76,9 @@ class CentreonAPI {
 	public $optGen;
 	private $return_code;
 	private $relationObject;
-
+    
 	private $objectTable;
-
+    
 	public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
 		global $version;
 
@@ -106,6 +106,7 @@ class CentreonAPI {
 		} else {
 			$this->variables = "";
 		}
+
 		if (isset($options["o"])) {
 			$this->object =  htmlentities(strtoupper($options["o"]), ENT_QUOTES);
 		} else {
@@ -118,7 +119,7 @@ class CentreonAPI {
   		 * Centreon DB Connexion
 		 */
 		$this->DB = new CentreonDB();
-                $this->DBC = new CentreonDB('centstorage');
+        $this->DBC = new CentreonDB('centstorage');
 		$this->dateStart = time();
 
 		$this->relationObject = array();
