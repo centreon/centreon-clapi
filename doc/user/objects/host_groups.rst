@@ -90,10 +90,6 @@ comment	        Comment
 
 activate	*1* when enabled, *0* otherwise
 
-snmp_community	example: public
-
-snmp_version	example: 2c
-
 notes	        Notes
 
 notes_url	Notes URL
