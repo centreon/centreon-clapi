@@ -170,7 +170,7 @@ class CentreonHost extends CentreonObject
         if (isset($parameters)) {
             $filters[$this->object->getUniqueLabelField()] = "%".$parameters."%";
         }
-        $params = array('host_id', 'host_name', 'host_alias', 'host_address');
+        $params = array('host_id', 'host_name', 'host_alias', 'host_address', 'host_activate');
         $paramString = str_replace("host_", "", implode($this->delim, $params));
         echo $paramString . "\n";
         $elements = $this->object->getList($params, -1, 0, null, null, $filters, "AND");

@@ -162,7 +162,7 @@ class CentreonService extends CentreonObject
         $paramsHost = array('host_id', 'host_name');
         $paramsSvc = array('service_id', 'service_description', 'command_command_id', 'command_command_id_arg',
                         'service_normal_check_interval', 'service_retry_check_interval', 'service_max_check_attempts',
-                        'service_active_checks_enabled', 'service_passive_checks_enabled');
+                        'service_active_checks_enabled', 'service_passive_checks_enabled', 'service_activate');
         $relObject = new Centreon_Object_Relation_Host_Service();
         $elements = $relObject->getMergedParameters($paramsHost, $paramsSvc, -1, 0, "host_name,service_description", "ASC", $filters, "AND");
         $paramHostString = str_replace("_", " ", implode($this->delim, $paramsHost));
