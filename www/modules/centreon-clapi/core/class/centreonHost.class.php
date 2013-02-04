@@ -210,14 +210,16 @@ class CentreonHost extends CentreonObject
         }
         $instanceName = $params[self::ORDER_POLLER];
         $instanceObject = new Centreon_Object_Instance();
-        if ($instanceName) {
-            $tmp = $instanceObject->getIdByParameter($instanceObject->getUniqueLabelField(), $instanceName);
-            if (!count($tmp)) {
-                throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $instanceName);
+        if ($this->action == "HOST") {
+            if ($instanceName) {
+                $tmp = $instanceObject->getIdByParameter($instanceObject->getUniqueLabelField(), $instanceName);
+                if (!count($tmp)) {
+                    throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $instanceName);
+                }
+                $instanceId = $tmp[0];
+            } else {
+                throw new CentreonClapiException(self::MISSING_INSTANCE);
             }
-            $instanceId = $tmp[0];
-        } else {
-            throw new CentreonClapiException(self::MISSING_INSTANCE);
         }
         $hostgroups = explode("|", $params[self::ORDER_HOSTGROUP]);
         $hostgroupIds = array();
