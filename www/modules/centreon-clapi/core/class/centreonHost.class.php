@@ -31,8 +31,8 @@
  *
  * For more information : contact@centreon.com
  *
- * SVN : $URL$
- * SVN : $Id$
+ * SVN : $URL: http://svn.modules.centreon.com/centreon-clapi/trunk/www/modules/centreon-clapi/core/class/centreonHost.class.php $
+ * SVN : $Id: centreonHost.class.php 343 2012-07-05 15:52:30Z shotamchay $
  *
  */
 
@@ -703,11 +703,24 @@ class CentreonHost extends CentreonObject
         $commandObj = new Centreon_Object_Command();
         $tpObj = new Centreon_Object_Timeperiod();
         $macroObj = new Centreon_Object_Host_Macro_Custom();
+        $instanceRel = new Centreon_Object_Relation_Instance_Host();
+        if ($this->register) {
+            $instElements = $instanceRel->getMergedParameters(array("name"), array("host_name"),-1, 0 , null, null, array("host_register" => $this->register), "AND");
+        }
         foreach ($elements as $element) {
             $addStr = $this->action.$this->delim."ADD";
             foreach ($this->insertParams as $param) {
                 $addStr .= $this->delim;
-                if ($param != "instance" && $param != "hostgroup" && $param != "template") {
+                if ($param == 'instance') {
+                    if ($this->register) {
+                        foreach ($instElements as $instElem) {
+                            if ($element['host_name'] == $instElem['host_name']) {
+                                $addStr .= $instElem['name'];
+                            }
+                        }
+                    }
+                }
+                if ($param != "hostgroup" && $param != "template") {
                     $addStr .= $element[$param];
                 }
             }
@@ -759,15 +772,6 @@ class CentreonHost extends CentreonObject
         $elements = $htplRel->getMergedParameters(array("host_name as host"), array("host_name as template"), -1, 0, "host,`order`", "ASC", array("h.host_register"=>$this->register), "AND");
         foreach ($elements as $element) {
             echo $this->action.$this->delim."addtemplate".$this->delim.$element['host'].$this->delim.$element['template']."\n";
-        }
-        if ($this->register == 1) {
-            $instanceRel = new Centreon_Object_Relation_Instance_Host();
-            $elements = $instanceRel->getMergedParameters(array("name"), array("host_name"),-1, 0 , null, null, array("host_register" => $this->register), "AND");
-            foreach ($elements as $element) {
-                if (!preg_match("/^_Module_/", $element['host_name'])) {
-                    echo $this->action.$this->delim."setinstance".$this->delim.$element['host_name'].$this->delim.$element['name']."\n";
-                }
-            }
         }
     }
 }

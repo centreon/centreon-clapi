@@ -57,12 +57,12 @@ Order Description
 
 3     Host IP address
 
-4     Instance name (poller)
-
-5     Hostgroup; for multiple
+4     Host templates; for multiple
       definitions, use delimiter *|*
 
-6     Host templates; for multiple
+5     Instance name (poller)
+
+6     Hostgroup; for multiple
       definitions, use delimiter *|*
 ===== ==================================
 
