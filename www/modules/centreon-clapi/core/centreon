@@ -89,7 +89,12 @@
 	if (isset($conf_centreon['port'])) {
 		$dbConfig['port'] = $conf_centreon['port']; 
 	}
-	Centreon_Db_Manager::factory('centreon', 'pdo_mysql', $dbConfig);
+	$db = Centreon_Db_Manager::factory('centreon', 'pdo_mysql', $dbConfig);
+        try {
+            $db->getConnection();
+        } catch (Exception $e) {
+            echo sprintf("Could not connect to database. Check your configuration file %s", $centreon_etc.'/centreon.conf.php');
+        }
 
 	/**
 	 * Create Centreon API object
