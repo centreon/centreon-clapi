@@ -268,7 +268,7 @@ class CentreonTrap extends CentreonObject
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]);
         }
         $string= $params[1];
-        $regexp = $params[2];
+        $regexp = preg_quote($params[2]);
         $status = $this->getStatusInt($params[3]);
 
 	//we search for matching rules and delete them one by one
