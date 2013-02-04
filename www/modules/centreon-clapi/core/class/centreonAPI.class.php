@@ -244,31 +244,37 @@ class CentreonAPI {
 	}
 
 	/**
-	 *
-	 * check user access ...
+         * Check user access and password
+         *
+         * @param boolean $useSha1
 	 * @return return bool 1 if user can login
 	 */
-	public function checkUser() {
-		if (!isset($this->login) || $this->login == "") {
-			print "ERROR: Can not connect to centreon without login.\n";
-			$this->printHelp();
-			exit();
-		}
-		if (!isset($this->password) || $this->password == "") {
-			print "ERROR: Can not connect to centreon without password.";
-			$this->printHelp();
-		}
+	public function checkUser($useSha1 = false) {
+            if (!isset($this->login) || $this->login == "") {
+                print "ERROR: Can not connect to centreon without login.\n";
+                $this->printHelp();
+                exit();
+            }
+            if (!isset($this->password) || $this->password == "") {
+                print "ERROR: Can not connect to centreon without password.";
+                $this->printHelp();
+            }
 
-		/**
-		 * Check Login / Password
-		 */
-		$DBRESULT =& $this->DB->query("SELECT contact_id FROM contact WHERE contact_alias = '".$this->login."' AND contact_passwd = MD5('".$this->password."') AND contact_activate = '1' AND contact_oreon = '1'");
-		if ($DBRESULT->numRows()) {
-			return 1;
-		} else {
-			print "Can not found user '".$this->login."'. User cannot connect\n";
-			exit(1);
-		}
+            /**
+             * Check Login / Password
+             */
+             if ($useSha1) {
+                 $pass = sha1($this->password);
+             } else {
+                 $pass = md5($this->password);
+             }
+             $DBRESULT = $this->DB->query("SELECT contact_id FROM contact WHERE contact_alias = '".$this->login."' AND contact_passwd = '".$pass."' AND contact_activate = '1' AND contact_oreon = '1'");
+             if ($DBRESULT->numRows()) {
+                 return 1;
+             } else {
+                 print "Invalid credentials.\n";
+		 exit(1);
+             }
 	}
 
 	/**
@@ -296,7 +302,8 @@ class CentreonAPI {
 		$this->printLegals();
 		print "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n";
 		print "and you are welcome to modify and redistribute it under the GPL license\n\n";
-		print "usage: ./centreon -u <LOGIN> -p <PASSWORD> -o <OBJECT> -a <ACTION> [-v]\n";
+		print "usage: ./centreon -u <LOGIN> -p <PASSWORD> [-s] -o <OBJECT> -a <ACTION> [-v]\n";
+                print "  -s 	Use SHA1 on password (default is MD5)\n";
 		print "  -v 	variables \n";
 		print "  -h 	Print help \n";
 		print "  -V 	Print version \n";

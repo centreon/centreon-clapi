@@ -55,6 +55,7 @@
 	$shortopts .= "d"; /* Debug mode */
 	$shortopts .= "u:"; /* Users */
 	$shortopts .= "p:"; /* Password */
+        $shortopts .= "s"; /* Sha1 mode */
 	$shortopts .= "o:"; /* Object type */
 	$shortopts .= "v:"; /* variables */
 	$shortopts .= "h"; /* Help */
@@ -67,6 +68,10 @@
 	if (isset($options['d'])) {
 		$debug = 1;
 	}
+        $useSha1 = false;
+        if (isset($options['s'])) {
+            $useSha1 = true;
+        }
 	if ($debug) {
 		print_r($options);
 	} else {
@@ -128,7 +133,7 @@
 					$credential = split(":", $str);
 					$api->setLogin($credential[0]);
 					$api->setPassword($credential[1]);
-					$api->checkUser();
+					$api->checkUser($useSha1);
 				}
 				$api->launchAction();
 			} else {
@@ -141,7 +146,7 @@
 	} else {
 	  	
 	  	if (!isset($api->options["V"]) && !isset($api->options["h"])) {
-			$api->checkUser();
+			$api->checkUser($useSha1);
 		}
 		
 		/*
