@@ -128,7 +128,7 @@ class CentreonHost extends CentreonObject
                            "command_command_id_arg2" => "event_handler_arguments");
         }
         if (preg_match("/^ehi_/", $columnName)) {
-            return ltrim($columnName, "ehi_");
+            return substr($columnName, strlen("ehi_"));
         }
         if (isset($table[$columnName])) {
             return $table[$columnName];

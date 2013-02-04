@@ -226,7 +226,7 @@ class CentreonService extends CentreonObject
                            "command_command_id_arg2" => "event_handler_arguments");
         }
         if (preg_match("/^esi_/", $columnName)) {
-            return ltrim($columnName, "esi_");
+            return substr($columnName, strlen("esi_"));
         }
         if (isset($table[$columnName])) {
             return $table[$columnName];
