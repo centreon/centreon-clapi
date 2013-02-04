@@ -317,7 +317,7 @@ class CentreonAPI {
 		print "           #> ./centreon -u <LOGIN> -p <PASSWORD> -a POLLERLIST\n";
 		print "\n";
 		print "   For more information about configuration objects, please refer to CLAPI wiki:\n";
-		print "      - http://forge.centreon.com/wiki/centreon-clapi/Use \n";
+		print "      - http://documentation.centreon.com/docs/centreon-clapi/ \n";
 		print "\n";
 		print "Notes:\n";
 		print "  - Actions can be written in lowercase chars\n";
