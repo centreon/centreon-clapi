@@ -614,5 +614,10 @@ class CentreonServiceTemplate extends CentreonObject
         foreach ($telements as $telement) {
             echo $this->action.$this->delim."addtrap".$this->delim.$telement['service_description'].$this->delim.$telement['traps_name']."\n";
         }
+        $hostRel = new Centreon_Object_Relation_Host_Service();
+        $helements = $hostRel->getMergedParameters(array("host_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
+        foreach ($helements as $helement) {
+            echo $this->action.$this->delim."sethost".$this->delim.$helement['service_description'].$this->delim.$helement['host_name']."\n";
+        }
     }
 }
