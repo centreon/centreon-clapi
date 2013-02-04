@@ -102,7 +102,7 @@ class CentreonHost extends CentreonObject
                               'host_activate'						 => '1'
                               );
         $this->insertParams = array('host_name', 'host_alias', 'host_address', 'template', 'instance', 'hostgroup');
-        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()), array('host_template_model_htm_id'));
         $this->action = "HOST";
         $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->register = 1;
