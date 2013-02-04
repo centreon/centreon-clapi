@@ -248,9 +248,9 @@ class CentreonHost extends CentreonObject
         if (isset($instanceId)) {
             $instanceRelationObject = new Centreon_Object_Relation_Instance_Host();
             $instanceRelationObject->insert($instanceId, $hostId);
-            $extended = new Centreon_Object_Host_Extended();
-            $extended->insert(array($extended->getUniqueLabelField() => $hostId));
         }
+        $extended = new Centreon_Object_Host_Extended();
+        $extended->insert(array($extended->getUniqueLabelField() => $hostId));
     }
 
 	/**
