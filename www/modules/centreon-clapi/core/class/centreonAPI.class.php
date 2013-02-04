@@ -588,10 +588,16 @@ class CentreonAPI {
 	 * Print centreon version
 	 */
 	public function printVersion() {
-		$DBRESULT =& $this->DB->query("SELECT * FROM informations WHERE `key` = 'version'");
- 		$data =& $DBRESULT->fetchRow();
- 		print "version ".$data["value"]."\n";
- 		unset($data);
+		$res = $this->DB->query("SELECT * FROM informations WHERE `key` = 'version'");
+ 		$data = $res->fetchRow();
+ 		print "Centreon version ".$data["value"]."\n";
+                $res = $this->DB->query("SELECT mod_release FROM modules_informations WHERE name = 'centreon-clapi'");
+                $clapiVersion = 'undefined';
+                if ($res->numRows()) {
+                    $data = $res->fetchRow();
+                    $clapiVersion = $data['mod_release'];
+                }
+                print "Centreon CLAPI version ".$clapiVersion."\n";
 	}
 
 	/** ******************************************************
