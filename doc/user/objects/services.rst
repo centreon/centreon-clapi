@@ -142,6 +142,8 @@ obsess_over_service	         *1* when obsess over service is enabled, *0* otherw
 
 check_freshness	                 *1* when check freshness is enabled, *0* otherwise
 
+freshness_threshold              Value in seconds
+
 event_handler_enabled	         *1* when event handler is enabled, *0* otherwise
 
 flap_detection_enabled	         *1* when flap detection is enabled, *0* otherwise
