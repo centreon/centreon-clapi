@@ -17,8 +17,9 @@ Object management
    objects/contact_groups
    objects/host_templates
    objects/hosts
-   objects/host_groups
    objects/host_categories
+   objects/host_groups
+   objects/host_group_services
    objects/instances
    objects/ldap_servers
    objects/nagios_cfg
