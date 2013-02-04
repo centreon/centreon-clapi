@@ -146,6 +146,7 @@ class CentreonTrap extends CentreonObject
             } elseif (!preg_match('/^traps_/', $params[1])) {
                 $params[1] = 'traps_'.$params[1];
             }
+            $params[2]=str_replace("<br/>", "\n", $params[2]);
             $updateParams = array($params[1] => $params[2]);
             parent::setparam($objectId, $updateParams);
         } else {
