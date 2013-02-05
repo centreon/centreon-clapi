@@ -298,6 +298,7 @@ class CentreonConfigPoller {
 		require_once $this->centreon_path."/www/class/centreonDB.class.php";
 		require_once $this->centreon_path."/www/class/centreonAuth.class.php";
 		require_once $this->centreon_path."/www/class/centreonLog.class.php";
+                require_once $this->centreon_path."/www/class/centreonConfigCentreonBroker.php";
 
 		global $oreon, $_SERVER;
 
@@ -329,6 +330,7 @@ class CentreonConfigPoller {
 		 */
 		global $gbArr;
 		$gbArr = manageDependencies();
+                $centreonBrokerPath = $this->centreon_path . "/filesGeneration/broker/";
 
 		/**
 		 * Generate Configuration
@@ -347,12 +349,16 @@ class CentreonConfigPoller {
 
 		require $path."genNdomod.php";
 		require $path."genNdo2db.php";
+                require $path."genCentreonBroker.php";
 		require $path."genResourceCFG.php";
 		require $path."genTimeperiods.php";
 		require $path."genCommands.php";
+                if (file_exists($path."genConnectors.php")) {
+                    require $path."genConnectors.php";
+                }
 		require $path."genContacts.php";
 		if (file_exists($path."genContactTemplates.php")) {
-            require $path."genContactTemplates.php";
+                    require $path."genContactTemplates.php";
 		}
 		require $path."genContactGroups.php";
 		require $path."genHosts.php";
