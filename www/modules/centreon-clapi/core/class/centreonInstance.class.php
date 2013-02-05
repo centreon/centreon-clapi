@@ -37,6 +37,8 @@
 
 require_once "centreonObject.class.php";
 require_once "Centreon/Object/Instance/Instance.php";
+require_once "Centreon/Object/Host/Host.php";
+require_once "Centreon/Object/Relation/Instance/Host.php";
 
 /**
  *
@@ -173,5 +175,21 @@ class CentreonInstance extends CentreonObject
         $instanceName = $this->object->getParameters($instanceId, array($this->object->getUniqueLabelField()));
         $this->object->setCache(false);
         return $instanceName[$this->object->getUniqueLabelField()];
+    }
+
+    /**
+     * Get hosts monitored by instance
+     *
+     * @param string $instanceName
+     * @return string
+     */
+    public function getHosts($instanceName)
+    {
+        $relObj = new Centreon_Object_Relation_Instance_Host();
+        $fields = array('host_id', 'host_name', 'host_address');
+        $elems = $relObj->getMergedParameters(array(), $fields, -1, 0, "host_name", "ASC", array('name' => $instanceName), 'AND');
+        foreach ($elems as $elem) {
+            echo $elem['host_id'].$this->delim.$elem['host_name'].$this->delim.$elem['host_address']."\n";
+        }
     }
 }
