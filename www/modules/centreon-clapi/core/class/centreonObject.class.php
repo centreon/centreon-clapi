@@ -46,6 +46,8 @@ abstract class CentreonObject
     const UNKNOWN_METHOD = "Method not implemented into Centreon API";
     const NAMEALREADYINUSE = "Name is already in use";
     const NB_UPDATE_PARAMS = 3;
+    const UNKNOWNPARAMETER = "Unknown parameter";
+
     /**
      * Db adapter
      *

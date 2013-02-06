@@ -109,7 +109,7 @@ class CentreonContact extends CentreonObject
         $cIds = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($contact_name));
         $this->object->setCache(false);
         if (!count($cIds)) {
-            throw new CentreonClapiException("Unknown timeperiod: " . $contact_name);
+            throw new CentreonClapiException("Unknown contact: " . $contact_name);
         }
         return $cIds[0];
 	}
