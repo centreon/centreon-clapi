@@ -49,6 +49,7 @@ class CentreonResourceCfg extends CentreonObject
     const ORDER_VALUE             = 1;
     const ORDER_INSTANCE          = 2;
     const ORDER_COMMENT           = 3;
+    const MACRO_ALREADY_IN_USE    = "Macro is already declared";
     protected $instanceObj;
     protected $relObj;
 
@@ -72,6 +73,42 @@ class CentreonResourceCfg extends CentreonObject
     }
 
     /**
+     * Checks if macro is unique on a given poller
+     *
+     * @param mixed $macroName
+     * @param int $pollerId
+     * @return boolean
+     * @throws CentreonClapiException
+     */
+    protected function isUnique($macro, $pollerId)
+    {
+        if (is_numeric($macro)) {
+            $stmt = $this->db->query("SELECT resource_name FROM cfg_resource WHERE resource_id = ?", array($macro));
+            $res = $stmt->fetchAll();
+            if (count($res)) {
+                $macroName = $res[0]['resource_name'];
+            } else {
+                throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+            }
+            unset($res);
+            unset($stmt);
+        } else {
+            $macroName = $macro;
+        }
+        $stmt = $this->db->query("SELECT r.resource_id 
+                                  FROM cfg_resource r, cfg_resource_instance_relations rir 
+                                  WHERE r.resource_id = rir.resource_id
+                                  AND rir.instance_id = ?
+                                  AND r.resource_name = ?", array($pollerId, $macroName));
+        $res = $stmt->fetchAll();
+        if (count($res)) {
+            return false;
+        }
+        return true;
+    }
+
+
+    /**
      * Add action
      *
      * @param string $parameters
@@ -88,6 +125,11 @@ class CentreonResourceCfg extends CentreonObject
         $instanceIds = array();
         foreach ($instanceNames as $instanceName) {
             $instanceIds[] = $this->instanceObj->getInstanceId($instanceName);
+        }
+        foreach ($instanceIds as $instanceId) {
+            if ($this->isUnique("$".$params[self::ORDER_UNIQUENAME]."$", $instanceId) == false) {
+                throw new CentreonClapiException(self::MACRO_ALREADY_IN_USE);
+            }
         }
         $addParams[$this->object->getUniqueLabelField()] = "$".$params[self::ORDER_UNIQUENAME]."$";
         $addParams['resource_line'] = $params[self::ORDER_VALUE];
@@ -116,6 +158,11 @@ class CentreonResourceCfg extends CentreonObject
                 $instanceIds = array();
                 foreach ($instanceNames as $instanceName) {
                     $instanceIds[] = $this->instanceObj->getInstanceId($instanceName);
+                }
+                foreach ($instanceIds as $instanceId) {
+                    if ($this->isUnique($objectId, $instanceId) == false) {
+                        throw new CentreonClapiException(self::MACRO_ALREADY_IN_USE);
+                    }
                 }
                 $this->setRelations($objectId, $instanceIds);
             } else {
