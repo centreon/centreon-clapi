@@ -15,20 +15,21 @@ Show
 In order to list available hosts, use the **SHOW** action::
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o HOST -a show
-  82;sri-dev1;dev1;192.168.2.1
-  83;sri-dev2;dev2;192.168.2.2
-  84;sri-dev3;dev3;192.168.2.3
-  85;sri-dev4;dev4;192.168.2.4
-  86;sri-dev5;dev5;192.168.2.5
-  87;sri-dev6;dev6;192.168.2.6
-  94;sri-dev7;dev7;192.168.2.7
-  95;sri-dev8;dev8;192.168.2.8
+  id;name;alias;address;activate
+  82;sri-dev1;dev1;192.168.2.1;1
+  83;sri-dev2;dev2;192.168.2.2;1
+  84;sri-dev3;dev3;192.168.2.3;0
+  85;sri-dev4;dev4;192.168.2.4;1
+  86;sri-dev5;dev5;192.168.2.5;1
+  87;sri-dev6;dev6;192.168.2.6;1
+  94;sri-dev7;dev7;192.168.2.7;1
+  95;sri-dev8;dev8;192.168.2.8;1
 
 Columns are the following :
 
-=========== ===================
+=========== ===================================
 Column      Description
-=========== ===================
+=========== ===================================
 ID          ID of host
 
 Name        Host name
@@ -36,7 +37,9 @@ Name        Host name
 Alias       Host alias
 
 IP/Address  IP of host
-=========== ===================
+
+Activate    1 when enabled, 0 when disabled
+=========== ===================================
 
 
 Add
