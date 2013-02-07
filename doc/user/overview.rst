@@ -13,3 +13,17 @@ Features
  - Move configuration files to monitoring pollers
  - Restart monitoring pollers
  - Import and export objects
+
+
+Basic usage
+-----------
+
+All actions in Centreon CLAPI will require authentication, so your commands will always start like this::
+
+  # cd /usr/share/centreon/www/modules/centreon-clapi/core
+  # ./centreon -u admin -p centreon [...]
+
+Obviously, the **-u** option is for the username and the **-p** option is for the password. If your passwords 
+are encoded with SHA1 in database, use the **-s** option::
+
+  # ./centreon -u admin -p centreon -s [...]
