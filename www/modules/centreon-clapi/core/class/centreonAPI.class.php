@@ -76,9 +76,9 @@ class CentreonAPI {
 	public $optGen;
 	private $return_code;
 	private $relationObject;
-    
+
 	private $objectTable;
-    
+
 	public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
 		global $version;
 
@@ -163,6 +163,8 @@ class CentreonAPI {
         $this->relationObject["ACLRESOURCE"] = "ACLResource";
 
         $this->relationObject["LDAP"] = "LDAP";
+
+        $this->relationObject["SETTINGS"] = "Settings";
 
 		/*
 		 * Manage version

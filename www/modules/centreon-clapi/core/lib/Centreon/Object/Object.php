@@ -123,12 +123,25 @@ abstract class Centreon_Object
      *
      * @param int $objectId
      * @param array $params
+     * @return void
      */
     public function update($objectId, $params = array())
     {
         $sql = "UPDATE $this->table SET ";
         $sqlUpdate = "";
         $sqlParams = array();
+        $not_null_attributes = array();
+
+        if (array_search("", $params)) {
+            $sql_attr = "SHOW FIELDS FROM $this->table";
+            $res = $this->getResult($sql_attr, array(), "fetchAll");
+            foreach ($res as $tab) {
+                if ($tab['Null'] == 'NO') {
+                    $not_null_attributes[$tab['Field']] = true;
+                }
+            }
+        }
+
         foreach ($params as $key => $value) {
             if ($key == $this->primaryKey) {
                 continue;
@@ -137,8 +150,12 @@ abstract class Centreon_Object
                 $sqlUpdate .= ",";
             }
             $sqlUpdate .= $key . " = ? ";
+            if ($value == "" && !isset($not_null_attributes[$key])) {
+                $value = null;
+            }
             $sqlParams[] = $value;
         }
+
         if ($sqlUpdate) {
             $sqlParams[] = $objectId;
             $sql .= $sqlUpdate . " WHERE $this->primaryKey = ?";
