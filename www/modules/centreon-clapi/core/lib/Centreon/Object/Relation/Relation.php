@@ -140,7 +140,7 @@ abstract class Centreon_Object_Relation
         if (count($filters)) {
             foreach ($filters as $key => $value) {
                 $sql .= " $filterType $key LIKE ? ";
-                $filterTab[] = $value;
+                $filterTab[] = str_replace("_", "\_", $value);
             }
         }
         if (isset($order) && isset($sort) && (strtoupper($sort) == "ASC" || strtoupper($sort) == "DESC")) {
