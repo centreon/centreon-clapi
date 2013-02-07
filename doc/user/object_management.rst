@@ -21,7 +21,6 @@ Object management
    objects/host_groups
    objects/host_group_services
    objects/instances
-   objects/ldap_servers
    objects/nagios_cfg
    objects/ndo2db_cfg
    objects/ndomod_cfg
