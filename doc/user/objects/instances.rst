@@ -129,3 +129,25 @@ centreonbroker_cfg_path	   Centreon Broker Configuration path
 centreonbroker_module_path Centreon Broker Module path
 ========================== =====================================================
 
+
+
+Gethosts
+--------
+
+If you want to list all hosts that are monitored by a poller, use the **GETHOSTS** action. The Name is used for identifying the instance to query::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o INSTANCE -a GETHOSTS -v "Poller test"
+  14;Centreon-Server;127.0.0.1
+  17;srv-website;10.30.2.1
+
+Returned info is the following:
+
+================= ================================================================
+Order             Description
+================= ================================================================
+1                 Host ID
+
+2                 Host name
+
+3                 Host address
+================= ================================================================
