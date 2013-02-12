@@ -67,9 +67,7 @@ class CentreonHostGroup extends CentreonObject
     {
         parent::__construct();
         $this->object = new Centreon_Object_Host_Group();
-        $this->params = array('hg_snmp_community'           => 'public',
-                              'hg_snmp_version'             => '2c',
-                              'hg_activate'                 => '1');
+        $this->params = array('hg_activate' => '1');
         $this->insertParams = array('hg_name', 'hg_alias');
         $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
         $this->action = "HG";
