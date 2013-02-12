@@ -297,11 +297,15 @@ class CentreonAPI {
 	}
 
 	/**
-	 *
 	 * Print usage for using CLAPI ...
+     *
+     * @param boolean $dbOk | whether db is ok
+     * @param int $returnCode
 	 */
-	public function printHelp() {
-		$this->printLegals();
+	public function printHelp($dbOk = true, $returnCode = 0) {
+        if ($dbOk) {
+    		$this->printLegals();
+        }
 		print "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n";
 		print "and you are welcome to modify and redistribute it under the GPL license\n\n";
 		print "usage: ./centreon -u <LOGIN> -p <PASSWORD> [-s] -o <OBJECT> -a <ACTION> [-v]\n";
@@ -332,7 +336,7 @@ class CentreonAPI {
 		print "  - Actions can be written in lowercase chars\n";
 		print "  - LOGIN and PASSWORD is an admin account of Centreon\n";
 		print "\n";
-		$this->return_code = 0;
+		$this->return_code = $returnCode;
 		exit($this->return_code);
 	}
 
