@@ -166,7 +166,6 @@ Required parameters are the following:
 ============= ===============================
 Order         Description
 ============= ===============================
-
 1             Configuration name
 
 2             Server address             
@@ -200,7 +199,6 @@ Parameters that you may update are the following:
 ============== ======================== ========================
 Key            Description              Possible values
 ============== ======================== ========================
-
 host_address   Address of the server
 
 host_port      Port of the server
