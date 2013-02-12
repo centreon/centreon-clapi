@@ -598,6 +598,17 @@ class CentreonServiceTemplate extends CentreonObject
             foreach ($macros as $macro) {
                 echo $this->action.$this->delim."setmacro".$this->delim.$element['service_description'].$this->delim.$this->stripMacro($macro['svc_macro_name']).$this->delim.$macro['svc_macro_value']."\n";
             }
+
+            $trapRel = new Centreon_Object_Relation_Trap_Service();
+            $telements = $trapRel->getMergedParameters(array("traps_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
+            foreach ($telements as $telement) {
+                echo $this->action.$this->delim."addtrap".$this->delim.$telement['service_description'].$this->delim.$telement['traps_name']."\n";
+            }
+            $hostRel = new Centreon_Object_Relation_Host_Service();
+            $helements = $hostRel->getMergedParameters(array("host_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
+            foreach ($helements as $helement) {
+                echo $this->action.$this->delim."sethost".$this->delim.$helement['service_description'].$this->delim.$helement['host_name']."\n";
+            }
         }
         $cgRel = new Centreon_Object_Relation_Contact_Group_Service();
         $elements = $cgRel->getMergedParameters(array("cg_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register), "AND");
@@ -608,16 +619,6 @@ class CentreonServiceTemplate extends CentreonObject
         $elements = $contactRel->getMergedParameters(array("contact_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register), "AND");
         foreach ($elements as $element) {
             echo $this->action.$this->delim."addcontact".$this->delim.$element['service_description'].$this->delim.$element['contact_name']."\n";
-        }
-        $trapRel = new Centreon_Object_Relation_Trap_Service();
-        $telements = $trapRel->getMergedParameters(array("traps_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
-        foreach ($telements as $telement) {
-            echo $this->action.$this->delim."addtrap".$this->delim.$telement['service_description'].$this->delim.$telement['traps_name']."\n";
-        }
-        $hostRel = new Centreon_Object_Relation_Host_Service();
-        $helements = $hostRel->getMergedParameters(array("host_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
-        foreach ($helements as $helement) {
-            echo $this->action.$this->delim."sethost".$this->delim.$helement['service_description'].$this->delim.$helement['host_name']."\n";
         }
     }
 }
