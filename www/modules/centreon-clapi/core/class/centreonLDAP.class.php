@@ -87,7 +87,7 @@ class CentreonLDAP extends CentreonObject
 
     /**
      * Checks if configuration name is unique
-     * 
+     *
      * @param string $name
      * @param int $arId
      * @return boolean
@@ -140,7 +140,7 @@ class CentreonLDAP extends CentreonObject
     }
 
     /**
-     * Show server 
+     * Show server
      *
      * @param string $arName
      * @return void
@@ -216,7 +216,7 @@ class CentreonLDAP extends CentreonObject
         if (is_null($arId)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ' ' . $arName);
         }
-        $this->db->query("INSERT INTO auth_ressource_host (auth_ressource_id, host_address, host_port, use_ssl, use_tls) 
+        $this->db->query("INSERT INTO auth_ressource_host (auth_ressource_id, host_address, host_port, use_ssl, use_tls)
                           VALUES (:arId, :address, :port, :ssl, :tls)", array(':arId'    => $arId,
                                                                               ':address' => $address,
                                                                               ':port'    => $port,
@@ -234,7 +234,7 @@ class CentreonLDAP extends CentreonObject
     {
         if (!isset($arName)) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
-        } 
+        }
         $arId = $this->getLdapId($arName);
         if (is_null($arId)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.' '.$arName);
@@ -287,12 +287,11 @@ class CentreonLDAP extends CentreonObject
                 $contactObj = new CentreonContact($this->db);
                 $params[2] = $contactObj->getContactID($params[2]);
             }
-            $this->db->query("UPDATE auth_ressource_info
-                              SET ari_value = ?
-                              WHERE ari_name = ?
-                              AND ar_id = ?", array($params[2],
-                                                    $params[1],
-                                                    $arId));
+            $this->db->query("DELETE FROM auth_ressource_info WHERE ari_name = ? AND ar_id = ?", array($params[1], $arId));
+            $this->db->query("INSERT INTO auth_ressource_info (ari_value, ari_name, ar_id)
+                              VALUES (?, ?, ?)", array($params[2],
+                                                       $params[1],
+                                                       $arId));
         } else {
             throw new CentreonClapiException(self::UNKNOWNPARAMETER);
         }
