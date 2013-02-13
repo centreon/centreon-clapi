@@ -93,7 +93,12 @@
 	$dbConfig['dbname'] = $conf_centreon['db'];
 	if (isset($conf_centreon['port'])) {
 		$dbConfig['port'] = $conf_centreon['port']; 
-	}
+	} elseif ($p = strstr($dbConfig['host'], ':')) {
+        $p = substr($p, 1);
+        if (is_numeric($p)) {
+            $dbConfig['port'] = $p;
+        }
+    }
 	$db = Centreon_Db_Manager::factory('centreon', 'pdo_mysql', $dbConfig);
         try {
             $db->getConnection();
