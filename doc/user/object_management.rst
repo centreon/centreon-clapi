@@ -30,6 +30,7 @@ Object management
    objects/services
    objects/service_groups
    objects/service_categories
+   objects/settings
    objects/time_periods
    objects/traps
    objects/vendors

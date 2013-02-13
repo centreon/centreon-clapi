@@ -58,8 +58,7 @@ class CentreonSettings extends CentreonObject
     public function __construct()
     {
         parent::__construct();
-        $this->authorizedOptions = array('monitoring_engine'            => array('NAGIOS','CENGINE','ICINGA'),
-                                         'broker'                       => array('ndo', 'broker'),
+        $this->authorizedOptions = array('broker'                       => array('ndo', 'broker'),
                                          'centstorage'                  => array('0', '1'),
                                          'enable_perfdata_sync'         => array('0', '1'),
                                          'enable_logs_sync'             => array('0', '1'),
