@@ -384,8 +384,10 @@ class CentreonService extends CentreonObject
         }
         if ($extended == false) {
             $updateParams = array($params[2] => $params[3]);
+            if ($params[2] == 'service_description' && $this->serviceExists($hostName, $serviceDesc)) {
+                throw new CentreonClapiException(self::OBJECTALREADYEXISTS);
+            }
             $this->object->update($objectId, $updateParams);
-            //parent::setparam($objectId, $updateParams);
         } else {
             if ($params[2] != "graph_id") {
                 $params[2] = "esi_".$params[2];
