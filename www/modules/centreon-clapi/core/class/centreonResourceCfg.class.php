@@ -49,7 +49,7 @@ class CentreonResourceCfg extends CentreonObject
     const ORDER_VALUE             = 1;
     const ORDER_INSTANCE          = 2;
     const ORDER_COMMENT           = 3;
-    const MACRO_ALREADY_IN_USE    = "Macro is already declared";
+    const MACRO_ALREADY_IN_USE    = "Resource is already tied to instance";
     protected $instanceObj;
     protected $relObj;
 
@@ -95,8 +95,8 @@ class CentreonResourceCfg extends CentreonObject
         } else {
             $macroName = $macro;
         }
-        $stmt = $this->db->query("SELECT r.resource_id 
-                                  FROM cfg_resource r, cfg_resource_instance_relations rir 
+        $stmt = $this->db->query("SELECT r.resource_id
+                                  FROM cfg_resource r, cfg_resource_instance_relations rir
                                   WHERE r.resource_id = rir.resource_id
                                   AND rir.instance_id = ?
                                   AND r.resource_name = ?", array($pollerId, $macroName));
