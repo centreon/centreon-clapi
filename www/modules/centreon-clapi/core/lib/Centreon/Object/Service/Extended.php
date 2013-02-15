@@ -54,12 +54,15 @@ class Centreon_Object_Service_Extended extends Centreon_Object
     {
         $params = parent::getParameters($objectId, $parameterNames);
         $params_image = array("esi_icon_image");
+        if (!is_array($params)) {
+            return array();
+        }
         foreach ($params_image as $image) {
             if (array_key_exists($image, $params)) {
-                $sql = "SELECT dir_name, img_path 
-                        FROM view_img vi 
-                        LEFT JOIN view_img_dir_relation vidr ON vi.img_id = vidr.img_img_id 
-                        LEFT JOIN view_img_dir vid ON vid.dir_id = vidr.dir_dir_parent_id 
+                $sql = "SELECT dir_name, img_path
+                        FROM view_img vi
+                        LEFT JOIN view_img_dir_relation vidr ON vi.img_id = vidr.img_img_id
+                        LEFT JOIN view_img_dir vid ON vid.dir_id = vidr.dir_dir_parent_id
                         WHERE img_id = ?";
                 $res = $this->getResult($sql, array($params[$image]), "fetch");
                 if (is_array($res)) {
