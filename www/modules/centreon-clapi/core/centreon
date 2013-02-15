@@ -104,7 +104,7 @@
             $db->getConnection();
         } catch (Exception $e) {
             echo sprintf("Could not connect to database. Check your configuration file %s\n", $centreon_etc.'/centreon.conf.php');
-            if ($options['h']) {
+            if (isset($options['h'])) {
                 CentreonAPI::printHelp(false, 1);
             }
             exit(1);

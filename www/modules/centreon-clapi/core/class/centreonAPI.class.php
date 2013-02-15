@@ -336,8 +336,7 @@ class CentreonAPI {
 		print "  - Actions can be written in lowercase chars\n";
 		print "  - LOGIN and PASSWORD is an admin account of Centreon\n";
 		print "\n";
-		$this->return_code = $returnCode;
-		exit($this->return_code);
+		exit($returnCode);
 	}
 
 	/**
