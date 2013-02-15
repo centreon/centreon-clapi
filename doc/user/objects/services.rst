@@ -13,16 +13,16 @@ Show
 In order to list available service, use the **SHOW** action::
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a show
-  host id;host name;id;description;check command;check command arg;normal check interval;retry check interval;max check attempts;active checks enabled;passive checks enabled
-  14;Centreon-Server;19;Disk-/;;;;;;2;2
-  14;Centreon-Server;20;Disk-/home;;;;;;2;2
-  14;Centreon-Server;21;Disk-/opt;;;;;;2;2
-  14;Centreon-Server;22;Disk-/usr;;;;;;2;2
-  14;Centreon-Server;23;Disk-/var;;;;;;2;2
-  14;Centreon-Server;151;Load;;;;;;2;2
-  14;Centreon-Server;25;Memory;;;;;;2;2
-  14;Centreon-Server;26;Ping;;;;;;2;2
-  14;Centreon-Server;40;dummy;check_centreon_dummy;!2!critical;;;;2;2
+  host id;host name;id;description;check command;check command arg;normal check interval;retry check interval;max check attempts;active checks enabled;passive checks enabled;activate
+  14;Centreon-Server;19;Disk-/;;;;;;2;2;1
+  14;Centreon-Server;20;Disk-/home;;;;;;2;2;1
+  14;Centreon-Server;21;Disk-/opt;;;;;;2;2;1
+  14;Centreon-Server;22;Disk-/usr;;;;;;2;2;1
+  14;Centreon-Server;23;Disk-/var;;;;;;2;2;1
+  14;Centreon-Server;151;Load;;;;;;2;2;1
+  14;Centreon-Server;25;Memory;;;;;;2;2;1
+  14;Centreon-Server;26;Ping;;;;;;2;2;0
+  14;Centreon-Server;40;dummy;check_centreon_dummy;!2!critical;;;;2;2;1
 
 Columns are the following:
 
@@ -31,25 +31,27 @@ Column	                     Description
 ============================ ===================================================
 Host ID	                     Host ID
 
-Host name	             Host name
+Host name	                 Host name
 
-Service ID	             Service ID
+Service ID	                 Service ID
 
-Service description	     Service description
+Service description	         Service description
 
 Check Command	             Check command
 
-Command arguments	     Check command arguments
+Command arguments	         Check command arguments
 
 Normal check interval	     Normal check interval
 
 Retry check interval	     Retry check interval
 
-Max check attempts	     Maximum check attempts
+Max check attempts	         Maximum check attempts
 
-Active check enable	     *1* when active checks are enabled, *0* otherwise
+Active check enable	         *1* when active checks are enabled, *0* otherwise
 
 Passive check enable	     *1* when passive checks are enabled, *0* otherwise
+
+Activate                     *1* when enabled, *0* when disabled
 ============================ ===================================================
 
 
