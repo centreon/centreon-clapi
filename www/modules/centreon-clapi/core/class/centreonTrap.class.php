@@ -260,27 +260,8 @@ class CentreonTrap extends CentreonObject
         if (is_null($parameters)) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $params = explode($this->delim, $parameters);
-        if (count($params) < 4) {
-            throw new CentreonClapiException(self::MISSINGPARAMETER);
-        }
-        $trapId = $this->getObjectId($params[0]);
-        if (!$trapId) {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]);
-        }
-        $string= $params[1];
-        $regexp = preg_quote($params[2]);
-        $status = $this->getStatusInt($params[3]);
-
-	//we search for matching rules and delete them one by one
         $matchObj = new Centreon_Object_Trap_Matching();
-        $elements = $matchObj->getList("tmo_id", -1, 0, null, null, array('trap_id'    => $trapId, 
-                                                                          'tmo_regexp' => $regexp, 
-                                                                          'tmo_string' => $string,
-                                                                          'tmo_status' => $status), 'AND');
-	if(count($elements)) foreach($elements as $element) {
-        	$matchObj->delete($element['tmo_id']);
-	}        
+        $matchObj->delete($parameters);
     }
 
     /**
