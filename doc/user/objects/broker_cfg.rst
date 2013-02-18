@@ -262,404 +262,592 @@ This is how you get the list of possible values of a given field::
 
 The following chapters describes the parameters of each Object type
 
+
 correlation
 ~~~~~~~~~~~
 
 correlation:
 
-===================================== ================================= ================================================================= ================================
-ID	                              Label	                        Description	                                                  Possible values
-===================================== ================================= ================================================================= ================================
-file	                              Correlation File	                Path to the correlation file which holds 
-                                                                        host, services, dependencies and parenting definitions.	
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+file                           Correlation file                                             Path to the correlation file which holds host, services, 
+                                                                                            dependencies and parenting definitions.                      -                                                          
 
-retention                             Retention File	                File where correlation state will be stored during 
-                                                                        correlation engine restart	
-===================================== ================================= ================================================================= ================================
+retention                      Retention file                                               File where correlation state will be stored during 
+                                                                                            correlation engine restart                                   -                                                          
+
+============================== ============================================================ ============================================================ ===========================================================
+
+
 
 input
 ~~~~~
 
 ipv4:
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-compression	                      Compression (zlib)	        Enable or not data stream compression.	
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
 
-compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression. 
-                                                                        This however increase data streaming latency. 
-                                                                        Use with caution.	
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
 
-compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).           
-                                                                        -1 is the default	
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression. 
+                                                                                            This however increase data streaming latency. 
+                                                                                            Use with caution.                                            -                                                          
 
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression). 
+                                                                                            Default is -1 (zlib compression)                             -                                                          
 
-ca_certificate	                      Trusted CA's certificate		
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
 
-host	                              Host to connect to		
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
-port	                              Connection port	                Port for listen or connect in TCP	
+ca_certificate                 Trusted CA's certificate                                     Trusted CA's certificate.                                    -                                                          
 
-private_key	                      Private key file.		
+host                           Host to connect to                                           IP address or hostname of the host to connect to 
+                                                                                            (leave blank for listening mode).                            -                                                          
 
-protocol	                      Serialization Protocol		ndo
+port                           Connection port                                              Port to listen on (empty host) or to connect to 
+                                                                                            (with host filled).                                          -                                                          
 
-public_cert	                      Public certificate		
+private_key                    Private key file.                                            Private key file path when TLS encryption is used.           -                                                          
 
-tls	                              Enable TLS encryption		
-===================================== ================================= ================================================================= ================================
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
 
+public_cert                    Public certificate                                           Public certificate file path when TLS encryption is used.    -                                                          
 
-ipv6
+tls                            Enable TLS encryption                                        Enable TLS encryption.                                       -                                                          
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-compression	                      Compression (zlib)	        Enable or not data stream compression.	
-
-compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
-                                                                        This however increase data streaming latency.
-                                                                        Use with caution.	
-
-compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression). 
-                                                                        -1 is the default	
-
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
-
-ca_certificate	                      Trusted CA's certificate		
-
-host	                              Host to connect to		
-
-port	                              Connection port	                Port for listen or connect in TCP	
-
-private_key	                      Private key file.		
-
-protocol	                      Serialization Protocol		                                                                  ndo
-
-public_cert	                      Public certificate		
-
-tls	                              Enable TLS encryption		
-===================================== ================================= ================================================================= ================================
+============================== ============================================================ ============================================================ ===========================================================
 
 
-file
+ipv6:
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-compression	                      Compression (zlib)	        Enable or not data stream compression.	
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
 
-compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression. 
-                                                                        This however increase data streaming latency. 
-                                                                        Use with caution.	
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
 
-compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression). 
-                                                                        -1 is the default	
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression. 
+                                                                                            This however increase data streaming latency.
+                                                                                            Use with caution.                                            -                                                          
 
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression).
+                                                                                            Default is -1 (zlib compression)                             -                                                          
 
-path	                              File path		
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
 
-protocol	                      Serialization Protocol		                                                                  ndo
-===================================== ================================= ================================================================= ================================
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
+ca_certificate                 Trusted CA's certificate                                     Trusted CA's certificate.                                    -                                                          
 
-local_server
+host                           Host to connect to                                           IP address or hostname of the host to connect to 
+                                                                                            (leave blank for listening mode).                            -                                                          
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-compression	                      Compression (zlib)	        Enable or not data stream compression.	
+port                           Connection port                                              Port to listen on (empty host) or to connect to 
+                                                                                            (with host filled).                                          -                                                          
 
-compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression. 
-                                                                        This however increase data streaming latency.
-                                                                        Use with caution.	
+private_key                    Private key file.                                            Private key file path when TLS encryption is used.           -                                                          
 
-compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
-                                                                        -1 is the default	
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
 
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+public_cert                    Public certificate                                           Public certificate file path when TLS encryption is used.    -                                                          
 
-path	                              File path		
+tls                            Enable TLS encryption                                        Enable TLS encryption.                                       -                                                          
 
-protocol	                      Serialization Protocol		                                                                  ndo
-===================================== ================================= ================================================================= ================================
+============================== ============================================================ ============================================================ ===========================================================
 
 
-local_client
+file:
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-compression	                      Compression (zlib)	        Enable or not data stream compression.	
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
 
-compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression. 
-                                                                        This however increase data streaming latency. 
-                                                                        Use with caution.	
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
 
-compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
-                                                                        -1 is the default	
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression. 
+                                                                                            This however increase data streaming latency.
+                                                                                            Use with caution.                                            -                                                          
 
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression). 
+                                                                                            Default is -1 (zlib compression)                             -                                                          
 
-path	                              File path		
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
 
-protocol	                      Serialization Protocol		                                                                  ndo
-===================================== ================================= ================================================================= ================================
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
+
+max_size                       Maximum size of file                                         Maximum size in bytes.                                       -                                                          
+
+path                           File path                                                    Path to the file.                                            -                                                          
+
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
+
+============================== ============================================================ ============================================================ ===========================================================
+
+
+local_server:
+
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
+
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
+
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression. 
+                                                                                            This however increase data streaming latency. 
+                                                                                            Use with caution.                                            -                                                          
+
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression). 
+                                                                                            Default is -1 (zlib compression)                             -                                                          
+
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
+
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
+
+path                           File path                                                    Path to the file.                                            -                                                          
+
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
+
+============================== ============================================================ ============================================================ ===========================================================
+
+
+local_client:
+
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
+
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
+
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression. 
+                                                                                            This however increase data streaming latency. 
+                                                                                            Use with caution.                                            -                                                          
+
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression). 
+                                                                                            Default is -1 (zlib compression)                             -                                                          
+
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
+
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
+
+path                           File path                                                    Path to the file.                                            -                                                          
+
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
+
+============================== ============================================================ ============================================================ ===========================================================
+
 
 
 logger
 ~~~~~~
 
-file
+file:
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-config	                              Configuration messages	        Enable or not configuration messages logging.	
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+config                         Configuration messages                                       Enable or not configuration messages logging.                -                                                          
 
-debug	                              Debug messages	                Enable or not debug messages logging.	
+debug                          Debug messages                                               Enable or not debug messages logging.                        -                                                          
 
-error	                              Error messages	                Enable or not error messages logging.	
+error                          Error messages                                               Enable or not error messages logging.                        -                                                          
 
-info	                              Informational messages	        Enable or not informational messages logging.	
+info                           Informational messages                                       Enable or not informational messages logging.                -                                                          
 
-level	                              Logging level	                How much messages must be logged.	                          high,low,medium
+level                          Logging level                                                How much messages must be logged.                            high,low,medium                                            
 
-name	                              Name of the logger	        For a file logger this is the path to the file. 
-                                                                        For a standard logger, one of 'stdout' or 'stderr'.	
-===================================== ================================= ================================================================= ================================
+max_size                       Max file size in bytes                                       The maximum size of log file.                                -                                                          
 
-standard
+name                           Name of the logger                                           For a file logger this is the path to the file. For a 
+                                                                                            standard logger, one of 'stdout' or 'stderr'.                -                                                          
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-config	                              Configuration messages	        Enable or not configuration messages logging.	
+============================== ============================================================ ============================================================ ===========================================================
 
-debug	                              Debug messages	                Enable or not debug messages logging.	
 
-error	                              Error messages	                Enable or not error messages logging.	
+standard:
 
-info	                              Informational messages	        Enable or not informational messages logging.	
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+config                         Configuration messages                                       Enable or not configuration messages logging.                -                                                          
 
-level	                              Logging level	                How much messages must be logged.	                          high,low,medium
+debug                          Debug messages                                               Enable or not debug messages logging.                        -                                                          
 
-name	                              Name of the logger	        For a file logger this is the path to the file. 
-                                                                        For a standard logger, one of 'stdout' or 'stderr'.	
-===================================== ================================= ================================================================= ================================
+error                          Error messages                                               Enable or not error messages logging.                        -                                                          
 
-syslog
+info                           Informational messages                                       Enable or not informational messages logging.                -                                                          
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-config	                              Configuration messages	        Enable or not configuration messages logging.	
+level                          Logging level                                                How much messages must be logged.                            high,low,medium                                            
 
-debug	                              Debug messages	                Enable or not debug messages logging.	
+name                           Name of the logger                                           For a file logger this is the path to the file. 
+                                                                                            For a standard logger, one of 'stdout' or 'stderr'.          -                                                          
 
-error	                              Error messages	                Enable or not error messages logging.	
+============================== ============================================================ ============================================================ ===========================================================
 
-info	                              Informational messages	        Enable or not informational messages logging.	
 
-level	                              Logging level	                How much messages must be logged.	                          high,low,medium
-===================================== ================================= ================================================================= ================================
+syslog:
+
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+config                         Configuration messages                                       Enable or not configuration messages logging.                -                                                          
+
+debug                          Debug messages                                               Enable or not debug messages logging.                        -                                                          
+
+error                          Error messages                                               Enable or not error messages logging.                        -                                                          
+
+info                           Informational messages                                       Enable or not informational messages logging.                -                                                          
+
+level                          Logging level                                                How much messages must be logged.                            high,low,medium                                            
+
+============================== ============================================================ ============================================================ ===========================================================
+
+
+monitoring:
+
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+config                         Configuration messages                                       Enable or not configuration messages logging.                -                                                          
+
+debug                          Debug messages                                               Enable or not debug messages logging.                        -                                                          
+
+error                          Error messages                                               Enable or not error messages logging.                        -                                                          
+
+info                           Informational messages                                       Enable or not informational messages logging.                -                                                          
+
+level                          Logging level                                                How much messages must be logged.                            high,low,medium                                            
+
+name                           Name of the logger                                           For a file logger this is the path to the file.
+                                                                                            For a standard logger, one of 'stdout' or 'stderr'.          -                                                          
+
+============================== ============================================================ ============================================================ ===========================================================
+
 
 
 output
 ~~~~~~
 
-ipv4
+ipv4:
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-compression	                      Compression (zlib)	        Enable or not data stream compression.	
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
 
-compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
-                                                                        This however increase data streaming latency. Use with caution.	
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
 
-compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
-                                                                        -1 is the default	
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression. 
+                                                                                            This however increase data streaming latency. 
+                                                                                            Use with caution.                                            -                                                          
 
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression). 
+                                                                                            Default is -1 (zlib compression)                             -                                                          
 
-ca_certificate	                      Trusted CA's certificate		
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
 
-host	                              Host to connect to		
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
-port	                              Connection port	                Port for listen or connect in TCP	
+ca_certificate                 Trusted CA's certificate                                     Trusted CA's certificate.                                    -                                                          
 
-private_key	                      Private key file.		
+host                           Host to connect to                                           IP address or hostname of the host to connect to 
+                                                                                            (leave blank for listening mode).                            -                                                          
 
-protocol	                      Serialization Protocol		                                                                  ndo
+port                           Connection port                                              Port to listen on (empty host) or to connect to 
+                                                                                            (with host filled).                                          -                                                          
 
-public_cert	                      Public certificate		
+private_key                    Private key file.                                            Private key file path when TLS encryption is used.           -                                                          
 
-tls	                              Enable TLS encryption		
-===================================== ================================= ================================================================= ================================
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
 
+public_cert                    Public certificate                                           Public certificate file path when TLS encryption is used.    -                                                          
 
-ipv6
+tls                            Enable TLS encryption                                        Enable TLS encryption.                                       -                                                          
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-compression	                      Compression (zlib)	        Enable or not data stream compression.	
+============================== ============================================================ ============================================================ ===========================================================
 
-compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
-                                                                        This however increase data streaming latency.
- 									Use with caution.	
 
-compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
-                                                                        -1 is the default	
+ipv6:
 
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
 
-ca_certificate	                      Trusted CA's certificate		
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
 
-host	                              Host to connect to		
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression.
+                                                                                            This however increase data streaming latency.
+                                                                                            Use with caution.                                            -                                                          
 
-port	                              Connection port	                Port for listen or connect in TCP	
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression). 
+                                                                                            Default is -1 (zlib compression)                             -                                                          
 
-private_key	                      Private key file.		
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
 
-protocol	                      Serialization Protocol		                                                                   ndo
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
-public_cert	                      Public certificate		
+ca_certificate                 Trusted CA's certificate                                     Trusted CA's certificate.                                    -                                                          
 
-tls	                              Enable TLS encryption		
-===================================== ================================= ================================================================= ================================
+host                           Host to connect to                                           IP address or hostname of the host to connect to 
+                                                                                            (leave blank for listening mode).                            -                                                          
 
+port                           Connection port                                              Port to listen on (empty host) or to connect to 
+                                                                                            (with host filled).                                          -                                                          
 
-file
+private_key                    Private key file.                                            Private key file path when TLS encryption is used.           -                                                          
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-compression	                      Compression (zlib)	        Enable or not data stream compression.	
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
 
-compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
-                                                                        This however increase data streaming latency.
-                                                                        Use with caution.	
+public_cert                    Public certificate                                           Public certificate file path when TLS encryption is used.    -                                                          
 
-compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
-                                                                        -1 is the default	
+tls                            Enable TLS encryption                                        Enable TLS encryption.                                       -                                                          
 
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+============================== ============================================================ ============================================================ ===========================================================
 
-path	                              File path		
 
-protocol	                      Serialization Protocol		                                                                  ndo
-===================================== ================================= ================================================================= ================================
+file:
 
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
 
-local_server
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-compression	                      Compression (zlib)	        Enable or not data stream compression.	
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression. 
+                                                                                            This however increase data streaming latency.
+                                                                                            Use with caution.                                            -                                                          
 
-compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
-                                                                        This however increase data streaming latency.
-                                                                        Use with caution.	
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression).
+                                                                                            Default is -1 (zlib compression)                             -                                                          
 
-compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
-                                                                        -1 is the default	
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
 
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
-path	                              File path		
+max_size                       Maximum size of file                                         Maximum size in bytes.                                       -                                                          
 
-protocol	                      Serialization Protocol		                                                                  ndo
-===================================== ================================= ================================================================= ================================
+path                           File path                                                    Path to the file.                                            -                                                          
 
-rrd
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+============================== ============================================================ ============================================================ ===========================================================
 
-metrics_path	                      Metrics RRD Directory		
 
-path	                              File path		
+local_server:
 
-port	                              Connection port	                Port for listen or connect in TCP	
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
 
-status_path	                      Status RRD Directory		
-===================================== ================================= ================================================================= ================================
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
 
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression. 
+                                                                                            This however increase data streaming latency. 
+                                                                                            Use with caution.                                            -                                                          
 
-storage
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression). 
+                                                                                            Default is -1 (zlib compression)                             -                                                          
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
 
-db_host	                              DB host		
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
-db_name	                              DB name		
+path                           File path                                                    Path to the file.                                            -                                                          
 
-db_password	                      DB password		
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
 
-db_port	                              DB Port	                        Port on which the DB server listens	
+============================== ============================================================ ============================================================ ===========================================================
 
-db_type	                              DB type		                                                                                   db2,ibase,mysql,oci,odbc,
-                                                                                                                                           postgresql,sqlite,tds
 
-db_user	                              DB user		
+rrd:
 
-interval	                      Interval Length	                Interval Length in seconds	
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
 
-length	                              RRD Length	                RRD storage duration.	
-===================================== ================================= ================================================================= ================================
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
 
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
-local_client
+metrics_path                   RRD file directory for metrics                               RRD file directory, for example /var/lib/centreon/metrics    -                                                          
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-compression	                      Compression (zlib)	        Enable or not data stream compression.	
+path                           Unix socket                                                  The Unix socket used to communicate with rrdcached. 
+                                                                                            This is a global option, go to 
+                                                                                            Administration > Options > RRDTool to modify it.             -                                                          
 
-compression_buffer	              Compression buffer size	        The higher the buffer size is, the best compression.
-                                                                        This however increase data streaming latency.
-                                                                        Use with caution.	
+port                           TCP port                                                     The TCP port used to communicate with rrdcached. 
+                                                                                            This is a global option, go to 
+                                                                                            Administration > Options > RRDTool to modify it.             -                                                          
 
-compression_level	              Compression level	                Ranges from 1 (no compression) to 9 (best compression).
-                                                                        -1 is the default	
+status_path                    RRD file directory for statuses                              RRD file directory, for example /var/lib/centreon/status     -                                                          
 
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+============================== ============================================================ ============================================================ ===========================================================
 
-path	                              File path		
 
-protocol	                      Serialization Protocol		                                                                  ndo
-===================================== ================================= ================================================================= ================================
+storage:
 
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
 
-sql
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
 
-===================================== ================================= ================================================================= ================================
-ID                                    Label                             Description                                                       Possible values
-===================================== ================================= ================================================================= ================================
-failover	                      Failover Name	                Name of the input or output object that will act as failover.	
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
-db_host	                              DB host		
+check_replication              Replication enabled                                          When enabled, the broker engine will check whether or not 
+                                                                                            the replication is up to date before attempting to 
+                                                                                            update data.                                                 -                                                          
 
-db_name	                              DB name		
+db_host                        DB host                                                      IP address or hostname of the database server.               -                                                          
 
-db_password	                      DB password		
+db_name                        DB name                                                      Database name.                                               -                                                          
 
-db_port	                              DB Port	                        Port on which the DB server listens	
+db_password                    DB password                                                  Password of database user.                                   -                                                          
 
-db_type	                              DB type		                                                                                  db2,ibase,mysql,oci,odbc,
-                                                                                                                                          postgresql,sqlite,tds
+db_port                        DB port                                                      Port on which the DB server listens                          -                                                          
 
-db_user	                              DB user		
-===================================== ================================= ================================================================= ================================
+db_type                        DB type                                                      Target DBMS.                                                 db2,ibase,mysql,oci,odbc,postgresql,sqlite,tds             
+
+db_user                        DB user                                                      Database user.                                               -                                                          
+
+interval                       Interval length                                              Interval length in seconds.                                  -                                                          
+
+length                         RRD length                                                   RRD storage duration in seconds.                             -                                                          
+
+queries_per_transaction        Maximum queries per transaction                              The maximum queries per transaction before commit.           -                                                          
+
+read_timeout                   Transaction commit timeout                                   The transaction timeout before running commit.               -                                                          
+
+rebuild_check_interval         Rebuild check interval in seconds                            The interval between check if some metrics must be rebuild. 
+                                                                                            The default value is 300s                                    -                                                          
+
+============================== ============================================================ ============================================================ ===========================================================
+
+
+local_client:
+
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
+
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
+
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression. 
+                                                                                            This however increase data streaming latency.
+                                                                                            Use with caution.                                            -                                                          
+
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression). 
+                                                                                            Default is -1 (zlib compression)                             -                                                          
+
+failover                       Failover name                                                Name of the input or output object that 
+                                                                                            will act as failover.                                        -                                                          
+
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
+
+path                           File path                                                    Path to the file.                                            -                                                          
+
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
+
+============================== ============================================================ ============================================================ ===========================================================
+
+
+sql:
+
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+buffering_timeout              Buffering timeout                                            Time in seconds to wait before launching failover.           -                                                          
+
+failover                       Failover name                                                Name of the input or output object that will act as 
+                                                                                            failover.                                                    -                                                          
+
+retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
+
+check_replication              Replication enabled                                          When enabled, the broker engine will check whether or not 
+                                                                                            the replication is up to date before attempting to 
+                                                                                            update data.                                                 -                                                          
+
+db_host                        DB host                                                      IP address or hostname of the database server.               -                                                          
+
+db_name                        DB name                                                      Database name.                                               -                                                          
+
+db_password                    DB password                                                  Password of database user.                                   -                                                          
+
+db_port                        DB port                                                      Port on which the DB server listens                          -                                                          
+
+db_type                        DB type                                                      Target DBMS.                                                 db2,ibase,mysql,oci,odbc,postgresql,sqlite,tds             
+
+db_user                        DB user                                                      Database user.                                               -                                                          
+
+queries_per_transaction        Maximum queries per transaction                              The maximum queries per transaction before commit.           -                                                          
+
+read_timeout                   Transaction commit timeout                                   The transaction timeout before running commit.               -                                                          
+
+============================== ============================================================ ============================================================ ===========================================================
+
+
+
+stats
+~~~~~
+
+stats:
+
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+fifo                           File for Centeron Broker statistics                          File where Centreon Broker statistics will be stored         -                                                          
+
+============================== ============================================================ ============================================================ ===========================================================
+
+
+
+temporary
+~~~~~~~~~
+
+file:
+
+============================== ============================================================ ============================================================ ===========================================================
+ID                             Label                                                        Description                                                  Possible values                                            
+============================== ============================================================ ============================================================ ===========================================================
+compression                    Compression (zlib)                                           Enable or not data stream compression.                       -                                                          
+
+compression_buffer             Compression buffer size                                      The higher the buffer size is, the best compression. 
+                                                                                            This however increase data streaming latency. 
+                                                                                            Use with caution.                                            -                                                          
+
+compression_level              Compression level                                            Ranges from 0 (no compression) to 9 (best compression). 
+                                                                                            Default is -1 (zlib compression)                             -                                                          
+
+max_size                       Maximum size of file                                         Maximum size in bytes.                                       -                                                          
+
+path                           File path                                                    Path to the file.                                            -                                                          
+
+protocol                       Serialization protocol                                       Serialization protocol.                                      ndo                                                        
+
+============================== ============================================================ ============================================================ ===========================================================
 
