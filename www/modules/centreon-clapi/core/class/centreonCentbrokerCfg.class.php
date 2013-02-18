@@ -109,7 +109,9 @@ class CentreonCentbrokerCfg extends CentreonObject
                 $params[1] = "ns_nagios_server";
                 $params[2] = $this->instanceObj->getInstanceId($params[2]);
             } elseif (!preg_match('/^config_/', $params[1])) {
-                $params[1] = 'config_'.$params[1];
+                if ($params[1] != "event_queue_max_size") {
+                    $params[1] = 'config_'.$params[1];
+                }
             }
             $updateParams = array($params[1] => $params[2]);
             parent::setparam($objectId, $updateParams);
