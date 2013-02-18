@@ -45,9 +45,9 @@ Required fields are:
 ======= =========================================
 Order	Description
 ======= =========================================
-1	Name of configuration
+1	    Name of configuration
 
-2	Instance that is linked to broker cfg
+2	    Instance that is linked to broker cfg
 ======= =========================================
 
 
@@ -71,24 +71,27 @@ Arguments are composed of the following columns:
 ======== =========================================
 Order	 Column description
 ======== =========================================
-1	 Name of Centreon Broker configuration
+1	     Name of Centreon Broker configuration
 
-2	 Parameter name
+2	     Parameter name
 
-3	 Parameter value
+3	     Parameter value
 ======== =========================================
 
 Parameters that you may change are:
 
-======== ==================================================
-Column	 Description
-======== ==================================================
-filename Filename of configuration (.xml extension)
+======================== ==================================================
+Column	                 Description
+======================== ==================================================
+filename                 Filename of configuration (.xml extension)
 
-name	 Name of configuration
+name	                 Name of configuration
 
-instance Instance that is linked to Centreon Broker CFG
-======== ==================================================
+instance                 Instance that is linked to Centreon Broker CFG
+
+event_queue_max_size     Event queue max size (when number is reached,
+                         temporary output will be used).
+======================== ==================================================
 
 
 Listinput, Listoutput, Listlogger and Listcorrelation
