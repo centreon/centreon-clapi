@@ -56,7 +56,7 @@ Setparam
 
 If you want to change a specific parameter of a Trap, use the **SETPARAM** command. The Name is used for identifying the Trap to update::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o VENDOR -a setparam -v "aNewTrap;vendor;3com" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o TRAP -a setparam -v "aNewTrap;vendor;3com" 
 
 Arguments are composed of the following columns:
 
@@ -165,7 +165,7 @@ ID	ID of the matching rule
 Updatematching
 --------------
 
-In order to delete a matching rule, use the **DELMATCHING** command::
+In order to delete a matching rule, use the **UPDATEMATCHING** command::
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o TRAP -a updatematching -v "8;status;critical" 
 
