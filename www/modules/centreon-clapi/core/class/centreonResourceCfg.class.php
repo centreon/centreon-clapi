@@ -126,11 +126,13 @@ class CentreonResourceCfg extends CentreonObject
         foreach ($instanceNames as $instanceName) {
             $instanceIds[] = $this->instanceObj->getInstanceId($instanceName);
         }
+        /*
         foreach ($instanceIds as $instanceId) {
             if ($this->isUnique("$".$params[self::ORDER_UNIQUENAME]."$", $instanceId) == false) {
                 throw new CentreonClapiException(self::MACRO_ALREADY_IN_USE);
             }
         }
+        */
         $addParams[$this->object->getUniqueLabelField()] = "$".$params[self::ORDER_UNIQUENAME]."$";
         $addParams['resource_line'] = $params[self::ORDER_VALUE];
         $addParams['resource_comment'] = $params[self::ORDER_COMMENT];
