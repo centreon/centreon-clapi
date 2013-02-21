@@ -9,9 +9,6 @@ Welcome to Centreon CLAPI's documentation!
 Centreon CLAPI is an Open Source module for Centreon that enables users to configure their monitoring system through command lines.
 This documentation aims to introduce all the actions you can perform with Centreon CLAPI, from adding host objects to restarting a remote monitoring poller.
 
-.. note::
-  Centreon CLAPI 1.5 is still in development stage.
-
 .. warning::
   This version is compatible with Centreon 2.4.
 
