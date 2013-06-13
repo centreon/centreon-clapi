@@ -130,6 +130,8 @@ Parameters that may be modified:
 ================================ =============================================================
 Parameter	                 Description
 ================================ =============================================================
+activate	                 *1* when service is enabled, 0 otherwise
+
 description	                 Description
 
 comment	                         Comment

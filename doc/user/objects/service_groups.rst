@@ -60,13 +60,14 @@ In order to change parameters for a servciegroup, use the **SETPARAM** action::
 
 You can change the following parameters:
 
-========= ================================
+========= =========================================
 Parameter Description
-========= ================================
+========= =========================================
+activate  *1* when service is enabled, 0 otherwise
 name      Name of service group
 alias     Alias of service group
 comment   Comments regarding service group
-========= ================================
+========= =========================================
 
 .. note::
   You need to generate your configuration file and restart monitoring engine in order to apply changes.
