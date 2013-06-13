@@ -106,6 +106,23 @@ class CentreonConfigPoller {
 
     }
 
+    /**
+     * Returns monitoring engines for generation purpose
+     *
+     * @param int $pollerId
+     * @return string
+     */
+    private function getMonitoringEngine($pollerId) {
+        $res = $this->_DB->query("SELECT monitoring_engine 
+            FROM nagios_server 
+            WHERE `id` = " . $this->_DB->escape($pollerId));
+        $row = $res->fetchRow();
+        if (isset($row['monitoring_engine'])) {
+            return $row['monitoring_engine'];
+        }
+        return "";
+    }
+
     public function getPollerList($format) {
         $DBRESULT =& $this->_DB->query("SELECT id,name FROM nagios_server WHERE ns_activate = '1' ORDER BY id");
         if ($format == "xml") {
@@ -118,6 +135,7 @@ class CentreonConfigPoller {
         unset($data);
         return 0;
     }
+
 
     /**
      *
@@ -300,7 +318,7 @@ class CentreonConfigPoller {
         require_once $this->centreon_path."/www/class/centreonLog.class.php";
         require_once $this->centreon_path."/www/class/centreonConfigCentreonBroker.php";
 
-        global $oreon, $_SERVER;
+        global $oreon, $centreon, $_SERVER;
 
         $_SERVER["REMOTE_ADDR"] = "127.0.0.1";
 
@@ -316,7 +334,9 @@ class CentreonConfigPoller {
             $oreon = new Oreon($user);
             $oreon->user->version = 3;
         }
+        $centreon = $oreon;
         $tab['id'] = $variables;
+        $tab['monitoring_engine'] = $this->getMonitoringEngine($variables);
 
         chdir("./modules/centreon-clapi/core/");
 
