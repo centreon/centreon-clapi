@@ -138,9 +138,12 @@ abstract class Centreon_Object_Relation
         		AND ".$this->relationTable.".".$this->secondKey." = ".$this->secondObject->getTableName().".".$this->secondObject->getPrimaryKey();
         $filterTab = array();
         if (count($filters)) {
-            foreach ($filters as $key => $value) {
+            foreach ($filters as $key => $rawvalue) {
                 $sql .= " $filterType $key LIKE ? ";
-                $filterTab[] = str_replace("_", "\_", $value);
+                $value = trim ($rawvalue);
+                $value = str_replace("_", "\_", $value);
+                $value = str_replace(" ", "\ ", $value);
+                $filterTab[] = $value;
             }
         }
         if (isset($order) && isset($sort) && (strtoupper($sort) == "ASC" || strtoupper($sort) == "DESC")) {

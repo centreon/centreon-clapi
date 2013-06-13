@@ -97,7 +97,7 @@ abstract class Centreon_Object
             }
             $sqlFields .= $key;
             $sqlValues .= "?";
-            $sqlParams[] = $value;
+            $sqlParams[] = trim($value);
         }
         if ($sqlFields && $sqlValues) {
             $sql .= "(".$sqlFields.") VALUES (".$sqlValues.")";
@@ -237,13 +237,16 @@ abstract class Centreon_Object
         $sql = "SELECT $params FROM $this->table ";
         $filterTab = array();
         if (count($filters)) {
-            foreach ($filters as $key => $value) {
+            foreach ($filters as $key => $rawvalue) {
                 if (!count($filterTab)) {
                     $sql .= " WHERE $key LIKE ? ";
                 } else {
                     $sql .= " $filterType $key LIKE ? ";
                 }
-                $filterTab[] = str_replace("_", "\_", $value);
+                $value = trim($rawvalue);
+                $value = str_replace("_", "\_", $value);
+                $value = str_replace(" ", "\ ", $value);
+                $filterTab[] = $value;
             }
         }
         if (isset($order) && isset($sort) && (strtoupper($sort) == "ASC" || strtoupper($sort) == "DESC")) {

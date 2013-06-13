@@ -139,7 +139,7 @@ class CentreonService extends CentreonObject
     {
         $relObj = new Centreon_Object_Relation_Host_Service();
         $elements = $relObj->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array('host_name' => $hostName,
-        																										 'service_description' => $serviceDescription), "AND");
+                                                                                                                'service_description' => $serviceDescription), "AND");
         if (count($elements)) {
             return true;
         }
