@@ -202,7 +202,7 @@ class CentreonContact extends CentreonObject
         $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
         $addParams['contact_alias'] = $params[self::ORDER_ALIAS];
         $addParams['contact_email'] = $params[self::ORDER_MAIL];
-        $addParams['contact_passwd'] = $params[self::ORDER_PASS];
+        $addParams['contact_passwd'] = md5($params[self::ORDER_PASS]);
         $addParams['contact_admin'] = $params[self::ORDER_ADMIN];
         $addParams['contact_oreon'] = $params[self::ORDER_ACCESS];
         if ($this->checkLang($params[self::ORDER_LANG]) == false) {
