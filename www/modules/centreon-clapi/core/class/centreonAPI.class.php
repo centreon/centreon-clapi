@@ -270,15 +270,19 @@ class CentreonAPI {
              } else {
                  $pass = md5($this->password);
              }
-             $DBRESULT = $this->DB->query("SELECT contact_id 
+             $DBRESULT = $this->DB->query("SELECT contact_id, contact_admin 
                  FROM contact 
                  WHERE contact_alias = '".$this->login."' 
                  AND contact_passwd = '".$pass."' 
                  AND contact_activate = '1' 
-                 AND contact_oreon = '1'
-                 AND contact_admin = '1'");
+                 AND contact_oreon = '1'");
              if ($DBRESULT->numRows()) {
-                 return 1;
+                 $row = $DBRESULT->fetchRow();
+                 if ($row['contact_admin'] == 1) {
+                     return 1;
+                 }
+                 print "Centreon CLAPI is for admin users only.\n";
+                 exit(1);
              } else {
                  print "Invalid credentials.\n";
 		 exit(1);
