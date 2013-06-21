@@ -270,7 +270,13 @@ class CentreonAPI {
              } else {
                  $pass = md5($this->password);
              }
-             $DBRESULT = $this->DB->query("SELECT contact_id FROM contact WHERE contact_alias = '".$this->login."' AND contact_passwd = '".$pass."' AND contact_activate = '1' AND contact_oreon = '1'");
+             $DBRESULT = $this->DB->query("SELECT contact_id 
+                 FROM contact 
+                 WHERE contact_alias = '".$this->login."' 
+                 AND contact_passwd = '".$pass."' 
+                 AND contact_activate = '1' 
+                 AND contact_oreon = '1'
+                 AND contact_admin = '1'");
              if ($DBRESULT->numRows()) {
                  return 1;
              } else {
