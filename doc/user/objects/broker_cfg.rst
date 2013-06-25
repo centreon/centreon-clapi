@@ -102,13 +102,15 @@ listinput
 listoutput
 listlogger
 listcorrelation
-Example:
 
-[root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a listoutput -v "broker cfg for poller test" 
-id;name
-1;Storage
-2;RRD
-3;PerfData
+Example::
+
+   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a listoutput -v "broker cfg for poller test" 
+   id;name
+   1;Storage
+   2;RRD
+   3;PerfData
+
 Columns are the following :
 
 Column	Description
@@ -125,7 +127,8 @@ In order to get parameters of a specific I/O object, use one of the following co
  - getlogger
  - getcorrelation
 
-Example:::
+Example::
+
   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a getoutput -v "broker cfg for poller test;3" 
   parameter key;parameter value
   db_host;localhost
@@ -162,7 +165,8 @@ In order to add a new I/O object, use one of the following commands:
  - **ADDLOGGER**
  - **ADDCORRELATION**
 
-Example:::
+Example::
+
   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a addlogger -v "broker cfg for poller test;/var/log/centreon-broker/central-module.log;file" 
   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a listlogger -v "broker cfg for poller test" 
   id;name
@@ -191,7 +195,7 @@ In order to remove an I/O object from the Centreon Broker configuration, use one
  - **DELLOGGER**
  - **DELCORRELATION**
 
-Example:::
+Example::
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a dellogger -v "broker cfg for poller test;1" 
 
@@ -207,7 +211,7 @@ In order to set parameters of an I/O object, use one of the following commands:
  - **SETLOGGER**
  - **SETCORRELATION**
 
-Example:::
+Example::
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a setcorrelation -v "broker cfg for poller test;1;file;/etc/centreon-broker/correlation.xml" 
 
@@ -230,7 +234,7 @@ You may get help with the following CLAPI commands:
  - **GETFIELDLIST**
  - **GETVALUELIST**
 
-Example:::
+Example::
 
   [root@localhost core]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a gettypelist -v "output" 
   type id;short name;name
