@@ -183,6 +183,7 @@ Setinstance
 -----------
 
 In order to set the instance from which a host will be monitored, use the **SETINSTANCE** action::
+
   [root@centreon ~]# ./centreon -u admin -p centreon -o HOST -a setinstance -v "Centreon-Server;Poller 1" 
 
 
