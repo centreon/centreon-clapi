@@ -44,7 +44,7 @@ In order to move configuration files for poller "Local Poller" of id 1 to the fi
 Restart monitoring engine of a poller
 -------------------------------------
 
-In order to restart the monitoring process on poller "Local Poller" of id 1, use the **POLLERRESTART** command::
+In order to restart the monitoring process on poller "Local Poller" of id 1, use the the **POLLERRESTART** command::
 
   [root@centreon core]# ./centreon -u admin -p centreon -a POLLERRESTART -v 1
   Running configuration check...done.
@@ -55,12 +55,19 @@ In order to restart the monitoring process on poller "Local Poller" of id 1, use
 Reload monitoring engine of a poller
 ------------------------------------
 
-In order to reload the monitoring process on poller "Remote Poller" of id 2, use **POLLERRELOAD** command::
+In order to reload the monitoring process on poller "Remote Poller" of id 2, use the **POLLERRELOAD** command::
 
   [root@centreon core]# ./centreon -u admin -p centreon -a POLLERRELOAD -v 2
   Running configuration check...done.
   Reloading nagios configuration...done
 
+
+Perform pollergenerate, pollertest, cfgmove and pollerrestart with one single command
+-------------------------------------------------------------------------------------
+
+It is possible to perform these four actions with one single command, use the **APPLYCFG** command::
+
+  [root@centreon core]# ./centreon -u admin -p centreon -a APPLYCFG -v 2
 
 Send Centreon trap configuration files to poller
 ------------------------------------------------
