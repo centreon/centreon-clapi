@@ -19,12 +19,3 @@ Contents:
 
    installation/index
    user/index
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
