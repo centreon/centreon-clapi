@@ -132,9 +132,9 @@ class CentreonCommand extends CentreonObject
         }
         if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
             if (!preg_match("/^command_/", $params[1])) {
-                if ($params[1] != "graph") {
+                if (!in_array($params[1], array('graph', 'enable_shell'))) {
                     $params[1] = "command_".$params[1];
-                } else {
+                } elseif ($param[1] == "graph") {
                     $params[1] = "graph_id";
                 }
             }
