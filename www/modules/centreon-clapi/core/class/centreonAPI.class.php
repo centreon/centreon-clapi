@@ -171,6 +171,7 @@ class CentreonAPI {
 		 */
 		$this->optGen = $this->getOptGen();
 		$version = $this->optGen["version"];
+                $this->delim = ";";
 	}
 
 	/**
@@ -529,6 +530,8 @@ class CentreonAPI {
 	 */
 	public function export() {
 		$this->initAllObjects();
+                // header
+                echo "{OBJECT_TYPE}{$this->delim}{COMMAND}{$this->delim}{PARAMETERS}\n";
 		$this->objectTable['CMD']->export();
 		$this->objectTable['TP']->export();
 		$this->objectTable['CONTACT']->export();
