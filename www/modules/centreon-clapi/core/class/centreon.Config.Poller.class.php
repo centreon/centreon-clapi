@@ -425,6 +425,10 @@ class CentreonConfigPoller {
         unset($generatedSG);
         unset($generatedS);
 
+        if (file_exists($path."genIndexData.php")) {
+            require_once $path."genIndexData.php";
+        }
+        
         print "Configuration files generated for poller ".$variables."\n";
         return 0;
     }
