@@ -308,21 +308,22 @@ abstract class CentreonObject
 	 */
 	public function export()
 	{
-        $elements = $this->object->getList("*", -1, 0);
-        foreach ($elements as $element) {
-            $addStr = $this->action.$this->delim."ADD";
-            foreach ($this->insertParams as $param) {
-                $addStr .= $this->delim.$element[$param];
-            }
-            $addStr .= "\n";
-            echo $addStr;
-            foreach ($element as $parameter => $value) {
-                if (!in_array($parameter, $this->exportExcludedParams)) {
-                    if (!is_null($value) && $value != "") {
-                        echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$parameter.$this->delim.$value."\n";
+            $elements = $this->object->getList("*", -1, 0);
+            foreach ($elements as $element) {
+                $addStr = $this->action.$this->delim."ADD";
+                foreach ($this->insertParams as $param) {
+                    $addStr .= $this->delim.$element[$param];
+                }
+                $addStr .= "\n";
+                echo $addStr;
+                foreach ($element as $parameter => $value) {
+                    if (!in_array($parameter, $this->exportExcludedParams)) {
+                        if (!is_null($value) && $value != "") {
+                            $value = CentreonUtils::convertLineBreak($value);
+                            echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$parameter.$this->delim.$value."\n";
+                        }
                     }
                 }
             }
-        }
 	}
 }

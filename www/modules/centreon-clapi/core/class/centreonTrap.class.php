@@ -319,6 +319,7 @@ class CentreonTrap extends CentreonObject
                             $parameter = 'vendor';
                             $value = $this->manufacturerObj->getName($value);
                         }
+                        $value = CentreonUtils::convertLineBreak($value);
                         echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$parameter.$this->delim.$value."\n";
                     }
                 }

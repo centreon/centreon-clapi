@@ -153,6 +153,7 @@ abstract class Centreon_Object
             if ($value == "" && !isset($not_null_attributes[$key])) {
                 $value = null;
             }
+            $value = str_replace("<br/>", "\n", $value);
             $sqlParams[] = $value;
         }
 

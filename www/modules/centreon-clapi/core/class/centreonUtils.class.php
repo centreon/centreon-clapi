@@ -86,4 +86,16 @@ class CentreonUtils
         }
 		return $img_id;
     }
+    
+    /**
+     * Convert Line Breaks \n or \r\n to <br/>
+     * 
+     * @param string $str | string to convert
+     * @return string
+     */
+    public static function convertLineBreak($str) {
+        $str = str_replace("\r\n", "<br/>", $str);
+        $str = str_replace("\n", "<br/>", $str);
+        return $str;
+    }
 }

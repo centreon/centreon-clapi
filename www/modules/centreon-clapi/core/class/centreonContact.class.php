@@ -365,6 +365,7 @@ class CentreonContact extends CentreonObject
                     } elseif ($parameter == "contact_lang") {
                         $parameter = "locale";
                     }
+                    $value = CentreonUtils::convertLineBreak($value);
                     echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$parameter.$this->delim.$value."\n";
                 }
             }
