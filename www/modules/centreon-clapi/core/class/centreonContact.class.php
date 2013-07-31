@@ -356,7 +356,7 @@ class CentreonContact extends CentreonObject
             echo $addStr;
             foreach ($element as $parameter => $value) {
                 if (!is_null($value) && $value != "" && !in_array($parameter, $this->exportExcludedParams)) {
-                    if ($parameter == "timeperiod_tp_id" || $parameter == "timeperiod_tp_id2") {
+                    if ($parameter == "timeperiod_tp_id") {
                         $parameter = self::HOST_NOTIF_TP;
                         $value = $this->tpObject->getObjectName($value);
                     } elseif ($parameter == "timeperiod_tp_id2") {
