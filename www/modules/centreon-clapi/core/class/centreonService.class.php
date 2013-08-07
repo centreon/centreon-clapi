@@ -713,6 +713,7 @@ class CentreonService extends CentreonObject
                         }
                         unset($tmpObj);
                     }
+                    $value = CentreonUtils::convertLineBreak($value);
                     echo $this->action.$this->delim."setparam".$this->delim.$element['host_name'].$this->delim.$element['service_description'].$this->delim.$this->getClapiActionName($parameter).$this->delim.$value."\n";
                 }
             }
@@ -721,6 +722,7 @@ class CentreonService extends CentreonObject
             if (isset($params) && is_array($params)) {
                 foreach ($params as $k => $v) {
                     if (!is_null($v) && $v != "") {
+                        $v = CentreonUtils::convertLineBreak($v);
                         echo $this->action.$this->delim."setparam".$this->delim.$element['host_name'].$this->delim.$element['service_description'].$this->delim.$this->getClapiActionName($k).$this->delim.$v."\n";
                     }
                 }

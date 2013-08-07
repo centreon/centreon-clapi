@@ -751,6 +751,7 @@ class CentreonHost extends CentreonObject
             if (isset($params) && is_array($params)) {
                 foreach ($params as $k => $v) {
                     if (!is_null($v) && $v != "") {
+                        $v = CentreonUtils::convertLineBreak($v);
                         echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$this->getClapiActionName($k).$this->delim.$v."\n";
                     }
                 }
