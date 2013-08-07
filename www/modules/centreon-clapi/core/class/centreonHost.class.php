@@ -742,6 +742,7 @@ class CentreonHost extends CentreonObject
                         }
                         unset($tmpObj);
                     }
+                    $value = CentreonUtils::convertLineBreak($value);
                     echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$this->getClapiActionName($parameter).$this->delim.$value."\n";
                 }
             }
