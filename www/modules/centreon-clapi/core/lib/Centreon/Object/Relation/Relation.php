@@ -141,6 +141,7 @@ abstract class Centreon_Object_Relation
             foreach ($filters as $key => $rawvalue) {
                 $sql .= " $filterType $key LIKE ? ";
                 $value = trim ($rawvalue);
+                $value = str_replace("\\", "\\\\", $value);
                 $value = str_replace("_", "\_", $value);
                 $value = str_replace(" ", "\ ", $value);
                 $filterTab[] = $value;
