@@ -371,6 +371,7 @@ class CentreonConfigPoller {
         require $path."genNdo2db.php";
         require $path."genCentreonBroker.php";
         require $path."genResourceCFG.php";
+        global $Period;
         require $path."genTimeperiods.php";
         require $path."genCommands.php";
         if (file_exists($path."genConnectors.php")) {
