@@ -136,6 +136,18 @@ class CentreonConfigPoller {
         return 0;
     }
 
+    /**
+     * Restart Centreon broker
+     */
+    protected function restartCentreonBroker() {
+        if (file_exists($this->centreon_path."/www/class/centreonBroker.class.php")) {
+            require_once $this->centreon_path."/www/class/centreonBroker.class.php";
+            $brk = new CentreonBroker($this->_DB);
+            if ($brk->getBroker() == 'broker') {
+                $brk->reload();
+            }
+        }
+    }
 
     /**
      *
@@ -151,6 +163,11 @@ class CentreonConfigPoller {
         }
 
         $this->testPollerId($variables);
+
+        /*
+         * Restart broker
+         */
+        $this->restartCentreonBroker();
 
         /*
          * Get Init Script
@@ -189,6 +206,11 @@ class CentreonConfigPoller {
         }
 
         $this->testPollerId($variables);
+
+        /*
+         * Restart broker
+         */
+        $this->restartCentreonBroker();
 
         /*
          * Get Init Script
