@@ -365,6 +365,7 @@ class CentreonConfigPoller {
         /**
          * Insert session in session table
          */
+        session_id(1);
         $pearDB->query("INSERT INTO `session` (`session_id` , `user_id` , `current_page` , `last_reload`, `ip_address`) VALUES ('1', '".$oreon->user->user_id."', '1', '".time()."', '".$_SERVER["REMOTE_ADDR"]."')");
 
         /**
