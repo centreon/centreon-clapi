@@ -31,9 +31,6 @@
  *
  * For more information : command@centreon.com
  *
- * SVN : $URL: http://svn.modules.centreon.com/centreon-clapi/trunk/www/modules/centreon-clapi/core/class/centreonHost.class.php $
- * SVN : $Id: centreonHost.class.php 25 2010-03-30 05:52:19Z jmathis $
- *
  */
 
 require_once "centreonObject.class.php";
@@ -134,7 +131,7 @@ class CentreonCommand extends CentreonObject
             if (!preg_match("/^command_/", $params[1])) {
                 if (!in_array($params[1], array('graph', 'enable_shell'))) {
                     $params[1] = "command_".$params[1];
-                } elseif ($param[1] == "graph") {
+                } elseif ($params[1] == "graph") {
                     $params[1] = "graph_id";
                 }
             }
