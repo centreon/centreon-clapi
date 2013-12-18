@@ -32,153 +32,151 @@
  *
  * For more information : contact@centreon.com
  *
- * SVN : $URL$
- * SVN : $Id$
- *
  */
-	$debug = 0;
-	
-	ini_set("display_errors", "Off");	
-		
-	define('APPLICATION_PATH', realpath(dirname(__FILE__)));
-	set_include_path(implode(PATH_SEPARATOR, array(realpath(APPLICATION_PATH . '/lib'),    											   
-    											   realpath(APPLICATION_PATH . '/class'),
-    												get_include_path()
-    										  )));
-	
-	global $version;
 
-	/**
-	 * Declare Options 
-	 */
-	$shortopts  = "";
-	$shortopts .= "d"; /* Debug mode */
-	$shortopts .= "u:"; /* Users */
-	$shortopts .= "p:"; /* Password */
-        $shortopts .= "s"; /* Sha1 mode */
-	$shortopts .= "o:"; /* Object type */
-	$shortopts .= "v:"; /* variables */
-	$shortopts .= "h"; /* Help */
-	$shortopts .= "V"; /* Version */
-	$shortopts .= "a:"; /* Action */
-	$shortopts .= "i:"; /* Import Massive data */
-	$shortopts .= "e"; /* Export all configuration */
+$debug = 0;
 	
-	$options = getopt($shortopts);
-	if (isset($options['d'])) {
-		$debug = 1;
-	}
-        $useSha1 = false;
-        if (isset($options['s'])) {
-            $useSha1 = true;
+ini_set("display_errors", "Off");	
+
+define('APPLICATION_PATH', realpath(dirname(__FILE__)));
+set_include_path(implode(PATH_SEPARATOR, array(realpath(APPLICATION_PATH . '/lib'),    											   
+                                               realpath(APPLICATION_PATH . '/class'),
+                                               get_include_path()
+                                               )));
+	
+global $version;
+
+/**
+ * Declare Options 
+ */
+$shortopts  = "";
+$shortopts .= "d"; /* Debug mode */
+$shortopts .= "u:"; /* Users */
+$shortopts .= "p:"; /* Password */
+$shortopts .= "s"; /* Sha1 mode */
+$shortopts .= "o:"; /* Object type */
+$shortopts .= "v:"; /* variables */
+$shortopts .= "h"; /* Help */
+$shortopts .= "V"; /* Version */
+$shortopts .= "a:"; /* Action */
+$shortopts .= "i:"; /* Import Massive data */
+$shortopts .= "e"; /* Export all configuration */
+
+$options = getopt($shortopts);
+if (isset($options['d'])) {
+    $debug = 1;
+}
+$useSha1 = false;
+if (isset($options['s'])) {
+    $useSha1 = true;
+}
+if ($debug) {
+    print_r($options);
+} else {
+    error_reporting(E_ALL ^ E_NOTICE);
+}
+
+if (!file_exists("../etc/api.conf.php")) {
+    chdir(dirname(__FILE__));
+}
+
+require_once "../etc/api.conf.php";
+require_once "$centreon_etc/centreon.conf.php";
+require_once "./class/centreonAPI.class.php";
+require_once "./lib/Centreon/Db/Manager/Manager.php";
+
+$dbConfig['host'] = $conf_centreon['hostCentreon'];
+$dbConfig['username'] = $conf_centreon['user'];
+$dbConfig['password'] = $conf_centreon['password'];
+$dbConfig['dbname'] = $conf_centreon['db'];
+if (isset($conf_centreon['port'])) {
+    $dbConfig['port'] = $conf_centreon['port']; 
+} elseif ($p = strstr($dbConfig['host'], ':')) {
+    $p = substr($p, 1);
+    if (is_numeric($p)) {
+        $dbConfig['port'] = $p;
+    }
+}
+$db = Centreon_Db_Manager::factory('centreon', 'pdo_mysql', $dbConfig);
+try {
+    $db->getConnection();
+} catch (Exception $e) {
+    echo sprintf("Could not connect to database. Check your configuration file %s\n", $centreon_etc.'/centreon.conf.php');
+    if (isset($options['h'])) {
+        CentreonAPI::printHelp(false, 1);
+    }
+    exit(1);
+  }
+
+/**
+ * Create Centreon API object
+ */
+$api = new CentreonAPI((isset($options["u"]) ? $options["u"] : "") , (isset($options["p"]) ? $options["p"] : ""), (isset($options["a"]) ? $options["a"] : ""), $centreon_path, $options);
+
+if (isset($options["h"])) {
+    $api->printHelp();
+}
+
+if (isset($options["V"])) {
+    $api->printVersion();
+    exit(0);		
+}
+
+/**
+ * Now works
+ */
+if ($api->login == "" || $api->password == "") {
+    if (file_exists($_SERVER["HOME"]."/.centreonApi")) {
+        $uid = posix_getpwuid (fileowner($_SERVER["HOME"]."/.centreonApi"));
+        $perms = substr(sprintf('%o', fileperms($_SERVER["HOME"]."/.centreonApi")), -3);
+        if (strcmp($perms,'400') == 0  && strcmp($_SERVER['USER'], $uid['name']) == 0) {
+            $handle = @fopen($_SERVER["HOME"]."/.centreonApi", "r");
+            if ($handle) {
+                /**
+                 * Read Only the first line 
+                 */
+                $str = fgets($handle);
+                fclose($handle);
+                $credential = split(":", $str);
+                $api->setLogin($credential[0]);
+                $api->setPassword($credential[1]);
+                $api->checkUser($useSha1);
+            }
+            $api->launchAction();
+        } else {
+            print "Please check access on login file...\n\n";
+            $api->printHelp();
         }
-	if ($debug) {
-		print_r($options);
-	} else {
-		error_reporting(E_ALL ^ E_NOTICE);
-	}
-	
-	if (!file_exists("../etc/api.conf.php")) {
-		chdir(dirname(__FILE__));
-	}
-
-	require_once "../etc/api.conf.php";
-	require_once "$centreon_etc/centreon.conf.php";
-	require_once "./class/centreonAPI.class.php";
-	require_once "./lib/Centreon/Db/Manager/Manager.php";
-	
-	$dbConfig['host'] = $conf_centreon['hostCentreon'];
-	$dbConfig['username'] = $conf_centreon['user'];
-	$dbConfig['password'] = $conf_centreon['password'];
-	$dbConfig['dbname'] = $conf_centreon['db'];
-	if (isset($conf_centreon['port'])) {
-		$dbConfig['port'] = $conf_centreon['port']; 
-	} elseif ($p = strstr($dbConfig['host'], ':')) {
-        $p = substr($p, 1);
-        if (is_numeric($p)) {
-            $dbConfig['port'] = $p;
+    } else {
+        $api->printHelp();
+    }
+} else {
+	  	
+    if (!isset($api->options["V"]) && !isset($api->options["h"])) {
+        $api->checkUser($useSha1);
+    }
+		
+    /*
+     * Check action to do
+     */
+    if (isset($api->options["e"])) {
+        $api->export();
+    } else if (isset($api->options["i"])) {
+        $api->import($api->options["i"]);
+    } else if (isset($api->options["a"])) {
+        try {
+            $api->launchAction();
+        } catch (CentreonClapiException $e) {
+            print $e->getMessage();
+            $api->setReturnCode(1);
+        } catch (Exception $e) {
+            if (isset($debug) && $debug) {
+                print $e->getMessage() . "\n";
+            }
+            print "Please check that your parameters are valid";
+            $api->setReturnCode(1);
         }
     }
-	$db = Centreon_Db_Manager::factory('centreon', 'pdo_mysql', $dbConfig);
-        try {
-            $db->getConnection();
-        } catch (Exception $e) {
-            echo sprintf("Could not connect to database. Check your configuration file %s\n", $centreon_etc.'/centreon.conf.php');
-            if (isset($options['h'])) {
-                CentreonAPI::printHelp(false, 1);
-            }
-            exit(1);
-        }
-
-	/**
-	 * Create Centreon API object
-	 */
-	$api = new CentreonAPI((isset($options["u"]) ? $options["u"] : "") , (isset($options["p"]) ? $options["p"] : ""), (isset($options["a"]) ? $options["a"] : ""), $centreon_path, $options);
-
-	if (isset($options["h"])) {
-		$api->printHelp();
-	}
-
-	if (isset($options["V"])) {
-		$api->printVersion();
-		exit(0);		
-	}
-
-	/**
-	 * Now works
-	 */
-	if ($api->login == "" || $api->password == "") {
-		if (file_exists($_SERVER["HOME"]."/.centreonApi")) {
-			$uid = posix_getpwuid (fileowner($_SERVER["HOME"]."/.centreonApi"));
-			$perms = substr(sprintf('%o', fileperms($_SERVER["HOME"]."/.centreonApi")), -3);
-			if (strcmp($perms,'400') == 0  && strcmp($_SERVER['USER'], $uid['name']) == 0) {
-				$handle = @fopen($_SERVER["HOME"]."/.centreonApi", "r");
-				if ($handle) {
-					/**
-					 * Read Only the first line 
-					 */
-					$str = fgets($handle);
-					fclose($handle);
-					$credential = split(":", $str);
-					$api->setLogin($credential[0]);
-					$api->setPassword($credential[1]);
-					$api->checkUser($useSha1);
-				}
-				$api->launchAction();
-			} else {
-				print "Please check access on login file...\n\n";
-				$api->printHelp();
-			}
-		} else {
-	 	   $api->printHelp();
-		}
-	} else {
-	  	
-	  	if (!isset($api->options["V"]) && !isset($api->options["h"])) {
-			$api->checkUser($useSha1);
-		}
-		
-		/*
-		 * Check action to do
-		 */
-		if (isset($api->options["e"])) {
-			$api->export();
-		} else if (isset($api->options["i"])) {
-			$api->import($api->options["i"]);
-		} else if (isset($api->options["a"])) {
-	  		try {
-	  			$api->launchAction();
-			} catch (CentreonClapiException $e) {
-				print $e->getMessage();
-				$api->setReturnCode(1);
-	  		} catch (Exception $e) {
-	  			if (isset($debug) && $debug) {
-	  				print $e->getMessage() . "\n";
-	  			}
-	  			print "Please check that your parameters are valid";
-	  			$api->setReturnCode(1);
-	  		}
-	  	}
-	}
+}
 	$api->close();
 ?>

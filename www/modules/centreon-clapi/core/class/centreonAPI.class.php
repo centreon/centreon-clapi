@@ -31,9 +31,6 @@
  *
  * For more information : contact@centreon.com
  *
- * SVN : $URL$
- * SVN : $Id$
- *
  */
 
 /**
@@ -171,7 +168,7 @@ class CentreonAPI {
 		 */
 		$this->optGen = $this->getOptGen();
 		$version = $this->optGen["version"];
-                $this->delim = ";";
+        $this->delim = ";";
 	}
 
 	/**
@@ -247,47 +244,47 @@ class CentreonAPI {
 	}
 
 	/**
-         * Check user access and password
-         *
-         * @param boolean $useSha1
+     * Check user access and password
+     *
+     * @param boolean $useSha1
 	 * @return return bool 1 if user can login
 	 */
 	public function checkUser($useSha1 = false) {
-            if (!isset($this->login) || $this->login == "") {
-                print "ERROR: Can not connect to centreon without login.\n";
-                $this->printHelp();
-                exit();
-            }
-            if (!isset($this->password) || $this->password == "") {
-                print "ERROR: Can not connect to centreon without password.";
-                $this->printHelp();
-            }
+        if (!isset($this->login) || $this->login == "") {
+            print "ERROR: Can not connect to centreon without login.\n";
+            $this->printHelp();
+            exit();
+        }
+        if (!isset($this->password) || $this->password == "") {
+            print "ERROR: Can not connect to centreon without password.";
+            $this->printHelp();
+        }
 
-            /**
-             * Check Login / Password
-             */
-             if ($useSha1) {
-                 $pass = sha1($this->password);
-             } else {
-                 $pass = md5($this->password);
-             }
-             $DBRESULT = $this->DB->query("SELECT contact_id, contact_admin 
+        /**
+         * Check Login / Password
+         */
+        if ($useSha1) {
+            $pass = sha1($this->password);
+        } else {
+            $pass = md5($this->password);
+        }
+        $DBRESULT = $this->DB->query("SELECT contact_id, contact_admin 
                  FROM contact 
                  WHERE contact_alias = '".$this->login."' 
                  AND contact_passwd = '".$pass."' 
                  AND contact_activate = '1' 
                  AND contact_oreon = '1'");
-             if ($DBRESULT->numRows()) {
-                 $row = $DBRESULT->fetchRow();
-                 if ($row['contact_admin'] == 1) {
-                     return 1;
-                 }
-                 print "Centreon CLAPI is for admin users only.\n";
-                 exit(1);
-             } else {
-                 print "Invalid credentials.\n";
-		 exit(1);
-             }
+        if ($DBRESULT->numRows()) {
+            $row = $DBRESULT->fetchRow();
+            if ($row['contact_admin'] == 1) {
+                return 1;
+            }
+            print "Centreon CLAPI is for admin users only.\n";
+            exit(1);
+        } else {
+            print "Invalid credentials.\n";
+            exit(1);
+        }
 	}
 
 	/**
@@ -320,7 +317,7 @@ class CentreonAPI {
 		print "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n";
 		print "and you are welcome to modify and redistribute it under the GPL license\n\n";
 		print "usage: ./centreon -u <LOGIN> -p <PASSWORD> [-s] -o <OBJECT> -a <ACTION> [-v]\n";
-                print "  -s 	Use SHA1 on password (default is MD5)\n";
+        print "  -s 	Use SHA1 on password (default is MD5)\n";
 		print "  -v 	variables \n";
 		print "  -h 	Print help \n";
 		print "  -V 	Print version \n";
@@ -530,8 +527,8 @@ class CentreonAPI {
 	 */
 	public function export() {
 		$this->initAllObjects();
-                // header
-                echo "{OBJECT_TYPE}{$this->delim}{COMMAND}{$this->delim}{PARAMETERS}\n";
+        // header
+        echo "{OBJECT_TYPE}{$this->delim}{COMMAND}{$this->delim}{PARAMETERS}\n";
 		$this->objectTable['CMD']->export();
 		$this->objectTable['TP']->export();
 		$this->objectTable['CONTACT']->export();
@@ -616,13 +613,13 @@ class CentreonAPI {
 		$res = $this->DB->query("SELECT * FROM informations WHERE `key` = 'version'");
  		$data = $res->fetchRow();
  		print "Centreon version ".$data["value"]."\n";
-                $res = $this->DB->query("SELECT mod_release FROM modules_informations WHERE name = 'centreon-clapi'");
-                $clapiVersion = 'undefined';
-                if ($res->numRows()) {
-                    $data = $res->fetchRow();
-                    $clapiVersion = $data['mod_release'];
-                }
-                print "Centreon CLAPI version ".$clapiVersion."\n";
+        $res = $this->DB->query("SELECT mod_release FROM modules_informations WHERE name = 'centreon-clapi'");
+        $clapiVersion = 'undefined';
+        if ($res->numRows()) {
+            $data = $res->fetchRow();
+            $clapiVersion = $data['mod_release'];
+        }
+        print "Centreon CLAPI version ".$clapiVersion."\n";
 	}
 
 	/** ******************************************************
