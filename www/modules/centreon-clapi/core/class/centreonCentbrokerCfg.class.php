@@ -170,7 +170,7 @@ class CentreonCentbrokerCfg extends CentreonObject
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND .":".$args[0]);
         }
         $configId = $configIds[0];
-        if (preg_match("/^(list|get|set|add|del)(correlation|input|output|logger)/", $name, $matches)) {
+        if (preg_match("/^(list|get|set|add|del)(correlation|input|output|logger|temporary)/", $name, $matches)) {
             $tagName = $matches[2];
             if ($matches[1] == "list") {
                 $sql = "SELECT config_group_id as id, config_value as name
