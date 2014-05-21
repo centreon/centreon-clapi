@@ -139,7 +139,17 @@ abstract class CentreonObject
      */
     protected function objectExists($name, $updateId = null)
     {
-        $ids = $this->object->getList($this->object->getPrimaryKey(), -1, 0, null, null, array($this->object->getUniqueLabelField() => $name), "AND");
+        $ids = $this->object->getList(
+            $this->object->getPrimaryKey(), 
+            -1, 
+            0, 
+            null, 
+            null, 
+            array(
+                $this->object->getUniqueLabelField() => $name
+            ), 
+            "AND"
+        );
         if (isset($updateId) && count($ids)) {
             if ($ids[0][$this->object->getPrimaryKey()] == $updateId) {
                 return false;
