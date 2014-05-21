@@ -75,7 +75,7 @@ class CentreonServiceTemplate extends CentreonObject
                               'service_activate'				       => '1'
                               );
         $this->insertParams = array('service_description', 'service_alias', 'service_template_model_stm_id');
-        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), 'children'));
         $this->action = "STPL";
         $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->register = 0;
@@ -539,19 +539,37 @@ class CentreonServiceTemplate extends CentreonObject
         }
     }
 
+
     /**
-     * Export
+     * Sort templates so that import can be processed without failure
      *
-     * @return void
+     * @param array $arr
+     * @param int $parentId
+     * @return array
      */
-    public function export()
+    protected function sortTemplates($arr, $parentId = null)
     {
-        $elements = $this->object->getList("*", -1, 0, "service_template_model_stm_id", null, array("service_register" => $this->register), "AND");
-        $extendedObj = new Centreon_Object_Service_Extended();
-        $commandObj = new Centreon_Object_Command();
-        $tpObj = new Centreon_Object_Timeperiod();
-        $macroObj = new Centreon_Object_Service_Macro_Custom();
-        foreach ($elements as $element) {
+        $branch = array();
+        foreach ($arr as $data) {
+            if ($data['service_template_model_stm_id'] == $parentId) {
+                $usedTemplateId = $data['service_template_model_stm_id'];
+                $children = $this->sortTemplates($arr, $data['service_id']);
+                $data['children'] = count($children) ? $children : array();
+                $branch[] = $data;
+            }
+        }
+        return $branch;
+    }
+
+    /**
+     * Parse template tree
+     *
+     * @param array $tree
+     * @param Centreon_Object_Service_Extended $extendedObj 
+     */
+    protected function parseTemplateTree($tree, $extendedObj)
+    {
+        foreach ($tree as $element) {
             $addStr = $this->action.$this->delim."ADD";
             foreach ($this->insertParams as $param) {
                 $addStr .= $this->delim;
@@ -586,8 +604,10 @@ class CentreonServiceTemplate extends CentreonObject
                     echo $this->action.$this->delim."setparam".$this->delim.$element['service_description'].$this->delim.$this->getClapiActionName($parameter).$this->delim.$value."\n";
                 }
             }
-            $params = $extendedObj->getParameters($element[$this->object->getPrimaryKey()],
-                                                  array("esi_notes", "esi_notes_url", "esi_action_url", "esi_icon_image", "esi_icon_image_alt"));
+            $params = $extendedObj->getParameters(
+                $element[$this->object->getPrimaryKey()],
+                array("esi_notes", "esi_notes_url", "esi_action_url", "esi_icon_image", "esi_icon_image_alt")
+            );
             if (isset($params) && is_array($params)) {
                 foreach ($params as $k => $v) {
                     if (!is_null($v) && $v != "") {
@@ -596,31 +616,59 @@ class CentreonServiceTemplate extends CentreonObject
                     }
                 }
             }
-            $macros = $macroObj->getList("*", -1, 0, null, null, array('svc_svc_id' => $element[$this->object->getPrimaryKey()]), "AND");
-            foreach ($macros as $macro) {
-                echo $this->action.$this->delim."setmacro".$this->delim.$element['service_description'].$this->delim.$this->stripMacro($macro['svc_macro_name']).$this->delim.$macro['svc_macro_value']."\n";
-            }
-
-            $trapRel = new Centreon_Object_Relation_Trap_Service();
-            $telements = $trapRel->getMergedParameters(array("traps_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
-            foreach ($telements as $telement) {
-                echo $this->action.$this->delim."addtrap".$this->delim.$telement['service_description'].$this->delim.$telement['traps_name']."\n";
-            }
-            $hostRel = new Centreon_Object_Relation_Host_Service();
-            $helements = $hostRel->getMergedParameters(array("host_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
-            foreach ($helements as $helement) {
-                echo $this->action.$this->delim."sethost".$this->delim.$helement['service_description'].$this->delim.$helement['host_name']."\n";
+            if (count($element['children'])) {
+                $this->parseTemplateTree($element['children'], $extendedObj);
             }
         }
+    }
+
+    /**
+     * Export
+     *
+     * @return void
+     */
+    public function export()
+    {
+        $elements = $this->object->getList("*", -1, 0, "service_template_model_stm_id", null, array("service_register" => $this->register), "AND");
+        $templateTree = $this->sortTemplates($elements);
+        $extendedObj = new Centreon_Object_Service_Extended();
+        $commandObj = new Centreon_Object_Command();
+        $tpObj = new Centreon_Object_Timeperiod();
+        $macroObj = new Centreon_Object_Service_Macro_Custom();
+        $this->parseTemplateTree($templateTree, $extendedObj);
+
+        // contact groups
         $cgRel = new Centreon_Object_Relation_Contact_Group_Service();
         $elements = $cgRel->getMergedParameters(array("cg_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register), "AND");
         foreach ($elements as $element) {
             echo $this->action.$this->delim."addcontactgroup".$this->delim.$element['service_description'].$this->delim.$element['cg_name']."\n";
         }
+
+        // contacts
         $contactRel = new Centreon_Object_Relation_Contact_Service();
         $elements = $contactRel->getMergedParameters(array("contact_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register), "AND");
         foreach ($elements as $element) {
             echo $this->action.$this->delim."addcontact".$this->delim.$element['service_description'].$this->delim.$element['contact_name']."\n";
+        }
+
+        // macros
+        $macros = $macroObj->getList("*", -1, 0, null, null, array('svc_svc_id' => $element[$this->object->getPrimaryKey()]), "AND");
+        foreach ($macros as $macro) {
+            echo $this->action.$this->delim."setmacro".$this->delim.$element['service_description'].$this->delim.$this->stripMacro($macro['svc_macro_name']).$this->delim.$macro['svc_macro_value']."\n";
+        }
+
+        // traps
+        $trapRel = new Centreon_Object_Relation_Trap_Service();
+        $telements = $trapRel->getMergedParameters(array("traps_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
+        foreach ($telements as $telement) {
+            echo $this->action.$this->delim."addtrap".$this->delim.$telement['service_description'].$this->delim.$telement['traps_name']."\n";
+        }
+
+        // hosts
+        $hostRel = new Centreon_Object_Relation_Host_Service();
+        $helements = $hostRel->getMergedParameters(array("host_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service.service_id" => $element['service_id']), "AND");
+        foreach ($helements as $helement) {
+            echo $this->action.$this->delim."sethost".$this->delim.$helement['service_description'].$this->delim.$helement['host_name']."\n";
         }
     }
 }
