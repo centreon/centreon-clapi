@@ -37,6 +37,7 @@
  */
 
 require_once "centreonObject.class.php";
+require_once "centreonSeverityAbstract.class.php";
 require_once "centreonACL.class.php";
 require_once "Centreon/Object/Service/Category.php";
 require_once "Centreon/Object/Service/Service.php";
@@ -48,11 +49,8 @@ require_once "Centreon/Object/Relation/Service/Category/Service.php";
  *
  * @author sylvestre
  */
-class CentreonServiceCategory extends CentreonObject
+class CentreonServiceCategory extends CentreonSeverityAbstract
 {
-    const ORDER_UNIQUENAME        = 0;
-    const ORDER_ALIAS             = 1;
-
     /**
      * Constructor
      *
@@ -81,11 +79,14 @@ class CentreonServiceCategory extends CentreonObject
         if (isset($parameters)) {
             $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
         }
-        $params = array('sc_id', 'sc_name', 'sc_description');
+        $params = array('sc_id', 'sc_name', 'sc_description', 'level');
         $paramString = str_replace("sc_", "", implode($this->delim, $params));
         echo $paramString . "\n";
         $elements = $this->object->getList($params, -1, 0, null, null, $filters);
         foreach ($elements as $tab) {
+            if (!$tab['level']) {
+                $tab['level'] = 'none';
+            }
             echo implode($this->delim, $tab) . "\n";
         }
 	}

@@ -37,6 +37,7 @@
  */
 
 require_once "centreonObject.class.php";
+require_once "centreonSeverityAbstract.class.php";
 require_once "centreonACL.class.php";
 require_once "Centreon/Object/Host/Host.php";
 require_once "Centreon/Object/Host/Category.php";
@@ -48,11 +49,8 @@ require_once "Centreon/Object/Relation/Host/Category/Host.php";
  *
  * @author sylvestre
  */
-class CentreonHostCategory extends CentreonObject
+class CentreonHostCategory extends CentreonSeverityAbstract
 {
-	const ORDER_UNIQUENAME        = 0;
-    const ORDER_ALIAS             = 1;
-
 	/**
 	 * Constructor
 	 *
@@ -81,11 +79,14 @@ class CentreonHostCategory extends CentreonObject
         if (isset($parameters)) {
             $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
         }
-        $params = array('hc_id', 'hc_name', 'hc_alias');
+        $params = array('hc_id', 'hc_name', 'hc_alias', 'level');
         $paramString = str_replace("hc_", "", implode($this->delim, $params));
         echo $paramString . "\n";
         $elements = $this->object->getList($params, -1, 0, null, null, $filters);
         foreach ($elements as $tab) {
+            if (!$tab['level']) {
+                $tab['level'] = 'none';
+            }
             echo implode($this->delim, $tab) . "\n";
         }
 	}
@@ -130,6 +131,28 @@ class CentreonHostCategory extends CentreonObject
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
         }
 	}
+
+    /**
+     * Set severity
+     *
+     * @param string $parameters
+     * @throws CentreonClapiException
+     */
+    public function setseverity($parameters)
+    {
+        parent::setseverity($parameters);
+    }
+
+    /**
+     * Unset severity
+     *
+     * @param string $parameters
+     * @throws CentreonClapiException
+     */
+    public function unsetseverity($parameters)
+    {
+        parent::unsetseverity($parameters);
+    }
 
 	/**
 	 * Magic method for get/set/add/del relations

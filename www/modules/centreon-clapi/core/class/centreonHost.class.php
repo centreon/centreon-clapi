@@ -412,6 +412,71 @@ class CentreonHost extends CentreonObject
     }
 
     /**
+     * Set severity
+     * 
+     * @param string $parameters
+     */
+    public function setseverity($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 2) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($hostId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) == 0) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
+        }
+        $severityObj = new Centreon_Object_Host_Category();
+        $severity = $severityObj->getIdByParameter(
+            $severityObj->getUniqueLabelField(), 
+            $params[1]
+        );
+        if (!isset($severity[0])) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[1]);
+        }
+        $k = $severityObj->getPrimaryKey();
+        $severityId = $severity[0][$k];
+        $severity = $severityObj->getParameters(
+            $severityId, 
+            array('level')
+        );
+        if ($severity['level']) {
+            // can't delete with generic method
+            $this->db->query("DELETE FROM hostcategories_relation 
+                WHERE host_host_id = ? 
+                AND hostcategories_hc_id IN (SELECT hc_id FROM hostcategories WHERE level > 0)",
+                $hostId
+            );
+            $rel = new Centreon_Object_Relation_Host_Category_Host();
+            $rel->insert($severityId, $hostId);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[1]);
+        }
+    }
+
+    /**
+     * Unset severity
+     * 
+     * @param string $parameters
+     */
+    public function unsetseverity($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 1) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($hostId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) == 0) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
+        }
+        // can't delete with generic method
+        $this->db->query("DELETE FROM hostcategories_relation 
+                WHERE host_host_id = ? 
+                AND hostcategories_hc_id IN (SELECT hc_id FROM hostcategories WHERE level > 0)",
+                $hostId
+        );
+    }
+
+
+    /**
      * Wrap macro
      *
      * @param string $macroName

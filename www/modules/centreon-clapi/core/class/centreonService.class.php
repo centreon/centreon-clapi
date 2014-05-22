@@ -61,6 +61,7 @@ require_once "Centreon/Object/Relation/Contact/Group/Service.php";
 require_once "Centreon/Object/Relation/Host/Service.php";
 require_once "Centreon/Object/Relation/Host/Group/Service/Service.php";
 require_once "Centreon/Object/Relation/Trap/Service.php";
+require_once "Centreon/Object/Relation/Service/Category/Service.php";
 
 
 /**
@@ -527,6 +528,103 @@ class CentreonService extends CentreonObject
         if (count($macroList)) {
             $macroObj->delete($macroList[0][$macroObj->getPrimaryKey()]);
         }
+    }
+
+    /**
+     * Set severity
+     * 
+     * @param string $parameters
+     */
+    public function setseverity($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 3) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        $rel = new Centreon_Object_Relation_Service_Category_Service();
+        $hostServiceRel = new Centreon_Object_Relation_Host_Service();
+        $elements = $hostServiceRel->getMergedParameters(
+            array('host_id'), 
+            array('service_id'), 
+            -1, 
+            0, 
+            null, 
+            null, 
+            array(
+                "host_name" => $params[0],
+                "service_description" => $params[1]
+            ), 
+            "AND"
+        );
+        if (!count($elements)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]."/".$params[1]);
+        }
+        $serviceId = $elements[0]['service_id'];
+        $severityObj = new Centreon_Object_Service_Category();
+        $severity = $severityObj->getIdByParameter(
+            $severityObj->getUniqueLabelField(), 
+            $params[2]
+        );
+        if (!isset($severity[0])) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[2]);
+        }
+        $k = $severityObj->getPrimaryKey();
+        $severityId = $severity[0][$k];
+        $severity = $severityObj->getParameters(
+            $severityId, 
+            array('level')
+        );
+        if ($severity['level']) {
+            // can't delete with generic method
+            $this->db->query("DELETE FROM service_categories_relation 
+                WHERE service_service_id = ? 
+                AND sc_id IN (SELECT sc_id FROM service_categories WHERE level > 0)",
+                $serviceId
+            );
+            $rel->insert($severityId, $serviceId);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[2]);
+        }
+    }
+
+    /**
+     * Unset severity
+     * 
+     * @param string $parameters
+     */
+    public function unsetseverity($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 2) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        
+        $rel = new Centreon_Object_Relation_Service_Category_Service();
+        $hostServiceRel = new Centreon_Object_Relation_Host_Service();
+        $elements = $hostServiceRel->getMergedParameters(
+            array('host_id'), 
+            array('service_id'), 
+            -1, 
+            0, 
+            null, 
+            null, 
+            array(
+                "host_name" => $params[0],
+                "service_description" => $params[1]
+            ), 
+            "AND"
+        );
+        if (!count($elements)) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]."/".$params[1]);
+        }
+        $serviceId = $elements[0]['service_id'];
+
+        // can't delete with generic method
+        $this->db->query("DELETE FROM service_categories_relation 
+                WHERE service_service_id = ? 
+                AND sc_id IN (SELECT sc_id FROM service_categories WHERE level > 0)",
+                $serviceId
+        );
     }
 
     /**
