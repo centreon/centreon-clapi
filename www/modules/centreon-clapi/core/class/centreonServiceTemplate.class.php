@@ -447,6 +447,74 @@ class CentreonServiceTemplate extends CentreonObject
         }
     }
 
+ /**
+     * Set severity
+     * 
+     * @param string $parameters
+     */
+    public function setseverity($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 2) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        
+        if (($serviceId = $this->getObjectId($params[self::ORDER_SVCDESC])) == 0) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_SVCDESC]);
+        } 
+        
+        $severityObj = new Centreon_Object_Service_Category();
+        $severity = $severityObj->getIdByParameter(
+            $severityObj->getUniqueLabelField(), 
+            $params[1]
+        );
+        if (!isset($severity[0])) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[1]);
+        }
+        $k = $severityObj->getPrimaryKey();
+        $severityId = $severity[0][$k];
+        $severity = $severityObj->getParameters(
+            $severityId, 
+            array('level')
+        );
+        if ($severity['level']) {
+            // can't delete with generic method
+            $this->db->query("DELETE FROM service_categories_relation 
+                WHERE service_service_id = ? 
+                AND sc_id IN (SELECT sc_id FROM service_categories WHERE level > 0)",
+                $serviceId
+            );
+            $rel = new Centreon_Object_Relation_Service_Category_Service();
+            $rel->insert($severityId, $serviceId);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[1]);
+        }
+    }
+
+    /**
+     * Unset severity
+     * 
+     * @param string $parameters
+     */
+    public function unsetseverity($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 1) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        
+        if (($serviceId = $this->getObjectId($params[self::ORDER_SVCDESC])) == 0) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_SVCDESC]);
+        }
+
+        // can't delete with generic method
+        $this->db->query("DELETE FROM service_categories_relation 
+                WHERE service_service_id = ? 
+                AND sc_id IN (SELECT sc_id FROM service_categories WHERE level > 0)",
+                $serviceId
+        );
+    }
+
     /**
      * Magic method
      *
