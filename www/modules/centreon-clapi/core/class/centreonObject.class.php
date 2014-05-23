@@ -215,7 +215,14 @@ abstract class CentreonObject
      */
     public function add()
     {
-        return $this->object->insert($this->params);
+        $id = $this->object->insert($this->params);
+        $this->addAuditLog(
+            'a', 
+            $id, 
+            $this->params[$this->object->getUniqueLabelField()], 
+            $this->params
+        );
+        return $id;
     }
 
     /**
@@ -230,6 +237,7 @@ abstract class CentreonObject
         $ids = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($objectName));
         if (count($ids)) {
             $this->object->delete($ids[0]);
+            $this->addAuditLog('d', $ids[0], $objectName);
         } else {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$objectName);
         }
@@ -247,6 +255,16 @@ abstract class CentreonObject
             throw new CentreonClapiException(self::NAMEALREADYINUSE);
         }
         $this->object->update($objectId, $params);
+        $uniqueField = $this->object->getUniqueLabelField();
+        $p = $this->object->getParameters($objectId, $uniqueField);
+        if (isset($p[$uniqueField])) {
+            $this->addAuditLog(
+                'c', 
+                $objectId, 
+                $p[$uniqueField], 
+                $params
+            );
+        }
     }
 
     /**
@@ -335,5 +353,88 @@ abstract class CentreonObject
                     }
                 }
             }
-	}
+    }
+
+    /**
+     * Insert audit log
+     *
+     * @param string $actionType
+     * @param int $objId
+     * @param string $objName
+     * @param array $objValues
+     */
+    public function addAuditLog($actionType, $objId, $objName, $objValues = array())
+    {
+        $objType = strtoupper($this->action);
+        $objectTypes = array(
+            'HTPL' => 'host',
+            'STPL' => 'service',
+            'CONTACT' => 'contact',
+            'SG' => 'servicegroup',
+            'TP' => 'timeperiod',
+            'SERVICE' => 'service',
+            'CG' => 'contactgroup',
+            'CMD' => 'command',
+            'HOST' => 'host',
+            'HC' => 'hostcategories',
+            'HG' => 'hostgroup',
+            'SC' => 'servicecategories'
+        );
+        if (!isset($objectTypes[$objType])) {
+            return null;
+        }
+        $objType = $objectTypes[$objType];
+        
+        $options = getopt('u:');
+        $contactObj = new Centreon_Object_Contact();
+        $contact = $contactObj->getIdByParameter('contact_alias', $options['u']);
+        $userName = $contact[0];
+
+        $dbstorage = Centreon_Db_Manager::factory('storage');
+        $query = 'INSERT INTO log_action
+            (action_log_date, object_type, object_id, object_name, action_type, log_contact_id)
+            VALUES (?, ?, ?, ?, ?, ?)';
+        $time = time();
+
+        $dbstorage->query($query, array(
+            $time,
+            $objType,
+            $objId,
+            $objName,
+            $actionType,
+            $userName
+        ));
+
+        $query = 'SELECT MAX(action_log_id) as action_log_id
+            FROM log_action
+            WHERE action_log_date = :time';
+        $stmt = $dbstorage->query($query, array($time));
+        $row = $stmt->fetch();
+        if (false === $row) {
+            throw new CentreonClapiException("Error while inserting log action");
+        }
+        $stmt->closeCursor();
+        $actionId = $row['action_log_id'];
+
+        $query = 'INSERT INTO log_action_modification
+            (field_name, field_value, action_log_id)
+            VALUES (?, ?, ?)';
+        foreach ($objValues as $name => $value) {
+            try {
+                if (is_array($value)) {
+                    $value = implode(',', $value);
+                }
+                $dbstorage->query(
+                    $query, 
+                    array(
+                        $name,
+                        $value,
+                        $actionId
+                    )
+                );
+            } catch (Exception $e) {
+                throw $e;
+            }
+        }
+    }
 }

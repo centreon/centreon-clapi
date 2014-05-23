@@ -98,8 +98,11 @@ if (isset($conf_centreon['port'])) {
     }
 }
 $db = Centreon_Db_Manager::factory('centreon', 'pdo_mysql', $dbConfig);
+$dbConfig['dbname'] = $conf_centreon['dbcstg'];
+$db_storage = Centreon_Db_Manager::factory('storage', 'pdo_mysql', $dbConfig);
 try {
-    $db->getConnection();
+  $db->getConnection();
+  $db_storage->getConnection();
 } catch (Exception $e) {
     echo sprintf("Could not connect to database. Check your configuration file %s\n", $centreon_etc.'/centreon.conf.php');
     if (isset($options['h'])) {
