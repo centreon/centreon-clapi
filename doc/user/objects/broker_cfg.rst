@@ -158,14 +158,15 @@ Order	 Description
 ======== ===========================
 
 
-Addinput, Addoutput, Addlogger and Addcorrelation
--------------------------------------------------
+Addinput, Addoutput, Addlogger, Addcorrelation and Addtemporary
+---------------------------------------------------------------
 
 In order to add a new I/O object, use one of the following commands:
  - **ADDINPUT**
  - **ADDOUTPUT**
  - **ADDLOGGER**
  - **ADDCORRELATION**
+ - **ADDTEMPORARY**
 
 Example::
 
@@ -188,14 +189,15 @@ Order	 Column description
 ======== ============================
 
 
-Delinput, Deloutput, Dellogger and Delcorrelation
--------------------------------------------------
+Delinput, Deloutput, Dellogger, Delcorrelation and Deltemporary
+---------------------------------------------------------------
 
 In order to remove an I/O object from the Centreon Broker configuration, use one of the following commands:
  - **DELINPUT**
  - **DELOUTPUT**
  - **DELLOGGER**
  - **DELCORRELATION**
+ - **DELTEMPORARY**
 
 Example::
 
@@ -204,14 +206,15 @@ Example::
 The I/O ID is used for identifying the object to delete.
 
 
-Setintput, Setoutput, Setlogger and Setcorrelation
---------------------------------------------------
+Setintput, Setoutput, Setlogger, Setcorrelation and Settemporary
+----------------------------------------------------------------
 
 In order to set parameters of an I/O object, use one of the following commands:
  - **SETINPUT**
  - **SETOUTPUT**
  - **SETLOGGER**
  - **SETCORRELATION**
+ - **SETTEMPORARY**
 
 Example::
 
