@@ -256,6 +256,46 @@ In order to remove a macro from a specific service use the **DELMACRO** action::
   You need to generate your configuration file and restart monitoring engine in order to apply changes.
 
 
+Setseverity
+-----------
+
+In order to associate a severity to a service, use the **SETSEVERITY** action::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a setseverity -v "Centreon-Server;ping;Critical" 
+
+
+Required parameters:
+
+===== ==================================
+Order Description
+===== ==================================
+1     Host name
+
+2     Service description
+
+3     Severity name
+===== ==================================
+
+
+Unsetseverity
+-------------
+
+In order to remove the severity from a service, use the **UNSETSEVERITY** action::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a unsetseverity -v "Centreon-Server;ping" 
+
+
+Required parameters:
+
+===== ==================================
+Order Description
+===== ==================================
+1     Host name
+
+2     Service description
+===== ==================================
+
+
 Getcontact
 ----------
 

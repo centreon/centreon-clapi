@@ -388,6 +388,42 @@ If you want to remove hostgroups from a host, use the **DELHOSTGROUP** action::
   You need to generate your configuration file and restart monitoring engine in order to apply changes.
 
 
+Setseverity
+-----------
+
+In order to associate a severity to a host, use the **SETSEVERITY** action::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o HOST -a setseverity -v "Centreon-Server;Critical" 
+
+
+Required parameters:
+
+===== ==================================
+Order Description
+===== ==================================
+1     Host name
+
+2     Severity name
+===== ==================================
+
+
+Unsetseverity
+-------------
+
+In order to remove the severity from a host, use the **UNSETSEVERITY** action::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o HOST -a unsetseverity -v "Centreon-Server" 
+
+
+Required parameters:
+
+===== ==================================
+Order Description
+===== ==================================
+1     Host name
+===== ==================================
+
+
 Enable
 ------
 

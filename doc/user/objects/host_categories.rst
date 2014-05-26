@@ -24,6 +24,7 @@ Columns are the following:
 Column Description
 ====== ======================
 Name   Name of host category
+
 Alias  Alias of host category
 ====== ======================
 
@@ -78,9 +79,47 @@ The needed parameters are the following:
 Order        Description
 ============ ============================================================
 1            Host category name
+
 2            Host names to add/set.
              For multiple definitions, use the *|* delimiter
 ============ ============================================================
+
+
+Setseverity
+-----------
+
+In order to turn a host category into a severity, use the **SETSEVERITY** action::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o HC -a setseverity -v "Critical;3;16x16/critical.gif" 
+
+The needed parameters are the following:
+
+============ ============================================================
+Order        Description
+============ ============================================================
+1            Host category name
+
+2            Severity level - must be a number
+
+3            Icon that represents the severity
+============ ============================================================
+
+
+Unsetseverity
+-------------
+
+In order to turn a severity into a regular host category, use the **UNSETSEVERITY** action::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o HC -a unsetseverity -v "Critical" 
+
+The needed parameters are the following:
+
+============ ============================================================
+Order        Description
+============ ============================================================
+1            Host category name
+============ ============================================================
+
 
 
 Delmember
@@ -96,5 +135,6 @@ The needed parameters are the following:
 Order        Description
 ============ ============================================================
 1            Host category name
+
 2            Host names to remove from host category
 ============ ============================================================

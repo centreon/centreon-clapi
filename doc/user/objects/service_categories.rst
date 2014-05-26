@@ -108,3 +108,39 @@ In order to remove a service from a  specific service category, use the **DELSER
   [root@centreon ~]# ./centreon -u admin -p centreon -o SC -a delservice -v "Ping-Category;my host,my service" 
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o SC -a delservicetemplate -v "Ping-Category;my template" 
+
+
+Setseverity
+-----------
+
+In order to turn a service category into a severity, use the **SETSEVERITY** action::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o SC -a setseverity -v "Critical;3;16x16/critical.gif" 
+
+The needed parameters are the following:
+
+============ ============================================================
+Order        Description
+============ ============================================================
+1            Service category name
+
+2            Severity level - must be a number
+
+3            Icon that represents the severity
+============ ============================================================
+
+
+Unsetseverity
+-------------
+
+In order to turn a severity into a regular service category, use the **UNSETSEVERITY** action::
+
+  [root@centreon ~]# ./centreon -u admin -p centreon -o SC -a unsetseverity -v "Critical" 
+
+The needed parameters are the following:
+
+============ ============================================================
+Order        Description
+============ ============================================================
+1            Service category name
+============ ============================================================
