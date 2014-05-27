@@ -182,6 +182,7 @@ class CentreonCentbrokerCfg extends CentreonObject
                 $res = $this->db->query($sql, array($configId, $tagName));
                 echo "id;name\n";
                 while ($row = $res->fetch()) {
+                    if ($row[''])
                     echo $row['id'].$this->delim.$row['name']."\n";
                 }
             } elseif ($matches[1] == "get") {
@@ -218,8 +219,11 @@ class CentreonCentbrokerCfg extends CentreonObject
                                              ':config_key'      => $args[2],
                                              ':config_group'    => $tagName));
                 $sql = "INSERT INTO cfg_centreonbroker_info (config_id, config_group_id, config_key, config_value, config_group)
-                		VALUES (?,?,?,?,?)";
-                $this->db->query($sql, array($configId, $args[1], $args[2], $args[3], $tagName));
+                    VALUES (?,?,?,?,?)";
+                $vals = explode(',', $args[3]);
+                foreach ($vals as $v) {
+                    $this->db->query($sql, array($configId, $args[1], $args[2], $v, $tagName));
+                }
 
             } elseif ($matches[1] == "add") {
                 if (!isset($args[2])) {
@@ -238,16 +242,19 @@ class CentreonCentbrokerCfg extends CentreonObject
                 }
                 unset($res);
                 $sql = "INSERT INTO cfg_centreonbroker_info (config_id, config_key, config_value, config_group, config_group_id)
-                		VALUES (:config_id, :config_key, :config_value, :config_group, :config_group_id)";
-                $sqlParams = array(':config_id'            => $configId,
-                                   ':config_key'           => 'name',
-                                   ':config_value'         => $args[1],
-                                   ':config_group'         => $tagName,
-                                   ':config_group_id'      => $i);
-                $this->db->query($sql, $sqlParams);
-                $sqlParams[':config_key'] = 'blockId';
-                $sqlParams[':config_value'] = $blockId;
-                $this->db->query($sql, $sqlParams);
+                    VALUES (:config_id, :config_key, :config_value, :config_group, :config_group_id)";
+                $vals = explode(',', $args[1]);
+                foreach ($vals as $v) {
+                    $sqlParams = array(':config_id'            => $configId,
+                                       ':config_key'           => 'name',
+                                       ':config_value'         => $v,
+                                       ':config_group'         => $tagName,
+                                       ':config_group_id'      => $i);
+                    $this->db->query($sql, $sqlParams);
+                    $sqlParams[':config_key'] = 'blockId';
+                    $sqlParams[':config_value'] = $blockId;
+                    $this->db->query($sql, $sqlParams);
+                }
             } elseif ($matches[1] == "del") {
                 if (!isset($args[1]) || !$args[1]) {
                     throw new CentreonClapiException(self::MISSINGPARAMETER);
@@ -316,7 +323,7 @@ class CentreonCentbrokerCfg extends CentreonObject
         echo "field id".$this->delim."short name".$this->delim."name\n";
         foreach ($rows as $row) {
             echo $row['cb_field_id'].$this->delim.$row['fieldname'];
-            if ($row['fieldtype'] == 'select') {
+            if ($row['fieldtype'] == 'select' || $row['fieldtype'] == 'multiselect') {
                 echo "*";
             }
             echo $this->delim.$row['displayname'].$this->delim.$row['fieldtype']."\n";
@@ -442,20 +449,41 @@ class CentreonCentbrokerCfg extends CentreonObject
                 return false;
             }
         }
-        if ($row['fieldtype'] != 'select') {
+        if ($row['fieldtype'] != 'select' && $row['fieldtype'] != 'multiselect') {
             return true;
         }
-        $sql = "SELECT value_value
-        		FROM cb_list cl, cb_list_values clv, cb_field cf
-        		WHERE cl.cb_list_id = clv.cb_list_id
+        if ($row['fieldtype'] == 'select') {
+            $sql = "SELECT value_value
+        	    FROM cb_list cl, cb_list_values clv, cb_field cf
+        	    WHERE cl.cb_list_id = clv.cb_list_id
         		AND cl.cb_field_id = cf.cb_field_id
-        		AND cf.cb_field_id = ?
-        		AND cf.fieldname = ?
-        		AND clv.value_value = ?";
-        $res = $this->db->query($sql, array($row['cb_field_id'], $args[2], $args[3]));
-        $row = $res->fetch();
-        if (!isset($row['value_value'])) {
-            return false;
+            	AND cf.cb_field_id = ?
+            	AND cf.fieldname = ?
+            	AND clv.value_value = ?";
+            $res = $this->db->query($sql, array($row['cb_field_id'], $args[2], $args[3]));
+            $row = $res->fetch();
+            if (!isset($row['value_value'])) {
+                return false;
+            }
+        } else {
+            $vals = explode(',', $args[3]);
+            $placeholders = trim($placeholders, ',');
+            $sql = "SELECT value_value
+        	    FROM cb_list cl, cb_list_values clv, cb_field cf
+        	    WHERE cl.cb_list_id = clv.cb_list_id
+        		AND cl.cb_field_id = cf.cb_field_id
+            	AND cf.cb_field_id = ?
+            	AND cf.fieldname = ?";
+            $res = $this->db->query($sql, array($row['cb_field_id'], $args[2]));
+            $allowedValues = array();
+            while ($row = $res->fetch()) {
+                $allowedValues[] = $row['value_value'];
+            }
+            foreach($vals as $v) {
+                if (!in_array($v, $allowedValues)) {
+                    return false;
+                }
+            }
         }
         return true;
     }
