@@ -222,17 +222,17 @@ Example::
 
 Arguments are composed of the following columns:
 
-======= =============================================
+======= ===========================================================
 Order	Column description
-======= =============================================
-1	 Name of Centreon Broker CFG
+======= ===========================================================
+1	    Name of Centreon Broker CFG
 
-2	 ID of I/O object
+2	    ID of I/O object
 
-3	 Parameter name
+3	    Parameter name
 
-4	 Parameter value
-======= =============================================
+4	    Parameter value, for multiple values, use the "," delimiter
+======= ===========================================================
 
 You may get help with the following CLAPI commands:
  - **GETTYPELIST**
