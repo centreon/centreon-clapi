@@ -459,10 +459,10 @@ class CentreonService extends CentreonObject
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$hostName."/".$serviceDescription);
         }
         $macroObj = new Centreon_Object_Service_Macro_Custom();
-        $macroList = $macroObj->getList(array("svc_macro_name", "svc_macro_value"), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id']));
-        echo "macro name;macro value\n";
+        $macroList = $macroObj->getList(array("svc_macro_name", "svc_macro_value", "is_password"), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id']));
+        echo "macro name;macro value;is_password\n";
         foreach ($macroList as $macro) {
-            echo $macro['svc_macro_name'] . $this->delim . $macro['svc_macro_value'] . "\n";
+            echo $macro['svc_macro_name'] . $this->delim . $macro['svc_macro_value'] . $this->delim . $macro['is_password'] . "\n";
         }
     }
 
@@ -476,6 +476,9 @@ class CentreonService extends CentreonObject
     public function setmacro($parameters)
     {
         $params = explode($this->delim, $parameters);
+        if (count($params) == 4) {
+            $params[4] = 0;
+        }
         if (count($params) < 4) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
@@ -483,20 +486,22 @@ class CentreonService extends CentreonObject
         $serviceDescription = $params[1];
         $relObject = new Centreon_Object_Relation_Host_Service();
         $elements = $relObject->getMergedParameters(array('host_id'), array('service_id'), -1, 0, null, null, array("host_name" => $hostName,
-                                                                                                                    "service_description" => $serviceDescription), "AND");
+                                                                                                                    "service_description" => $serviceDescription), 
+                                                    "AND");
         if (!count($elements)) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$hostName."/".$serviceDescription);
         }
         $macroObj = new Centreon_Object_Service_Macro_Custom();
         $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("svc_svc_id"      => $elements[0]['service_id'],
-                                                                                			 "svc_macro_name" => $this->wrapMacro($params[2])),
-                                                                                		"AND");
+                                                                                             "svc_macro_name" => $this->wrapMacro($params[2])),
+                                        "AND");
         if (count($macroList)) {
-            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[3]));
+            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[3], 'is_password' => $params[4]));
         } else {
-            $macroObj->insert(array('svc_svc_id'       => $elements[0]['service_id'],
+            $macroObj->insert(array('svc_svc_id'      => $elements[0]['service_id'],
                                     'svc_macro_name'  => $this->wrapMacro($params[2]),
-                                    'svc_macro_value' => $params[3]));
+                                    'svc_macro_value' => $params[3],
+                                    'is_password'     => $params[4]));
         }
     }
 

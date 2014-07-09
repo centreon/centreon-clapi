@@ -516,10 +516,10 @@ class CentreonHost extends CentreonObject
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$hostName);
         }
         $macroObj = new Centreon_Object_Host_Macro_Custom();
-        $macroList = $macroObj->getList(array("host_macro_name", "host_macro_value"), -1, 0, null, null, array("host_host_id"    => $hostId));
-        echo "macro name;macro value\n";
+        $macroList = $macroObj->getList(array("host_macro_name", "host_macro_value", "is_password"), -1, 0, null, null, array("host_host_id"    => $hostId));
+        echo "macro name;macro value;is_password\n";
         foreach ($macroList as $macro) {
-            echo $macro['host_macro_name'] . $this->delim . $macro['host_macro_value'] . "\n";
+            echo $macro['host_macro_name'] . $this->delim . $macro['host_macro_value'] . $this->delim . $macro['is_password'] . "\n";
         }
     }
 
@@ -533,6 +533,10 @@ class CentreonHost extends CentreonObject
     public function setmacro($parameters)
     {
         $params = explode($this->delim, $parameters);
+        if (count($params) == 3) {
+            $params[3] = 0;
+        }
+	
         if (($hostId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) == 0) {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
         }
@@ -541,14 +545,15 @@ class CentreonHost extends CentreonObject
         }
         $macroObj = new Centreon_Object_Host_Macro_Custom();
         $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("host_host_id"    => $hostId,
-                                                                                			 "host_macro_name" => $this->wrapMacro($params[1])),
-                                                                                		"AND");
+                                                                                             "host_macro_name" => $this->wrapMacro($params[1])),
+                                        "AND");
         if (count($macroList)) {
-            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('host_macro_value' => $params[2]));
+            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('host_macro_value' => $params[2], 'is_password' => $params[3]));
         } else {
             $macroObj->insert(array('host_host_id'     => $hostId,
                                     'host_macro_name'  => $this->wrapMacro($params[1]),
-                                    'host_macro_value' => $params[2]));
+                                    'host_macro_value' => $params[2], 
+                                    'is_password'      => $params[3]));
         }
     }
 
@@ -570,8 +575,8 @@ class CentreonHost extends CentreonObject
         }
         $macroObj = new Centreon_Object_Host_Macro_Custom();
         $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("host_host_id"    => $hostId,
-                                                                                			 "host_macro_name" => $this->wrapMacro($params[1])),
-                                                                                		"AND");
+											     "host_macro_name" => $this->wrapMacro($params[1])),
+					"AND");
         if (count($macroList)) {
             $macroObj->delete($macroList[0][$macroObj->getPrimaryKey()]);
         }
