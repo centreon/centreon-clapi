@@ -51,8 +51,8 @@ require_once "Centreon/Object/Relation/Contact/Command/Service.php";
  */
 class CentreonContact extends CentreonObject
 {
-    const ORDER_UNIQUENAME = 0;
-    const ORDER_ALIAS      = 1;
+    const ORDER_UNIQUENAME = 1;
+    const ORDER_NAME      = 0;
     const ORDER_MAIL       = 2;
     const ORDER_PASS       = 3;
     const ORDER_ADMIN      = 4;
@@ -200,7 +200,7 @@ class CentreonContact extends CentreonObject
         $addParams = array();
         $params[self::ORDER_UNIQUENAME] = str_replace(" ", "_", $params[self::ORDER_UNIQUENAME]);
         $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
-        $addParams['contact_alias'] = $params[self::ORDER_ALIAS];
+        $addParams['contact_name'] = $params[self::ORDER_NAME];
         $addParams['contact_email'] = $params[self::ORDER_MAIL];
         $addParams['contact_passwd'] = md5($params[self::ORDER_PASS]);
         $addParams['contact_admin'] = $params[self::ORDER_ADMIN];
