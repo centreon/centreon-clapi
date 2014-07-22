@@ -296,6 +296,8 @@ class CentreonConfigPoller {
             print "---------------------------------------------------------------------------------------------------\n";
             print $msg_debug."\n";
             print "---------------------------------------------------------------------------------------------------\n";
+        } elseif ($return_code) {
+            print implode("\n", $lines);
         } else {
             print "OK: Nagios Poller $variables can restart without problem...\n";
         }
