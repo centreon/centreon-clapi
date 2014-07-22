@@ -35,6 +35,7 @@
  * SVN : $Id$
  */
 require_once "Centreon/Db/Manager/Manager.php";
+require_once "Centreon/Object/Contact/Contact.php";
 require_once "centreonClapiException.class.php";
 
 abstract class CentreonObject
@@ -407,7 +408,7 @@ abstract class CentreonObject
 
         $query = 'SELECT MAX(action_log_id) as action_log_id
             FROM log_action
-            WHERE action_log_date = :time';
+            WHERE action_log_date = ?';
         $stmt = $dbstorage->query($query, array($time));
         $row = $stmt->fetch();
         if (false === $row) {
