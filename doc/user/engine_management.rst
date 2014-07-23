@@ -52,6 +52,16 @@ In order to restart the monitoring process on poller "Local Poller" of id 1, use
   Starting nagios: done.
 
 
+All in one command
+------------------
+
+Use the **APPLYCFG** command in order to execute all of the above with one single command::
+
+  [root@centreon core]# ./centreon -u admin -p centreon -a APPLYCFG -v 1
+  
+This will execute **POLLERGENERATE**, **POLLERTEST**, **CFGMOVE** and **POLLERRESTART**.
+
+
 Reload monitoring engine of a poller
 ------------------------------------
 
