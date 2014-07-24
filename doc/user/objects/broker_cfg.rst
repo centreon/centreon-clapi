@@ -94,8 +94,8 @@ event_queue_max_size     Event queue max size (when number is reached,
 ======================== ==================================================
 
 
-Listinput, Listoutput, Listlogger and Listcorrelation
------------------------------------------------------
+Listinput, Listoutput, Listlogger, Listcorrelation and Listtemporary
+--------------------------------------------------------------------
 
 If you want to list specific input output types of Centreon Broker, use one of the following commands:
 listinput
@@ -120,8 +120,8 @@ ID	    I/O ID
 Name	I/O Name
 ======= ============
 
-Getinput, Getoutput, Getlogger and Getcorrelation
--------------------------------------------------
+Getinput, Getoutput, Getlogger, Getcorrelation and Gettemporary
+---------------------------------------------------------------
 
 In order to get parameters of a specific I/O object, use one of the following commands:
  - getinput
@@ -131,19 +131,19 @@ In order to get parameters of a specific I/O object, use one of the following co
 
 Example::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a getoutput -v "broker cfg for poller test;3" 
-  parameter key;parameter value
-  db_host;localhost
-  db_name;centreon_storage
-  db_password;centreon
-  db_port;3306
-  db_type;mysql
-  db_user;centreon
-  failover;15552000
-  interval;60
-  length;
-  name;PerfData
-  type;storage
+   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a getoutput -v "broker cfg for poller test;3" 
+   parameter key;parameter value
+   db_host;localhost
+   db_name;centreon_storage
+   db_password;centreon
+   db_port;3306
+   db_type;mysql
+   db_user;centreon
+   failover;15552000
+   interval;60
+   length;
+   name;PerfData
+   type;storage
 
 The ID is used for identifying the I/O to get.
 
@@ -170,10 +170,10 @@ In order to add a new I/O object, use one of the following commands:
 
 Example::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a addlogger -v "broker cfg for poller test;/var/log/centreon-broker/central-module.log;file" 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a listlogger -v "broker cfg for poller test" 
-  id;name
-  1;/var/log/centreon-broker/central-module.log
+   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a addlogger -v "broker cfg for poller test;/var/log/centreon-broker/central-module.log;file" 
+   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a listlogger -v "broker cfg for poller test" 
+   id;name
+   1;/var/log/centreon-broker/central-module.log
 
 
 Arguments are composed of the following columns:
@@ -201,7 +201,7 @@ In order to remove an I/O object from the Centreon Broker configuration, use one
 
 Example::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a dellogger -v "broker cfg for poller test;1" 
+   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a dellogger -v "broker cfg for poller test;1" 
 
 The I/O ID is used for identifying the object to delete.
 
@@ -218,7 +218,7 @@ In order to set parameters of an I/O object, use one of the following commands:
 
 Example::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a setcorrelation -v "broker cfg for poller test;1;file;/etc/centreon-broker/correlation.xml" 
+   [root@centreon ~]# ./centreon -u admin -p centreon -o CENTBROKERCFG -a setcorrelation -v "broker cfg for poller test;1;file;/etc/centreon-broker/correlation.xml" 
 
 Arguments are composed of the following columns:
 
@@ -256,6 +256,8 @@ Example::
   field id;short name;name
   3;ca_certificate;Trusted CA's certificate;text
   2;host;Host to connect to;text
+  46;negociation;Enable negociation;radio
+  48;one_peer_retention_mode;One peer retention;radio
   1;port;Connection port;int
   4;private_key;Private key file.;text
   12;protocol*;Serialization Protocol;select
@@ -317,10 +319,15 @@ failover                       Failover name                                    
 
 retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
+category                       Filter category                                              Category filter for flux in input                            -
+
 ca_certificate                 Trusted CA's certificate                                     Trusted CA's certificate.                                    -                                                          
 
 host                           Host to connect to                                           IP address or hostname of the host to connect to 
                                                                                             (leave blank for listening mode).                            -                                                          
+
+one_peer_retention_mode        One peer retention                                           This allows the retention to work even                       -
+                                                                                            if the socket is listening
 
 port                           Connection port                                              Port to listen on (empty host) or to connect to 
                                                                                             (with host filled).                                          -                                                          
@@ -357,10 +364,15 @@ failover                       Failover name                                    
 
 retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
+category                       Filter category                                              Category filter for flux in input                            -
+
 ca_certificate                 Trusted CA's certificate                                     Trusted CA's certificate.                                    -                                                          
 
 host                           Host to connect to                                           IP address or hostname of the host to connect to 
                                                                                             (leave blank for listening mode).                            -                                                          
+
+one_peer_retention_mode        One peer retention                                           This allows the retention to work even                       -
+                                                                                            if the socket is listening
 
 port                           Connection port                                              Port to listen on (empty host) or to connect to 
                                                                                             (with host filled).                                          -                                                          
@@ -574,10 +586,15 @@ failover                       Failover name                                    
 
 retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
+category                       Filter category                                              Category filter for flux in output                           -
+
 ca_certificate                 Trusted CA's certificate                                     Trusted CA's certificate.                                    -                                                          
 
 host                           Host to connect to                                           IP address or hostname of the host to connect to 
                                                                                             (leave blank for listening mode).                            -                                                          
+
+one_peer_retention_mode        One peer retention                                           This allows the retention to work even                       -
+                                                                                            if the socket is listening     
 
 port                           Connection port                                              Port to listen on (empty host) or to connect to 
                                                                                             (with host filled).                                          -                                                          
@@ -614,10 +631,15 @@ failover                       Failover name                                    
 
 retry_interval                 Retry interval                                               Time in seconds to wait between each connection attempt.     -                                                          
 
+category                       Filter category                                              Category filter for flux in output                           -
+
 ca_certificate                 Trusted CA's certificate                                     Trusted CA's certificate.                                    -                                                          
 
 host                           Host to connect to                                           IP address or hostname of the host to connect to 
                                                                                             (leave blank for listening mode).                            -                                                          
+
+one_peer_retention_mode        One peer retention                                           This allows the retention to work even                       -
+                                                                                            if the socket is listening
 
 port                           Connection port                                              Port to listen on (empty host) or to connect to 
                                                                                             (with host filled).                                          -                                                          
