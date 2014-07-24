@@ -169,7 +169,11 @@ stalking_options	             Comma separated options: 'o' for OK, 'd' for Down,
 
 retry_check_interval	             Retry check interval
 
-statusmap_image	                     Status map image (used by statusmap)
+statusmap_image	                     Status map image (used by statusmap
+
+snmp_community                       Snmp Community
+
+snmp_version                         Snmp version
 
 vrml_image	                     VRML image
 ==================================== =================================================================================
