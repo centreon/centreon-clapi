@@ -182,7 +182,6 @@ class CentreonCentbrokerCfg extends CentreonObject
                 $res = $this->db->query($sql, array($configId, $tagName));
                 echo "id;name\n";
                 while ($row = $res->fetch()) {
-                    if ($row[''])
                     echo $row['id'].$this->delim.$row['name']."\n";
                 }
             } elseif ($matches[1] == "get") {
