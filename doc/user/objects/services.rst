@@ -227,9 +227,9 @@ Getmacro
 In order to view the custom macro list of a service, use the **GETMACRO** action::
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a getmacro -v "host1;ping" 
-  macro name;macro value
-  $_SERVICETIME$;80
-  $_SERVICEPL$;400
+  macro name;macro value;is_password
+  $_SERVICETIME$;80;0
+  $_SERVICEPL$;400;0
 
 
 Setmacro
@@ -237,8 +237,8 @@ Setmacro
 
 In order to set a macro for a specific service use the **SETMACRO** action::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a setmacro -v "test;ping;time;80" 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a setmacro -v "test;ping;pl;400" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a setmacro -v "test;ping;time;80;0" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a setmacro -v "test;ping;pl;400;0" 
 
 .. note::
  You need to generate your configuration file and restart monitoring engine in order to apply changes.
