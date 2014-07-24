@@ -193,16 +193,16 @@ Getmacro
 In order to view the custom macro list of a host, use the **GETMACRO** action::
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o HOST -a getmacro -v "Centreon-Server" 
-  macro name;macro value
-  $_HOSTMACADDRESS$;00:08:C7:1B:8C:02
+  macro name;macro value;is_password
+  $_HOSTMACADDRESS$;00:08:C7:1B:8C:02;0
   
 Setmacro
 --------
 
 In order to set a custom host macro, use the **SETMACRO** action::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o HOST -a setmacro -v "Centreon-Server;warning;80" 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o HOST -a setmacro -v "Centreon-Server;critical;90" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o HOST -a setmacro -v "Centreon-Server;warning;80;0" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o HOST -a setmacro -v "Centreon-Server;critical;90;0" 
 
 .. note::
   If the macro already exists, this action will only update the macro value. Otherwise, macro will be created.
