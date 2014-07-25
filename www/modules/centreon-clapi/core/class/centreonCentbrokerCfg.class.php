@@ -150,6 +150,26 @@ class CentreonCentbrokerCfg extends CentreonObject
     }
 
     /**
+     * get list of multi select fields
+     *
+     * @return array
+     */
+    protected function getMultiselect()
+    {
+        $sql = "SELECT f.cb_fieldgroup_id, fieldname, groupname 
+            FROM cb_field f, cb_fieldgroup fg
+            WHERE f.cb_fieldgroup_id = fg.cb_fieldgroup_id
+            AND f.fieldtype = 'multiselect'";
+        $res = $this->db->query($sql);
+        $arr = array();
+        while ($row = $res->fetch()) {
+            $arr[$row['fieldname']]['groupid'] = $row['cb_fieldgroup_id'];
+            $arr[$row['fieldname']]['groupname'] = $row['groupname'];
+        }
+        return $arr;
+    }
+
+    /**
      * Magic method
      *
      * @param string $name
@@ -202,6 +222,8 @@ class CentreonCentbrokerCfg extends CentreonObject
                     }
                 }
             } elseif ($matches[1] == "set") {
+        		$multiselect = $this->getMultiselect();	
+
                 if (!isset($args[3])) {
                     throw new CentreonClapiException(self::MISSINGPARAMETER);
                 }
@@ -217,13 +239,19 @@ class CentreonCentbrokerCfg extends CentreonObject
                                              ':config_group_id' => $args[1],
                                              ':config_key'      => $args[2],
                                              ':config_group'    => $tagName));
-                $sql = "INSERT INTO cfg_centreonbroker_info (config_id, config_group_id, config_key, config_value, config_group)
-                    VALUES (?,?,?,?,?)";
+                $sql = "INSERT INTO cfg_centreonbroker_info (config_id, config_group_id, config_key, config_value, config_group, grp_level, parent_grp_id, subgrp_id)
+                    VALUES (?,?,?,?,?,?,?,?)";
                 $vals = explode(',', $args[3]);
-                foreach ($vals as $v) {
-                    $this->db->query($sql, array($configId, $args[1], $args[2], $v, $tagName));
+                $grplvl = 0;
+                $parentgrpid = null;
+		        if (isset($multiselect[$args[2]])) {
+                    $this->db->query($sql, array($configId, $args[1], $multiselect[$args[2]]['groupname'], '', $tagName, 0, null, 1));
+        		    $grplvl = 1;
+                    $parentgrpid = $multiselect[$args[2]]['groupid'];
                 }
-
+                foreach ($vals as $v) {
+                    $this->db->query($sql, array($configId, $args[1], $args[2], $v, $tagName, $grplvl, $parentgrpid, null));
+                }
             } elseif ($matches[1] == "add") {
                 if (!isset($args[2])) {
                     throw new CentreonClapiException(self::MISSINGPARAMETER);
@@ -466,7 +494,6 @@ class CentreonCentbrokerCfg extends CentreonObject
             }
         } else {
             $vals = explode(',', $args[3]);
-            $placeholders = trim($placeholders, ',');
             $sql = "SELECT value_value
         	    FROM cb_list cl, cb_list_values clv, cb_field cf
         	    WHERE cl.cb_list_id = clv.cb_list_id

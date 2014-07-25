@@ -555,6 +555,12 @@ class CentreonHost extends CentreonObject
                                     'host_macro_value' => $params[2], 
                                     'is_password'      => $params[3]));
         }
+        $this->addAuditLog(
+            'c', 
+            $hostId, 
+            $params[self::ORDER_UNIQUENAME], 
+            array($params[1] => $params[2])
+        );
     }
 
     /**
@@ -580,6 +586,12 @@ class CentreonHost extends CentreonObject
         if (count($macroList)) {
             $macroObj->delete($macroList[0][$macroObj->getPrimaryKey()]);
         }
+        $this->addAuditLog(
+            'c', 
+            $hostId, 
+            $params[self::ORDER_UNIQUENAME], 
+            array($params[1] => '')
+        );
     }
 
     /**

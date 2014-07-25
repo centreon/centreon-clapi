@@ -253,7 +253,7 @@ class CentreonLDAP extends CentreonObject
         if (!isset($serverId)) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $this->db->query("DELETE FROM auth_ressource_host WHERE ldap_host_id = ?)", array($serverId));
+        $this->db->query("DELETE FROM auth_ressource_host WHERE ldap_host_id = ?", array($serverId));
     }
 
     /**
