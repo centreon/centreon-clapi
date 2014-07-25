@@ -206,7 +206,7 @@ class CentreonService extends CentreonObject
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$hostName."/".$serviceDesc);
         }
         $this->object->delete($elements[0]['service_id']);
-        $this->addAuditLog('d', $elements[0]['service_id'], $hostName."-".$serviceDesc);
+        $this->addAuditLog('d', $elements[0]['service_id'], $hostName." - ".$serviceDesc);
     }
 
 	/**
