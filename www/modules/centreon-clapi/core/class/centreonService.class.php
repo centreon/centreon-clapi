@@ -206,6 +206,7 @@ class CentreonService extends CentreonObject
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$hostName."/".$serviceDesc);
         }
         $this->object->delete($elements[0]['service_id']);
+        $this->addAuditLog('d', $elements[0]['service_id'], $hostName."-".$serviceDesc);
     }
 
 	/**
@@ -389,6 +390,7 @@ class CentreonService extends CentreonObject
                 throw new CentreonClapiException(self::OBJECTALREADYEXISTS);
             }
             $this->object->update($objectId, $updateParams);
+            $this->addAuditLog('c', $objectId, $hostName . ' - ' . $serviceDesc, $updateParams);
         } else {
             if ($params[2] != "graph_id") {
                 $params[2] = "esi_".$params[2];
@@ -406,6 +408,7 @@ class CentreonService extends CentreonObject
             }
             $extended = new Centreon_Object_Service_Extended();
             $extended->update($objectId, array($params[2] => $params[3]));
+            $this->addAuditLog('c', $objectId, $hostName . ' - ' . $serviceDesc, array($params[2] => $params[3]));
         }
     }
 
@@ -503,6 +506,12 @@ class CentreonService extends CentreonObject
                                     'svc_macro_value' => $params[3],
                                     'is_password'     => $params[4]));
         }
+        $this->addAuditLog(
+            'c', 
+            $elements[0]['service_id'], 
+            $hostName . ' - ' . $serviceDescription, 
+            array($params[2] => $params[3])
+        );
     }
 
     /**
@@ -533,6 +542,12 @@ class CentreonService extends CentreonObject
         if (count($macroList)) {
             $macroObj->delete($macroList[0][$macroObj->getPrimaryKey()]);
         }
+        $this->addAuditLog(
+            'c', 
+            $elements[0]['service_id'], 
+            $hostName . ' - ' . $serviceDescription, 
+            array($params[2] => '')
+        );
     }
 
     /**
