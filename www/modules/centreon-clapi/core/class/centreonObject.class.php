@@ -386,10 +386,9 @@ abstract class CentreonObject
         }
         $objType = $objectTypes[$objType];
         
-        $options = getopt('u:');
         $contactObj = new Centreon_Object_Contact();
-        $contact = $contactObj->getIdByParameter('contact_alias', $options['u']);
-        $userName = $contact[0];
+        $contact = $contactObj->getIdByParameter('contact_alias', CentreonUtils::getUserName());
+        $userId = $contact[0];
 
         $dbstorage = Centreon_Db_Manager::factory('storage');
         $query = 'INSERT INTO log_action
@@ -403,7 +402,7 @@ abstract class CentreonObject
             $objId,
             $objName,
             $actionType,
-            $userName
+            $userId
         ));
 
         $query = 'SELECT MAX(action_log_id) as action_log_id

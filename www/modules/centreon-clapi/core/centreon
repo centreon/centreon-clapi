@@ -114,6 +114,7 @@ try {
 /**
  * Create Centreon API object
  */
+CentreonUtils::setUserName($options['u']);
 $api = new CentreonAPI((isset($options["u"]) ? $options["u"] : "") , (isset($options["p"]) ? $options["p"] : ""), (isset($options["a"]) ? $options["a"] : ""), $centreon_path, $options);
 
 if (isset($options["h"])) {

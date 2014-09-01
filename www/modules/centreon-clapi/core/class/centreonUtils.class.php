@@ -8,6 +8,12 @@ class CentreonUtils
     private static $centreonPath;
 
     /**
+     * @var string
+     */
+    private static $clapiUserName;
+
+
+    /**
      * Get centreon application path
      *
      * @return string
@@ -97,5 +103,15 @@ class CentreonUtils
         $str = str_replace("\r\n", "<br/>", $str);
         $str = str_replace("\n", "<br/>", $str);
         return $str;
+    }
+
+    public static function setUserName($userName)
+    {
+        self::$clapiUserName = $userName;
+    }
+
+    public static function getUserName()
+    {
+        return self::$clapiUserName;
     }
 }
