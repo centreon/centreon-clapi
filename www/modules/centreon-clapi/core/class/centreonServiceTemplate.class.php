@@ -277,6 +277,10 @@ class CentreonServiceTemplate extends CentreonObject
                 $params[1] = "graph_id";
                 $params[2] = $tmp[0];
                 break;
+            case "contact_additive_inheritance":
+                break;
+            case "cg_additive_inheritance":
+                break;
             case "notes":
                 $extended = true;
                 break;

@@ -334,6 +334,10 @@ class CentreonHost extends CentreonObject
                     $tpObj = new CentreonTimePeriod();
                     $params[2] = $tpObj->getTimeperiodId($params[2]);
                     break;
+                case "contact_additive_inheritance":
+                    break;
+                case "cg_additive_inheritance":
+                    break;
                 case "flap_detection_options":
                     break;
                 case "notes":
