@@ -210,25 +210,6 @@ class CentreonServiceTemplate extends CentreonObject
         $this->object->delete($elements[0]['service_id']);
     }
 
-    /**
-     * Returns command id
-     *
-     * @param string $commandName
-     * @return int
-     * @throws CentreonClapiException
-     */
-    protected function getCommandId($commandName)
-    {
-        $obj = new Centreon_Object_Command();
-        $tmp = $obj->getIdByParameter($obj->getUniqueLabelField(), $commandName);
-        if (count($tmp)) {
-            $id = $tmp[0];
-        } else {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $commandName);
-        }
-        return $id;
-    }
-
 	/**
      * Set parameters
      *
@@ -250,17 +231,18 @@ class CentreonServiceTemplate extends CentreonObject
         }
         $objectId = $elements[0]['service_id'];
         $extended = false;
+        $commandObject = new Centreon_Object_Command();
         switch ($params[1]) {
             case "check_command":
                 $params[1] = "command_command_id";
-                $params[2] = $this->getCommandId($params[2]);
+                $params[2] = $commandObject->getId($params[2]);
                 break;
             case "check_command_arguments":
                 $params[1] = "command_command_id_arg";
                 break;
             case "event_handler":
                 $params[1] = "command_command_id2";
-                $params[2] = $this->getCommandId($params[2]);
+                $params[2] = $commandObject->getId($params[2]);
                 break;
             case "event_handler_arguments":
                 $params[1] = "command_command_id_arg2";
@@ -635,8 +617,11 @@ class CentreonServiceTemplate extends CentreonObject
      * @param array $tree
      * @param Centreon_Object_Service_Extended $extendedObj 
      */
-    protected function parseTemplateTree($tree, $extendedObj)
+    protected function parseTemplateTree($tree)
     {
+        $commandObj = new Centreon_Object_Command();
+        $tpObj = new Centreon_Object_Timeperiod();
+        $extendedObj = new Centreon_Object_Service_Extended();
         foreach ($tree as $element) {
             $addStr = $this->action.$this->delim."ADD";
             foreach ($this->insertParams as $param) {
@@ -699,11 +684,8 @@ class CentreonServiceTemplate extends CentreonObject
     {
         $elements = $this->object->getList("*", -1, 0, "service_template_model_stm_id", null, array("service_register" => $this->register), "AND");
         $templateTree = $this->sortTemplates($elements);
-        $extendedObj = new Centreon_Object_Service_Extended();
-        $commandObj = new Centreon_Object_Command();
-        $tpObj = new Centreon_Object_Timeperiod();
         $macroObj = new Centreon_Object_Service_Macro_Custom();
-        $this->parseTemplateTree($templateTree, $extendedObj);
+        $this->parseTemplateTree($templateTree);
 
         // contact groups
         $cgRel = new Centreon_Object_Relation_Contact_Group_Service();

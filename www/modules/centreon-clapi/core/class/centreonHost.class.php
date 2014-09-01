@@ -270,25 +270,6 @@ class CentreonHost extends CentreonObject
     }
 
     /**
-     * Returns command id
-     *
-     * @param string $commandName
-     * @return int
-     * @throws CentreonClapiException
-     */
-    protected function getCommandId($commandName)
-    {
-        $obj = new Centreon_Object_Command();
-        $tmp = $obj->getIdByParameter($obj->getUniqueLabelField(), $commandName);
-        if (count($tmp)) {
-            $id = $tmp[0];
-        } else {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $commandName);
-        }
-        return $id;
-    }
-
-    /**
      * Tie host to instance (poller)
      *
      * @param string $parameters
@@ -327,17 +308,18 @@ class CentreonHost extends CentreonObject
         }
         if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
             $extended = false;
+            $commandObject = new Centreon_Object_Command();
             switch ($params[1]) {
                 case "check_command":
                     $params[1] = "command_command_id";
-                    $params[2] = $this->getCommandId($params[2]);
+                    $params[2] = $commandObject->getId($params[2]);
                     break;
                 case "check_command_arguments":
                     $params[1] = "command_command_id_arg1";
                     break;
                 case "event_handler":
                     $params[1] = "command_command_id2";
-                    $params[2] = $this->getCommandId($params[2]);
+                    $params[2] = $commandObject->getId($params[2]);
                     break;
                 case "event_handler_arguments":
                     $params[1] = "command_command_id_arg2";

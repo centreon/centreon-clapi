@@ -155,6 +155,25 @@ class CentreonCommand extends CentreonObject
         } else {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
         }
-	}
+    }
+
+    /**
+     * Returns command id
+     *
+     * @param string $commandName
+     * @return int
+     * @throws CentreonClapiException
+     */
+    public function getId($commandName)
+    {
+        $obj = new Centreon_Object_Command();
+        $tmp = $obj->getIdByParameter($obj->getUniqueLabelField(), $commandName);
+        if (count($tmp)) {
+            $id = $tmp[0];
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $commandName);
+        }
+        return $id;
+    }
 }
 ?>
