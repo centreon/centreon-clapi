@@ -125,6 +125,10 @@ check_period	                     Check period
 
 checks_enabled	                     Whether or not checks are enabled
 
+contact_additive_inheritance         Enables contact additive inheritance
+
+cg_additive_inheritance              Enables contactgroup additive inheritance
+
 event_handler	                     Event handler command
 
 event_handler_arguments	             Event handler command arguments

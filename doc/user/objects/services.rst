@@ -148,6 +148,10 @@ obsess_over_service	         *1* when obsess over service is enabled, *0* otherw
 
 check_freshness	                 *1* when check freshness is enabled, *0* otherwise
 
+contact_additive_inheritance         Enables contact additive inheritance
+
+cg_additive_inheritance              Enables contactgroup additive inheritance
+
 freshness_threshold              Value in seconds
 
 event_handler_enabled	         *1* when event handler is enabled, *0* otherwise
