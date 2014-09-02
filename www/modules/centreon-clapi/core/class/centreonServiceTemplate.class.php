@@ -37,6 +37,7 @@
  */
 
 require_once "centreonService.class.php";
+require_once "centreonCommand.class.php";
 
 /**
  * Class for managing service templates
@@ -231,7 +232,7 @@ class CentreonServiceTemplate extends CentreonObject
         }
         $objectId = $elements[0]['service_id'];
         $extended = false;
-        $commandObject = new Centreon_Object_Command();
+        $commandObject = new CentreonCommand();
         switch ($params[1]) {
             case "check_command":
                 $params[1] = "command_command_id";
