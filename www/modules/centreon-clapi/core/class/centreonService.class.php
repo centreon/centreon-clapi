@@ -40,6 +40,7 @@ require_once "centreonObject.class.php";
 require_once "centreonUtils.class.php";
 require_once "centreonTimePeriod.class.php";
 require_once "centreonACL.class.php";
+require_once "centreonCommand.class.php";
 require_once "Centreon/Object/Instance/Instance.php";
 require_once "Centreon/Object/Command/Command.php";
 require_once "Centreon/Object/Timeperiod/Timeperiod.php";
@@ -299,7 +300,7 @@ class CentreonService extends CentreonObject
         }
         $objectId = $elements[0]['service_id'];
         $extended = false;
-        $commandObject = new Centreon_Object_Command();
+        $commandObject = new CentreonCommand();
         switch ($params[2]) {
             case "check_command":
                 $params[2] = "command_command_id";
