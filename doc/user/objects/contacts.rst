@@ -77,16 +77,16 @@ Setparam
 
 If you want to change a specific parameter for a contact, use the **SETPARAM** action::
 
-  [root@centreon core]# ./centreon -u admin -p centreon -o contact -a setParam -v "contact_login;hostnotifcmd;command name" 
-  [root@centreon core]# ./centreon -u admin -p centreon -o contact -a setParam -v "contact_login;svcnotifcmd;command name" 
-  root@centreon core]# ./centreon -u admin -p centreon -o contact -a setParam -v "contact_login;hostnotifperiod;period name" 
+  [root@centreon core]# ./centreon -u admin -p centreon -o contact -a setParam -v "contact alias;hostnotifcmd;command name" 
+  [root@centreon core]# ./centreon -u admin -p centreon -o contact -a setParam -v "contact alias;svcnotifcmd;command name" 
+  root@centreon core]# ./centreon -u admin -p centreon -o contact -a setParam -v "contact alias;hostnotifperiod;period name" 
 
 The required parameters are the following:
 
 =============   ===========================
 Parameter       Description
 =============   ===========================
-Login           Login of contact to update
+Contact alias   Alias of contact to update
 
 Parameter       Parameter to update
 
