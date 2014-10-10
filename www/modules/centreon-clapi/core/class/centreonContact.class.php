@@ -228,8 +228,8 @@ class CentreonContact extends CentreonObject
         if (count($params) < self::NB_UPDATE_PARAMS) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        $params[self::ORDER_UNIQUENAME] = str_replace(" ", "_", $params[self::ORDER_UNIQUENAME]);
-        if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+        $params[self::ORDER_NAME] = str_replace(" ", "_", $params[self::ORDER_NAME]);
+        if (($objectId = $this->getObjectId($params[self::ORDER_NAME])) != 0) {
             $regularParam = true;
             if ($params[1] == self::HOST_NOTIF_TP) {
                 $params[1] = "timeperiod_tp_id";
