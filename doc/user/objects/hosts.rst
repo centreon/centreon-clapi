@@ -61,12 +61,12 @@ Order Description
 3     Host IP address
 
 4     Host templates; for multiple
-      definitions, use delimiter *|*
+      definitions, use delimiter **|**
 
 5     Instance name (poller)
 
 6     Hostgroup; for multiple
-      definitions, use delimiter *|*
+      definitions, use delimiter **|**
 ===== ==================================
 
 .. note::
