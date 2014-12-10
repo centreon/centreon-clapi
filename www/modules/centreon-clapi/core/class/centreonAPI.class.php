@@ -138,6 +138,9 @@ class CentreonAPI {
 		$this->relationObject["CONTACTTPL"] = "ContactTemplate";
 		$this->relationObject["CG"] = "ContactGroup";
 
+		/* Dependencies */
+		$this->relationObject["DEP"] = "Dependency";
+
 		/* Templates */
 		$this->relationObject["HTPL"] = "HostTemplate";
 		$this->relationObject["STPL"] = "ServiceTemplate";
