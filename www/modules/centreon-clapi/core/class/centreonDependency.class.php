@@ -164,27 +164,27 @@ class CentreonDependency extends CentreonObject
      */
     protected function getDependencyType($dependencyName)
     {
-        $sql = "SELECT 'HOST' as type 
+        $sql = "SELECT '".self::DEP_TYPE_HOST."' as type 
             FROM dependency d, dependency_hostParent_relation rel
             WHERE rel.dependency_dep_id = d.dep_id
             AND d.dep_name = :name
             UNION 
-            SELECT 'SERVICE'
+            SELECT '".self::DEP_TYPE_SERVICE."'
             FROM dependency d, dependency_serviceParent_relation rel
             WHERE rel.dependency_dep_id = d.dep_id
             AND d.dep_name = :name
             UNION
-            SELECT 'HG'
+            SELECT '".self::DEP_TYPE_HOSTGROUP."'
             FROM dependency d, dependency_hostgroupParent_relation rel
             WHERE rel.dependency_dep_id = d.dep_id
             AND d.dep_name = :name                        
             UNION
-            SELECT 'SG'
+            SELECT '".self::DEP_TYPE_SERVICEGROUP."'
             FROM dependency d, dependency_servicegroupParent_relation rel
             WHERE rel.dependency_dep_id = d.dep_id
             AND d.dep_name = :name
             UNION
-            SELECT 'META'
+            SELECT '".self::DEP_TYPE_META."'
             FROM dependency d, dependency_metaserviceParent_relation rel
             WHERE rel.dependency_dep_id = d.dep_id
             AND d.dep_name = :name";
@@ -668,6 +668,186 @@ class CentreonDependency extends CentreonObject
     }
 
     /**
+     * Add relations
+     *
+     * @param string $parameters
+     * @param string $relType
+     */
+    protected function addRelations($parameters, $relType = 'parent')
+    {
+        $param = explode($this->delim, $parameters);
+        if (count($param) < 2) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+
+        // get dependency id
+        $depId = $this->getObjectId($param[0]);
+        if (!$depId) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND);
+        }
+
+        // get dependency type
+        $depType = $this->getDependencyType($param[0]);
+        $objectToDelete = $param[1];
+
+        switch ($depType) {
+            case self::DEP_TYPE_HOSTGROUP:
+                $this->addHostgroupRelations($depId, $objectToDelete, $relType);
+                break;
+            case self::DEP_TYPE_SERVICEGROUP:
+                $this->addServicegroupRelations($depId, $objectToDelete, $relType);
+                break;
+            case self::DEP_TYPE_META:
+                $this->addMetaRelations($depId, $objectToDelete, $relType);
+                break;
+            case self::DEP_TYPE_HOST:
+                $this->addHostRelations($depId, $objectToDelete, $relType);
+                break;
+            case self::DEP_TYPE_SERVICE:
+                $this->addServiceRelations($depId, $objectToDelete, $relType);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 
+     * @param int $depId
+     * @param string $objectToInsert
+     * @param string $relType | 'parent' or 'child'
+     */
+    protected function addHostgroupRelations($depId, $objectToInsert, $relType)
+    {
+        $table = "dependency_hostgroup" . ucfirst($relType) . "_relation";
+        $sql = "INSERT INTO {$table} (dependency_dep_id, hostgroup_hg_id) VALUES (?, ?)";
+        $obj = new Centreon_Object_Host_Group();
+        $ids = $obj->getIdByParameter($obj->getUniqueLabelField(), array($objectToInsert));
+        if (!count($ids)) {
+            throw new CentreonClapiException(sprintf('Could not find host group %s', $objectToInsert));
+        }
+        $this->db->query($sql, array($depId, $ids[0]));
+    }
+
+    /**
+     * 
+     * @param int $depId
+     * @param string $objectToInsert
+     * @param string $relType | 'parent' or 'child'
+     */
+    protected function addServicegroupRelations($depId, $objectToInsert, $relType)
+    {
+        $table = "dependency_servicegroup" . ucfirst($relType) . "_relation";
+        $sql = "INSERT INTO {$table} (dependency_dep_id, servicegroup_sg_id) VALUES (?, ?)";
+        $obj = new Centreon_Object_Service_Group();
+        $ids = $obj->getIdByParameter($obj->getUniqueLabelField(), array($objectToInsert));
+        if (!count($ids)) {
+            throw new CentreonClapiException(sprintf('Could not find service group %s', $objectToInsert));
+        }
+        $this->db->query($sql, array($depId, $ids[0]));
+    }
+
+    /**
+     * 
+     * @param int $depId
+     * @param string $objectToInsert
+     * @param string $relType | 'parent' or 'child'
+     */
+    protected function addMetaRelations($depId, $objectToInsert, $relType)
+    {
+        $table = "dependency_metaservice" . ucfirst($relType) . "_relation";
+       
+        $sql = "INSERT INTO {$table} (dependency_dep_id, meta_service_meta_id) VALUES (?, ?)";
+        $obj = new Centreon_Object_Meta_Service();
+        $ids = $obj->getIdByParameter($obj->getUniqueLabelField(), array($objectToInsert));
+        if (!count($ids)) {
+            throw new CentreonClapiException(sprintf('Could not find meta service %s', $objectToInsert));
+        }
+        $this->db->query($sql, array($depId, $ids[0]));
+    }
+
+    /**
+     * 
+     * @param int $depId
+     * @param string $objectToInsert
+     * @param string $relType | 'parent' or 'child'
+     */
+    protected function addHostRelations($depId, $objectToInsert, $relType)
+    {
+        if ($relType == 'parent') {
+            $sql = "INSERT INTO dependency_hostParent_relation (dependency_dep_id, host_host_id) VALUES (?, ?)";
+            $hostObj = new Centreon_Object_Host();
+            $hostIds = $hostObj->getIdByParameter($hostObj->getUniqueLabelField(), array($objectToInsert));
+            if (!count($hostIds)) {
+                throw new CentreonClapiException(sprintf('Could not find host %s', $objectToInsert));
+            }
+            $params = array($depId, $hostIds[0]);
+        } elseif ($relType == 'child' && strstr($objectToInsert, ',')) { // service child
+            $sql = "INSERT INTO dependency_serviceChild_relation 
+                (dependency_dep_id, host_host_id, service_service_id)
+                VALUES (?, ?, ?)";
+            list($host, $service) = explode(",", $objectToInsert);
+            $idTab = $this->getHostAndServiceId($host, $service);
+            if (!count($idTab)) {
+                throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
+            }
+            $params = array($depId, $idTab[0], $idTab[1]);
+        } elseif ($relType == 'child') { // host child
+            $sql = "INSERT INTO dependency_hostChild_relation (dependency_dep_id, host_host_id) VALUES (?, ?)";
+            $hostObj = new Centreon_Object_Host();
+            $hostIds = $hostObj->getIdByParameter($hostObj->getUniqueLabelField(), array($objectToInsert));
+            if (!count($hostIds)) {
+                throw new CentreonClapiException(sprintf('Could not find host %s', $objectToInsert));
+            }
+            $params = array($depId, $hostIds[0]);
+        }
+        $this->db->query($sql, $params);
+    }
+ 
+    /**
+     * 
+     * @param int $depId
+     * @param string $objectToInsert
+     * @param string $relType | 'parent' or 'child'
+     */
+    protected function addServiceRelations($depId, $objectToInsert, $relType)
+    {
+        if ($relType == 'parent') {
+            $sql = "INSERT INTO dependency_serviceParent_relation
+                (dependency_dep_id, host_host_id, service_service_id)
+                VALUES (?, ?, ?)";
+            if (!strstr($objectToInsert, ',')) {
+                throw new CentreonClapiException('Invalid service definition');
+            }
+            list($host, $service) = explode(",", $objectToInsert);
+            $idTab = $this->getHostAndServiceId($host, $service);
+            if (!count($idTab)) {
+                throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
+            }
+            $params = array($depId, $idTab[0], $idTab[1]);
+        } elseif ($relType == 'child' && strstr($objectToInsert, ',')) { // service child
+            $sql = "INSERT INTO dependency_serviceChild_relation (dependency_dep_id, host_host_id, service_service_id)
+                VALUES (?, ?, ?)";
+            list($host, $service) = explode(",", $objectToInsert);
+            $idTab = $this->getHostAndServiceId($host, $service);
+            if (!count($idTab)) {
+                throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
+            }
+            $params = array($depId, $idTab[0], $idTab[1]);
+        } elseif ($relType == 'child') { // host child
+            $sql = "INSERT INTO dependency_hostChild_relation (dependency_dep_id, host_host_id)
+                VALUES (?, ?)";
+            $hostObj = new Centreon_Object_Host();
+            $hostIds = $hostObj->getIdByParameter($hostObj->getUniqueLabelField(), array($objectToInsert));
+            if (!count($hostIds)) {
+                throw new CentreonClapiException(sprintf('Could not find host %s', $objectToInsert));
+            }
+            $params = array($depId, $hostIds[0]);
+        }
+        $this->db->query($sql, $params);
+    }
+
+    /**
      * Delete relations
      *
      * @param string $parameters
@@ -709,7 +889,6 @@ class CentreonDependency extends CentreonObject
             default:
                 break;
         }
-
     }
 
     /**
@@ -881,6 +1060,24 @@ class CentreonDependency extends CentreonObject
     public function delchild($parameters)
     {
         $this->deleteRelations($parameters, 'child');
+    }
+
+    /**
+     * Add parent
+     *
+     * @param string 
+     */
+    public function addparent($parameters)
+    {
+        $this->addRelations($parameters, 'parent');
+    }
+
+    /**
+     * Add child
+     */
+    public function addchild($parameters)
+    {
+        $this->addRelations($parameters, 'child');
     }
 
     /**
