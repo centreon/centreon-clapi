@@ -408,7 +408,7 @@ class CentreonDependency extends CentreonObject
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
         if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
-            if (in_array($params[1], array('id', 'name', 'description')) && !preg_match("/^dep_/", $params[1])) {
+            if (in_array($params[1], array('comment', 'name', 'description')) && !preg_match("/^dep_/", $params[1])) {
                 $params[1] = "dep_".$params[1];
             }
             $updateParams = array($params[1] => $params[2]);

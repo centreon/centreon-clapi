@@ -15,6 +15,7 @@ Object management
    objects/contacts
    objects/contact_templates
    objects/contact_groups
+   objects/dependencies
    objects/host_templates
    objects/hosts
    objects/host_categories
@@ -34,3 +35,4 @@ Object management
    objects/time_periods
    objects/traps
    objects/vendors
+
