@@ -1086,6 +1086,467 @@ class CentreonDependency extends CentreonObject
      */
     public function export()
     {
-        parent::export();
+        $this->exportHostDep();
+        $this->exportServiceDep();
+        $this->exportHostgroupDep();
+        $this->exportServicegroupDep();
+        $this->exportMetaDep();
     }
+
+    /**
+     *
+     */
+    protected function exportHostDep()
+    {
+        $sql = "SELECT dep_id, dep_name, dep_description, inherits_parent,
+            execution_failure_criteria, notification_failure_criteria, dep_comment, host_name
+            FROM dependency d, dependency_hostParent_relation rel, host h
+            WHERE d.dep_id = rel.dependency_dep_id
+            AND rel.host_host_id = h.host_id
+            ORDER BY dep_name";
+        $res = $this->db->query($sql);
+        $rows = $res->fetchAll();
+        $previous = 0;
+        $paramArr = array(
+            'inherits_parent',
+            'execution_failure_criteria',
+            'notification_failure_criteria',
+            'dep_comment'
+        );
+        foreach ($rows as $row) {
+            if ($row['dep_id'] != $previous) { // add dependency
+                echo implode(
+                    $this->delim,
+                    array(
+                        $this->action,
+                        'ADD',
+                        $row['dep_name'],
+                        $row['dep_description'],
+                        self::DEP_TYPE_HOST,
+                        $row['host_name']
+                    )
+                ) . "\n";
+                foreach ($row as $k => $v) {
+                    if (!in_array($k, $paramArr)) {
+                        continue;
+                    }
+                    // setparam
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'SETPARAM',
+                            $row['dep_name'],
+                            $k,
+                            $v,
+                        )
+                    ) . "\n";
+                }
+                // add host children
+                $childSql = "SELECT host_name 
+                    FROM host h, dependency_hostChild_relation rel
+                    WHERE h.host_id = rel.host_host_id
+                    AND rel.dependency_dep_id = ?";
+                $res = $this->db->query($childSql, array($row['dep_id']));
+                $childRows = $res->fetchAll();
+                foreach ($childRows as $childRow) {
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'ADDCHILD',
+                            $row['dep_name'],
+                            $childRow['host_name']
+                        )
+                    ) . "\n";
+                }
+
+                // add service children
+                $childSql = "SELECT host_name, service_description
+                    FROM host h, service s, dependency_serviceChild_relation rel
+                    WHERE h.host_id = rel.host_host_id
+                    AND rel.service_service_id = s.service_id
+                    AND rel.dependency_dep_id = ?";
+                $res = $this->db->query($childSql, array($row['dep_id']));
+                $childRows = $res->fetchAll();
+                foreach ($childRows as $childRow) {
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'ADDCHILD',
+                            $row['dep_name'],
+                            $childRow['host_name'] . ',' . $childRow['service_description']
+                        )
+                    ) . "\n";
+                }
+            } else {
+                // addparent
+                echo implode(
+                    $this->delim,
+                    array(
+                        $this->action,
+                        'ADDPARENT',
+                        $row['dep_name'],
+                        $row['host_name']
+                    )
+                ) . "\n";
+            }
+            $previous = $row['dep_id'];
+        }
+    }
+
+    /**
+     *
+     */
+    protected function exportServiceDep()
+    {
+        $sql = "SELECT dep_id, dep_name, dep_description, inherits_parent,
+            execution_failure_criteria, notification_failure_criteria, dep_comment, host_name, service_description
+            FROM dependency d, dependency_serviceParent_relation rel, host h, service s
+            WHERE d.dep_id = rel.dependency_dep_id
+            AND h.host_id = rel.host_host_id
+            AND rel.service_service_id = s.service_id
+            ORDER BY dep_name";
+        $res = $this->db->query($sql);
+        $rows = $res->fetchAll();
+        $previous = 0;
+        $paramArr = array(
+            'inherits_parent',
+            'execution_failure_criteria',
+            'notification_failure_criteria',
+            'dep_comment'
+        );
+        foreach ($rows as $row) {
+            if ($row['dep_id'] != $previous) { // add dependency
+                echo implode(
+                    $this->delim,
+                    array(
+                        $this->action,
+                        'ADD',
+                        $row['dep_name'],
+                        $row['dep_description'],
+                        self::DEP_TYPE_SERVICE,
+                        $row['host_name'] . ',' . $row['service_description']
+                    )
+                ) . "\n";
+                foreach ($row as $k => $v) {
+                    if (!in_array($k, $paramArr)) {
+                        continue;
+                    }
+                    // setparam
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'SETPARAM',
+                            $row['dep_name'],
+                            $k,
+                            $v,
+                        )
+                    ) . "\n";
+                }
+                // add host children
+                $childSql = "SELECT host_name 
+                    FROM host h, dependency_hostChild_relation rel
+                    WHERE h.host_id = rel.host_host_id
+                    AND rel.dependency_dep_id = ?";
+                $res = $this->db->query($childSql, array($row['dep_id']));
+                $childRows = $res->fetchAll();
+                foreach ($childRows as $childRow) {
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'ADDCHILD',
+                            $row['dep_name'],
+                            $childRow['host_name']
+                        )
+                    ) . "\n";
+                }
+
+                // add service children
+                $childSql = "SELECT host_name, service_description
+                    FROM host h, service s, dependency_serviceChild_relation rel
+                    WHERE h.host_id = rel.host_host_id
+                    AND rel.service_service_id = s.service_id
+                    AND rel.dependency_dep_id = ?";
+                $res = $this->db->query($childSql, array($row['dep_id']));
+                $childRows = $res->fetchAll();
+                foreach ($childRows as $childRow) {
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'ADDCHILD',
+                            $row['dep_name'],
+                            $childRow['host_name'] . ',' . $childRow['service_description']
+                        )
+                    ) . "\n";
+                }
+            } else {
+                // addparent
+                echo implode(
+                    $this->delim,
+                    array(
+                        $this->action,
+                        'ADDPARENT',
+                        $row['dep_name'],
+                        $row['host_name'] . ',' . $row['service_description']
+                    )
+                ) . "\n";
+            }
+            $previous = $row['dep_id'];
+        }
+    }
+
+    /**
+     *
+     */
+    protected function exportHostgroupDep()
+    {
+        $sql = "SELECT dep_id, dep_name, dep_description, inherits_parent,
+            execution_failure_criteria, notification_failure_criteria, dep_comment, hg_name
+            FROM dependency d, dependency_hostgroupParent_relation rel, hostgroup hg
+            WHERE d.dep_id = rel.dependency_dep_id
+            AND rel.hostgroup_hg_id = hg.hg_id
+            ORDER BY dep_name";
+        $res = $this->db->query($sql);
+        $rows = $res->fetchAll();
+        $previous = 0;
+        $paramArr = array(
+            'inherits_parent',
+            'execution_failure_criteria',
+            'notification_failure_criteria',
+            'dep_comment'
+        );
+        foreach ($rows as $row) {
+            if ($row['dep_id'] != $previous) { // add dependency
+                echo implode(
+                    $this->delim,
+                    array(
+                        $this->action,
+                        'ADD',
+                        $row['dep_name'],
+                        $row['dep_description'],
+                        self::DEP_TYPE_HOSTGROUP,
+                        $row['hg_name']
+                    )
+                ) . "\n";
+                foreach ($row as $k => $v) {
+                    if (!in_array($k, $paramArr)) {
+                        continue;
+                    }
+                    // setparam
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'SETPARAM',
+                            $row['dep_name'],
+                            $k,
+                            $v,
+                        )
+                    ) . "\n";
+                }
+                // add children
+                $childSql = "SELECT hg_name 
+                    FROM hostgroup hg, dependency_hostgroupChild_relation rel
+                    WHERE hg.hg_id = rel.hostgroup_hg_id
+                    AND rel.dependency_dep_id = ?";
+                $res = $this->db->query($childSql, array($row['dep_id']));
+                $childRows = $res->fetchAll();
+                foreach ($childRows as $childRow) {
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'ADDCHILD',
+                            $row['dep_name'],
+                            $childRow['hg_name']
+                        )
+                    ) . "\n";
+                }
+            } else {
+                // addparent
+                echo implode(
+                    $this->delim,
+                    array(
+                        $this->action,
+                        'ADDPARENT',
+                        $row['dep_name'],
+                        $row['hg_name']
+                    )
+                ) . "\n";
+            }
+            $previous = $row['dep_id'];
+        }
+    }
+
+    /**
+     *
+     */
+    protected function exportServicegroupDep()
+    {
+        $sql = "SELECT dep_id, dep_name, dep_description, inherits_parent,
+            execution_failure_criteria, notification_failure_criteria, dep_comment, sg_name
+            FROM dependency d, dependency_servicegroupParent_relation rel, servicegroup sg
+            WHERE d.dep_id = rel.dependency_dep_id
+            AND rel.servicegroup_sg_id = sg.sg_id
+            ORDER BY dep_name";
+        $res = $this->db->query($sql);
+        $rows = $res->fetchAll();
+        $previous = 0;
+        $paramArr = array(
+            'inherits_parent',
+            'execution_failure_criteria',
+            'notification_failure_criteria',
+            'dep_comment'
+        );
+        foreach ($rows as $row) {
+            if ($row['dep_id'] != $previous) { // add dependency
+                echo implode(
+                    $this->delim,
+                    array(
+                        $this->action,
+                        'ADD',
+                        $row['dep_name'],
+                        $row['dep_description'],
+                        self::DEP_TYPE_SERVICEGROUP,
+                        $row['sg_name']
+                    )
+                ) . "\n";
+                foreach ($row as $k => $v) {
+                    if (!in_array($k, $paramArr)) {
+                        continue;
+                    }
+                    // setparam
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'SETPARAM',
+                            $row['dep_name'],
+                            $k,
+                            $v,
+                        )
+                    ) . "\n";
+                }
+                // add children
+                $childSql = "SELECT sg_name 
+                    FROM servicegroup sg, dependency_servicegroupChild_relation rel
+                    WHERE sg.sg_id = rel.servicegroup_sg_id
+                    AND rel.dependency_dep_id = ?";
+                $res = $this->db->query($childSql, array($row['dep_id']));
+                $childRows = $res->fetchAll();
+                foreach ($childRows as $childRow) {
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'ADDCHILD',
+                            $row['dep_name'],
+                            $childRow['sg_name']
+                        )
+                    ) . "\n";
+                }
+            } else {
+                // addparent
+                echo implode(
+                    $this->delim,
+                    array(
+                        $this->action,
+                        'ADDPARENT',
+                        $row['dep_name'],
+                        $row['sg_name']
+                    )
+                ) . "\n";
+            }
+            $previous = $row['dep_id'];
+        }
+    }
+
+    /**
+     *
+     */
+    protected function exportMetaDep()
+    {
+        $sql = "SELECT dep_id, dep_name, dep_description, inherits_parent,
+            execution_failure_criteria, notification_failure_criteria, dep_comment, meta_name
+            FROM dependency d, dependency_metaserviceParent_relation rel, meta_service m
+            WHERE d.dep_id = rel.dependency_dep_id
+            AND rel.meta_service_meta_id = m.meta_id
+            ORDER BY dep_name";
+        $res = $this->db->query($sql);
+        $rows = $res->fetchAll();
+        $previous = 0;
+        $paramArr = array(
+            'inherits_parent',
+            'execution_failure_criteria',
+            'notification_failure_criteria',
+            'dep_comment'
+        );
+        foreach ($rows as $row) {
+            if ($row['dep_id'] != $previous) { // add dependency
+                echo implode(
+                    $this->delim,
+                    array(
+                        $this->action,
+                        'ADD',
+                        $row['dep_name'],
+                        $row['dep_description'],
+                        self::DEP_TYPE_META,
+                        $row['meta_name']
+                    )
+                ) . "\n";
+                foreach ($row as $k => $v) {
+                    if (!in_array($k, $paramArr)) {
+                        continue;
+                    }
+                    // setparam
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'SETPARAM',
+                            $row['dep_name'],
+                            $k,
+                            $v,
+                        )
+                    ) . "\n";
+                }
+                // add children
+                $childSql = "SELECT meta_name 
+                    FROM meta_service m, dependency_metaserviceChild_relation rel
+                    WHERE m.meta_id = rel.meta_service_meta_id
+                    AND rel.dependency_dep_id = ?";
+                $res = $this->db->query($childSql, array($row['dep_id']));
+                $childRows = $res->fetchAll();
+                foreach ($childRows as $childRow) {
+                    echo implode(
+                        $this->delim,
+                        array(
+                            $this->action,
+                            'ADDCHILD',
+                            $row['dep_name'],
+                            $childRow['meta_name']
+                        )
+                    ) . "\n";
+                }
+            } else {
+                // addparent
+                echo implode(
+                    $this->delim,
+                    array(
+                        $this->action,
+                        'ADDPARENT',
+                        $row['dep_name'],
+                        $row['meta_name']
+                    )
+                ) . "\n";
+            }
+            $previous = $row['dep_id'];
+        }
+    }
+
 }

@@ -549,6 +549,7 @@ class CentreonAPI {
 		$this->objectTable['HGSERVICE']->export();
 		$this->objectTable['SG']->export();
 		$this->objectTable['SC']->export();
+		$this->objectTable['DEP']->export();
 	}
 
 	/**
@@ -584,6 +585,7 @@ class CentreonAPI {
 		$this->iniObject('CG');
 		$this->iniObject('HTPL');
 		$this->iniObject('STPL');
+		$this->iniObject('DEP');
 	}
 
 	/**
