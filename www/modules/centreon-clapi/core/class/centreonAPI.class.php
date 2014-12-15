@@ -678,6 +678,14 @@ class CentreonAPI {
 	}
 
 	/**
+	 * Execute the post generation command
+	 */
+	public function POLLEREXECCMD() {
+		$poller = new CentreonConfigPoller($this->DB, $this->centreon_path, $this->DBC);
+		return $poller->execCmd($this->variables);
+	}
+
+	/**
 	 *
 	 * move configuration files into final directory
 	 */
@@ -721,6 +729,9 @@ class CentreonAPI {
 		}
 		if ($this->return_code == 0) {
 			$this->return_code = $poller->pollerRestart($this->variables);
+		}
+		if ($this->return_code == 0) {
+			$this->return_code = $poller->execCmd($this->variables);
 		}
 		return $this->return_code;
 	}

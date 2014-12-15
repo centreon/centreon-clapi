@@ -195,6 +195,38 @@ class CentreonConfigPoller {
     }
 
     /**
+     * Execute post generation command
+     *
+     * @param int $pollerId
+     * @throws CentreonClapiException
+     */
+    public function execCmd($pollerId)
+    {
+        $instanceClassFile = $this->centreon_path . 'www/class/centreonInstance.class.php';
+        if (!is_file($instanceClassFile)) {
+            throw new CentreonClapiException('This action is not available in the version of Centreon you are using');
+        }
+        require_once $instanceClassFile;
+
+        $instanceObj = new CentreonInstance($this->_DB);
+        $cmds = $instanceObj->getCommandData($pollerId);
+        $result = 0;
+        foreach ($cmds as $cmd) {
+            echo "Executing command {$cmd['command_name']}... ";
+            exec($cmd['command_line'], $output, $cmdResult);
+            if ($cmdResult) {
+                $resultStr = "Error: {$output}";
+                $result += $cmdResult;
+            } else {
+                $resultStr = "OK";
+            }
+            echo "{$resultStr}\n";
+        }
+        // if result > 0, return 1, return 0 otherwise 
+        return ($result ? 1 : 0);
+    }
+
+    /**
      *
      * Restart a serveur
      * @param unknown_type $variables

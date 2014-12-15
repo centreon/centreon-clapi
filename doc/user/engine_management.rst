@@ -72,10 +72,22 @@ In order to reload the monitoring process on poller "Remote Poller" of id 2, use
   Reloading nagios configuration...done
 
 
-Perform pollergenerate, pollertest, cfgmove and pollerrestart with one single command
--------------------------------------------------------------------------------------
+Execute post generation commands of a poller
+--------------------------------------------
 
-It is possible to perform these four actions with one single command, use the **APPLYCFG** command::
+In order to execute post generation commands of a poller, use the **POLLEREXECCMD** command::
+
+  [root@centreon core]# ./centreon -u admin -p centreon -a POLLEREXECCMD -v 2
+  Running configuration check...done.
+  Reloading nagios configuration...done
+
+
+Perform an all-in-one command
+-----------------------------
+
+It is possible to perform the following commands all at the same time: POLLERGENERATE, POLLERTEST, CFGMOVE, POLLERRESTART and POLLEREXECCMD.
+
+In order to do that, use the **APPLYCFG** command::
 
   [root@centreon core]# ./centreon -u admin -p centreon -a APPLYCFG -v 2
 
