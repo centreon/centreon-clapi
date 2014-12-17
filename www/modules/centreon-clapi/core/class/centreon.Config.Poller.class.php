@@ -400,7 +400,10 @@ class CentreonConfigPoller {
          * Insert session in session table
          */
         session_id(1);
-        $pearDB->query("INSERT INTO `session` (`session_id` , `user_id` , `current_page` , `last_reload`, `ip_address`) VALUES ('1', '".$oreon->user->user_id."', '1', '".time()."', '".$_SERVER["REMOTE_ADDR"]."')");
+        $pearDB->query(
+            "INSERT INTO `session` (`session_id` , `user_id` , `current_page` , `last_reload`, `ip_address`) 
+            VALUES ('1', '".$oreon->user->user_id."', '1', '".time()."', '".$_SERVER["REMOTE_ADDR"]."')"
+        );
 
         /**
          * Generate dependancies tree.
@@ -488,6 +491,12 @@ class CentreonConfigPoller {
         }
         
         print "Configuration files generated for poller ".$variables."\n";
+
+        /* free session */
+        $pearDB->query("DELETE FROM `session` 
+            WHERE `session_id` = '1' 
+            AND `user_id` = '".$oreon->user->user_id."'");
+
         return 0;
     }
 
