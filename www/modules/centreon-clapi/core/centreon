@@ -141,7 +141,7 @@ if ($api->login == "" || $api->password == "") {
                  */
                 $str = fgets($handle);
                 fclose($handle);
-                $credential = split(":", $str);
+                $credential = explode(":", $str);
                 $api->setLogin($credential[0]);
                 $api->setPassword($credential[1]);
                 $api->checkUser($useSha1);

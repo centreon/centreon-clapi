@@ -356,7 +356,7 @@ class CentreonAPI {
 	 * @param varchar $str
 	 */
 	public function getVar($str) {
-		$res = split("=", $str);
+		$res = explode("=", $str);
  		return $res[1];
 	}
 
