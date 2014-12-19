@@ -40,7 +40,8 @@ Add
 
 In order to add a new dependency, use the **ADD** action::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a ADD -v "my new dependency;any description;HOST;dummy-host" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a ADD \
+  -v "my new dependency;any description;HOST;dummy-host" 
 
 
 The required parameters are the following:
@@ -77,7 +78,8 @@ Setparam
 
 In order to set a specific parameter for a dependency, use the **SETPARAM** action::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a setparam -v "my dependency;name;my new dependency name" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a setparam \
+  -v "my dependency;name;my new dependency name" 
 
 You may change the following parameters:
 
@@ -115,9 +117,12 @@ Addparent and Addchild
 
 If you want to add a new parent or a new child in a dependency definition, use the **ADDPARENT** or **ADDCHILD** action::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a ADDPARENT -v "my dependency;my_parent_host" 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a ADDCHILD -v "my dependency;my_child_host" 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a ADDCHILD -v "my dependency;my_child_host2,my_child_service2" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a ADDPARENT \
+  -v "my dependency;my_parent_host" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a ADDCHILD \
+  -v "my dependency;my_child_host" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a ADDCHILD \
+  -v "my dependency;my_child_host2,my_child_service2" 
 
 .. note::
   You need to generate your configuration file and restart monitoring engine in order to apply changes.
@@ -128,9 +133,12 @@ Delparent and Delchild
 
 If you want to add a new parent or a new child in a dependency definition, use the **DELPARENT** or **DELCHILD** action::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a DELPARENT -v "my dependency;my_parent_host" 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a DELCHILD -v "my dependency;my_child_host" 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a DELCHILD -v "my dependency;my_child_host2,my_child_service2" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a DELPARENT \
+  -v "my dependency;my_parent_host" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a DELCHILD \
+  -v "my dependency;my_child_host" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a DELCHILD \
+  -v "my dependency;my_child_host2,my_child_service2" 
 
 .. note::
   You need to generate your configuration file and restart monitoring engine in order to apply changes.
