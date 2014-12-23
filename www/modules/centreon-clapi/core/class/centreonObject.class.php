@@ -315,7 +315,7 @@ abstract class CentreonObject
      */
     public function enable($objectName)
     {
-        $this->activate($objectName, 1);
+        $this->activate($objectName, '1');
     }
 
     /**
@@ -326,7 +326,7 @@ abstract class CentreonObject
      */
     public function disable($objectName)
     {
-        $this->activate($objectName, 0);
+        $this->activate($objectName, '0');
     }
 
 	/**

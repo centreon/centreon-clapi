@@ -141,6 +141,9 @@ class CentreonAPI {
 		/* Dependencies */
 		$this->relationObject["DEP"] = "Dependency";
 
+		/* Downtimes */
+		$this->relationObject["DOWNTIME"] = "Downtime";
+
 		/* Templates */
 		$this->relationObject["HTPL"] = "HostTemplate";
 		$this->relationObject["STPL"] = "ServiceTemplate";
@@ -550,6 +553,7 @@ class CentreonAPI {
 		$this->objectTable['SG']->export();
 		$this->objectTable['SC']->export();
 		$this->objectTable['DEP']->export();
+		$this->objectTable['DOWNTIME']->export();
 	}
 
 	/**
