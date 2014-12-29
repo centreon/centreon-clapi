@@ -65,7 +65,7 @@ Order     Description
 Del
 ---
 
-In order to delete a dependency, use the **DEL** action. The dependency namme is used for identifying the dependency you would like to delete::
+In order to delete a dependency, use the **DEL** action. The dependency name is used for identifying the dependency you would like to delete::
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o DEP -a DEL -v "my dependency" 
 
