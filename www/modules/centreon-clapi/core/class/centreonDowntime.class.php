@@ -68,6 +68,10 @@ class CentreonDowntime extends CentreonObject
         $this->object = new Centreon_Object_Downtime();
         $this->action = "DOWNTIME";
         $this->insertParams = array('dt_name', 'dt_description');
+        $this->exportExcludedParams = array_merge(
+            $this->insertParams, 
+            array($this->object->getPrimaryKey())
+        );
         $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->activateField = 'dt_activate';
         $this->weekDays = array(
@@ -200,10 +204,14 @@ class CentreonDowntime extends CentreonObject
         $daysOfWeek = explode(',', strtolower($tmp[5]));
         $days = array();
         foreach ($daysOfWeek as $dayOfWeek) {
-            if (!isset($this->weekDays[$dayOfWeek])) {
+            if (!isset($this->weekDays[$dayOfWeek]) && !in_array($dayOfWeek, $this->weekDays)) {
                 throw new CentreonClapiException(sprintf('Invalid period format %s', $dayOfWeek));
             }
-            $days[] = $this->weekDays[$dayOfWeek];
+            if (is_numeric($dayOfWeek)) { // value doesn't need conversion
+                $days[] = $dayOfWeek;
+            } else {
+                $days[] = $this->weekDays[$dayOfWeek];
+            }
         }
         $p[':day_of_week'] = implode(',', $days);
         $p[':day_of_month'] = null;
@@ -253,10 +261,14 @@ class CentreonDowntime extends CentreonObject
         $p[':fixed'] = $tmp[3];
         $p[':duration'] = $tmp[4];
         $dayOfWeek = strtolower($tmp[5]);
-        if (!isset($this->weekDays[$dayOfWeek])) {
+        if (!isset($this->weekDays[$dayOfWeek]) && !in_array($dayOfWeek, $this->weekDays)) {
             throw new CentreonClapiException(sprintf('Invalid period format %s', $dayOfWeek));
         }
-        $p[':day_of_week'] = $this->weekDays[$dayOfWeek];
+        if (is_numeric($dayOfWeek)) {
+            $p[':day_of_week'] = $dayOfWeek;
+        } else {
+            $p[':day_of_week'] = $this->weekDays[$dayOfWeek];
+        }
         $p[':day_of_month'] = null;
 
         $cycle = strtolower($tmp[6]);
@@ -628,9 +640,143 @@ class CentreonDowntime extends CentreonObject
      */
     public function export()
     {
+        // generic add & setparam
+        parent::export();
 
+        // handle host relationships
+        $this->exportHostRel();
+
+        // handle hostgroup relationships
+        $this->exportHostgroupRel();
+
+        // handle service relationships
+        $this->exportServiceRel();
+
+        // handle servicegroup relationships
+        $this->exportServicegroupRel();
+        
+        // handle periods
+        $this->exportPeriods();
     }
 
+    /**
+     *
+     */
+    protected function exportPeriods()
+    {
+        $sql = "SELECT dt_name, dtp_start_time, dtp_end_time, dtp_fixed, dtp_duration, 
+            dtp_day_of_week, dtp_day_of_month, dtp_month_cycle
+            FROM downtime d, downtime_period p
+            WHERE d.dt_id = p.dt_id";
+        $stmt = $this->db->query($sql);
+        $rows = $stmt->fetchAll();
+        foreach ($rows as $row) {
+            $periodType = null;
+            $extraData = array();
+            $row['dtp_start_time'] = preg_replace('/:00$/', '', $row['dtp_start_time']);
+            $row['dtp_end_time'] = preg_replace('/:00$/', '', $row['dtp_end_time']);
+            if (!$row['dtp_day_of_month'] && $row['dtp_month_cycle'] == 'all') { // weekly
+                $periodType = 'ADDWEEKLYPERIOD';
+                $extraData[] = $row['dtp_day_of_week'];
+            } elseif (!$row['dtp_day_of_week'] && $row['dtp_month_cycle'] == 'none') { // monthly
+                $periodType = 'ADDMONTHLYPERIOD';
+                $extraData[] = $row['dtp_day_of_month'];
+            } elseif ($row['dtp_month_cycle'] == 'last' || $row['dtp_month_cycle'] == 'first') { // specific
+                $periodType = 'ADDSPECIFICPERIOD';
+                $extraData[] = $row['dtp_day_of_week'];
+                $extraData[] = $row['dtp_month_cycle'];
+            }
+            if (!is_null($periodType)) {
+                echo implode(
+                    $this->delim,
+                    array_merge(
+                        array(
+                            $this->action,
+                            $periodType,
+                            $row['dt_name'],
+                            $row['dtp_start_time'],
+                            $row['dtp_end_time'],
+                            $row['dtp_fixed'],
+                            $row['dtp_duration']
+
+                        ),
+                        $extraData
+                    )
+                ) . "\n";
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    protected function exportHostRel()
+    {
+        $sql = "SELECT dt_name, host_name as object_name
+            FROM downtime d, host o, downtime_host_relation rel
+            WHERE d.dt_id = rel.dt_id
+            AND rel.host_host_id = o.host_id";
+        $this->exportGenericRel('ADDHOST', $sql);
+    }
+
+    /**
+     *
+     */
+    protected function exportHostgroupRel()
+    {
+        $sql = "SELECT dt_name, hg_name as object_name
+            FROM downtime d, hostgroup o, downtime_hostgroup_relation rel
+            WHERE d.dt_id = rel.dt_id
+            AND rel.hg_hg_id = o.hg_id";
+        $this->exportGenericRel('ADDHOSTGROUP', $sql);
+    }
+
+    /**
+     *
+     */
+    protected function exportServiceRel()
+    {
+        $sql = "SELECT dt_name, CONCAT_WS(',', host_name, service_description) as object_name
+            FROM downtime d, host h, service s, downtime_service_relation rel
+            WHERE d.dt_id = rel.dt_id
+            AND rel.host_host_id = h.host_id
+            AND rel.service_service_id = s.service_id";
+        $this->exportGenericRel('ADDSERVICE', $sql); 
+    }
+
+    /**
+     *
+     */
+    protected function exportServicegroupRel()
+    {
+        $sql = "SELECT dt_name, sg_name as object_name
+            FROM downtime d, servicegroup o, downtime_servicegroup_relation rel
+            WHERE d.dt_id = rel.dt_id
+            AND rel.sg_sg_id = o.sg_id";
+        $this->exportGenericRel('ADDSERVICEGROUP', $sql); 
+    }
+
+    /**
+     *
+     * @param string $actionType | addhost, addhostgroup, addservice or addservicegroup
+     * @param string $sql | query
+     */
+    protected function exportGenericRel($actionType, $sql)
+    {
+        $stmt = $this->db->query($sql);
+        $rows = $stmt->fetchAll();
+        foreach ($rows as $row) {
+            echo implode(
+                $this->delim,
+                array(
+                    $this->action,
+                    $actionType,
+                    $row['dt_name'],
+                    $row['object_name']
+                )
+            ) . "\n";
+        }
+    }
 
     /**
      * Add period
@@ -653,6 +799,26 @@ class CentreonDowntime extends CentreonObject
         if ($p[':fixed']) {
             $p[':duration'] = null;
         }
+
+        /* delete duplicate period */
+        $sql = "DELETE FROM downtime_period 
+            WHERE dt_id = :dt_id
+            AND dtp_start_time = :start_time
+            AND dtp_end_time = :end_time
+            AND dtp_fixed = :fixed
+            AND dtp_duration = :duration
+            AND dtp_day_of_week = :day_of_week
+            AND dtp_day_of_month = :day_of_month
+            AND dtp_month_cycle = :month_cycle";
+        $delParams = array();
+        foreach ($p as $k => $v) {
+            if ($v == "") {
+                $sql = str_replace("= {$k}", 'IS NULL', $sql);
+            } else {
+                $delParams[$k] = $v;
+            }
+        }
+        $this->db->query($sql, $delParams);
 
         $sql = "INSERT INTO downtime_period 
             (dt_id, dtp_start_time, dtp_end_time, dtp_fixed, dtp_duration, 

@@ -590,6 +590,7 @@ class CentreonAPI {
 		$this->iniObject('HTPL');
 		$this->iniObject('STPL');
 		$this->iniObject('DEP');
+		$this->iniObject('DOWNTIME');
 	}
 
 	/**
