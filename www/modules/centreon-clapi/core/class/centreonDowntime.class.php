@@ -35,6 +35,7 @@
 
 require_once "centreonObject.class.php";
 require_once "centreonHost.class.php";
+require_once "centreonService.class.php";
 require_once "Centreon/Object/Downtime/Downtime.php";
 require_once "Centreon/Object/Host/Host.php";
 require_once "Centreon/Object/Host/Group.php";
@@ -53,6 +54,7 @@ class CentreonDowntime extends CentreonObject
     const ORDER_UNIQUENAME        = 0;
     const ORDER_ALIAS             = 1;
     protected $weekDays;
+    protected $serviceObj;
 
     /**
      * Constructor
@@ -62,6 +64,7 @@ class CentreonDowntime extends CentreonObject
     public function __construct()
     {
         parent::__construct();
+        $this->serviceObj = new CentreonService();
         $this->object = new Centreon_Object_Downtime();
         $this->action = "DOWNTIME";
         $this->insertParams = array('dt_name', 'dt_description');
@@ -454,7 +457,51 @@ class CentreonDowntime extends CentreonObject
      */
     public function addservice($parameters)
     {
+        $tmp = explode($this->delim, $parameters);
+        if (count($tmp) != 2) {
+            throw new CentreonClapiException('Missing parameters');
+        }
 
+        /* init var */
+        $downtimeId = $this->getObjectId($tmp[0]);
+        $resources = explode('|', $tmp[1]);
+
+        /* retrieve object ids */
+        $objectIds = array();
+        foreach ($resources as $resource) {
+            $tmp = explode(',', $resource);
+            if (count($tmp) != 2) {
+                throw new CentreonClapiException(sprintf('Wrong format for service %s', $resource));
+            }
+            $host = $tmp[0];
+            $service = $tmp[1];
+
+            $ids = $this->serviceObj->getHostAndServiceId($host, $service);
+
+            /* object does not exist */
+            if (!count($ids)) {
+                throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
+            }
+
+            /* checks whether or not relationship already exists */
+            $sql = "SELECT * 
+                FROM downtime_service_relation 
+                WHERE dt_id = ? 
+                AND host_host_id = ? 
+                AND service_service_id = ?";
+            $stmt = $this->db->query($sql, array($downtimeId, $ids[0], $ids[1]));
+            if ($stmt->rowCount()) {
+                throw new CentreonClapiException(sprintf('Relationship with %s / %s already exists', $host, $service));
+            }
+
+            $objectIds[] = $ids;
+        }
+
+        /* insert relationship */
+        $sql = "INSERT INTO downtime_service_relation (dt_id, host_host_id, service_service_id) VALUES (?, ?, ?)";
+        foreach ($objectIds as $id) {
+            $this->db->query($sql, array($downtimeId, $id[0], $id[1]));
+        }
     }
 
     /**
@@ -464,7 +511,16 @@ class CentreonDowntime extends CentreonObject
      */
     public function setservice($parameters)
     {
+        $tmp = explode($this->delim, $parameters);
+        if (count($tmp) != 2) {
+            throw new CentreonClapiException("Missing parameters");
+        }
 
+        /* delete all service relationships */
+        $downtimeId = $this->getObjectId($tmp[0]);
+        $this->db->query("DELETE FROM downtime_service_relation WHERE dt_id = ?", array($downtimeId));
+
+        $this->addservice($parameters);
     }
 
     /**
@@ -474,7 +530,54 @@ class CentreonDowntime extends CentreonObject
      */
     public function delservice($parameters)
     {
+        $tmp = explode($this->delim, $parameters);
+        if (count($tmp) != 2) {
+            throw new CentreonClapiException('Missing parameters');
+        }
 
+        /* init var */
+        $downtimeId = $this->getObjectId($tmp[0]);
+        $resources = explode('|', $tmp[1]);
+
+        /* retrieve object ids */
+        $objectIds = array();
+        foreach ($resources as $resource) {
+            $tmp = explode(',', $resource);
+            if (count($tmp) != 2) {
+                throw new CentreonClapiException(sprintf('Wrong format for service %s', $resource));
+            }
+            $host = $tmp[0];
+            $service = $tmp[1];
+
+            $ids = $this->serviceObj->getHostAndServiceId($host, $service);
+
+            /* object does not exist */
+            if (!count($ids)) {
+                throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
+            }
+
+            /* checks whether or not relationship already exists */
+            $sql = "SELECT * 
+                FROM downtime_service_relation 
+                WHERE dt_id = ? 
+                AND host_host_id = ? 
+                AND service_service_id = ?";
+            $stmt = $this->db->query($sql, array($downtimeId, $ids[0], $ids[1]));
+            if (!$stmt->rowCount()) {
+                throw new CentreonClapiException(sprintf('Relationship with %s / %s does not exist', $host, $service));
+            }
+
+            $objectIds[] = $ids;
+        }
+
+        /* delete relationship */
+        $sql = "DELETE FROM downtime_service_relation 
+            WHERE dt_id = ? 
+            AND host_host_id = ?
+            AND service_service_id = ?";
+        foreach ($objectIds as $id) {
+            $this->db->query($sql, array($downtimeId, $id[0], $id[1]));
+        }
     } 
 
     /**
@@ -674,7 +777,7 @@ class CentreonDowntime extends CentreonObject
             $objectIds[] = $ids[0];
         }
 
-        /* insert relationship */
+        /* delete relationship */
         $sql = "DELETE FROM {$relTable} WHERE dt_id = ? AND {$relField} = ?";
         foreach ($objectIds as $id) {
             $this->db->query($sql, array($downtimeId, $id));

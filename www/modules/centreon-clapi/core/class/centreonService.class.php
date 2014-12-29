@@ -110,6 +110,47 @@ class CentreonService extends CentreonObject
     }
 
     /**
+     * Return the host id and service id if the combination does exist
+     *
+     * @param string $host
+     * @param string $service
+     * @return array | array($hostId, $serviceId)
+     */
+    public function getHostAndServiceId($host, $service)
+    {
+        /* Regular services */
+        $sql = "SELECT h.host_id, s.service_id
+            FROM host h, service s, host_service_relation hsr
+            WHERE h.host_id = hsr.host_host_id
+            AND hsr.service_service_id = s.service_id
+            AND h.host_name = ?
+            AND s.service_description = ?";
+        $res = $this->db->query($sql, array($host, $service));
+        $row = $res->fetchAll();
+        if (count($row)) {
+            return array($row[0]['host_id'], $row[0]['service_id']);
+        }
+
+        /* Service by hostgroup */
+        $sql = "SELECT h.host_id, s.service_id
+            FROM host h, service s, host_service_relation hsr, hostgroup_relation hgr
+            WHERE h.host_id = hgr.host_host_id
+            AND hgr.hostgroup_hg_id = hsr.hostgroup_hg_id
+            AND hsr.service_service_id = s.service_id
+            AND h.host_name = ?
+            AND s.service_description = ?"; 
+        $res = $this->db->query($sql, array($host, $service));
+        $row = $res->fetchAll();
+        if (count($row)) {
+            return array($row[0]['host_id'], $row[0]['service_id']);
+        }
+
+        /* nothing found, return empty array */
+        return array();
+    }
+
+
+    /**
      * Returns type of host service relation
      *
      * @param int $serviceId

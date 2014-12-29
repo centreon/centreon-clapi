@@ -35,6 +35,7 @@
 
 require_once "centreonObject.class.php";
 require_once "centreonHost.class.php";
+require_once "centreonService.class.php";
 require_once "Centreon/Object/Dependency/Dependency.php";
 require_once "Centreon/Object/Host/Host.php";
 require_once "Centreon/Object/Host/Group.php";
@@ -61,6 +62,7 @@ class CentreonDependency extends CentreonObject
     const DEP_TYPE_SERVICE        = 'SERVICE';
     const DEP_TYPE_SERVICEGROUP   = 'SG';
     const DEP_TYPE_META           = 'META';
+    protected $serviceObj;
 
     /**
      * Constructor
@@ -70,6 +72,7 @@ class CentreonDependency extends CentreonObject
     public function __construct()
     {
         parent::__construct();
+        $this->serviceObj = new CentreonService();
         $this->object = new Centreon_Object_Dependency();
         $this->action = "DEP";
         $this->insertParams = array(
@@ -276,46 +279,6 @@ class CentreonDependency extends CentreonObject
     }
 
     /**
-     * Return the host id and service id if the combination does exist
-     *
-     * @param string $host
-     * @param string $service
-     * @return array | array($hostId, $serviceId)
-     */
-    protected function getHostAndServiceId($host, $service)
-    {
-        /* Regular services */
-        $sql = "SELECT h.host_id, s.service_id
-            FROM host h, service s, host_service_relation hsr
-            WHERE h.host_id = hsr.host_host_id
-            AND hsr.service_service_id = s.service_id
-            AND h.host_name = ?
-            AND s.service_description = ?";
-        $res = $this->db->query($sql, array($host, $service));
-        $row = $res->fetchAll();
-        if (count($row)) {
-            return array($row[0]['host_id'], $row[0]['service_id']);
-        }
-
-        /* Service by hostgroup */
-        $sql = "SELECT h.host_id, s.service_id
-            FROM host h, service s, host_service_relation hsr, hostgroup_relation hgr
-            WHERE h.host_id = hgr.host_host_id
-            AND hgr.hostgroup_hg_id = hsr.hostgroup_hg_id
-            AND hsr.service_service_id = s.service_id
-            AND h.host_name = ?
-            AND s.service_description = ?"; 
-        $res = $this->db->query($sql, array($host, $service));
-        $row = $res->fetchAll();
-        if (count($row)) {
-            return array($row[0]['host_id'], $row[0]['service_id']);
-        }
-
-        /* nothing found, return empty array */
-        return array();
-    }
-
-    /**
      * Add service type dependency
      *
      * @param array $params
@@ -332,7 +295,7 @@ class CentreonDependency extends CentreonObject
             // make sure that all parents exist
             $host = $tmp[0];
             $service = $tmp[1];
-            $idTab = $this->getHostAndServiceId($host, $service);
+            $idTab = $this->serviceObj->getHostAndServiceId($host, $service);
             if (!count($idTab)) {
                 throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
             }
@@ -787,7 +750,7 @@ class CentreonDependency extends CentreonObject
                 (dependency_dep_id, host_host_id, service_service_id)
                 VALUES (?, ?, ?)";
             list($host, $service) = explode(",", $objectToInsert);
-            $idTab = $this->getHostAndServiceId($host, $service);
+            $idTab = $this->serviceObj->getHostAndServiceId($host, $service);
             if (!count($idTab)) {
                 throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
             }
@@ -820,7 +783,7 @@ class CentreonDependency extends CentreonObject
                 throw new CentreonClapiException('Invalid service definition');
             }
             list($host, $service) = explode(",", $objectToInsert);
-            $idTab = $this->getHostAndServiceId($host, $service);
+            $idTab = $this->serviceObj->getHostAndServiceId($host, $service);
             if (!count($idTab)) {
                 throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
             }
@@ -829,7 +792,7 @@ class CentreonDependency extends CentreonObject
             $sql = "INSERT INTO dependency_serviceChild_relation (dependency_dep_id, host_host_id, service_service_id)
                 VALUES (?, ?, ?)";
             list($host, $service) = explode(",", $objectToInsert);
-            $idTab = $this->getHostAndServiceId($host, $service);
+            $idTab = $this->serviceObj->getHostAndServiceId($host, $service);
             if (!count($idTab)) {
                 throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
             }
@@ -976,7 +939,7 @@ class CentreonDependency extends CentreonObject
                 AND host_host_id = ?
                 AND service_service_id = ?";
             list($host, $service) = explode(",", $objectToDelete);
-            $idTab = $this->getHostAndServiceId($host, $service);
+            $idTab = $this->serviceObj->getHostAndServiceId($host, $service);
             if (!count($idTab)) {
                 throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
             }
@@ -1012,7 +975,7 @@ class CentreonDependency extends CentreonObject
                 throw new CentreonClapiException('Invalid service definition');
             }
             list($host, $service) = explode(",", $objectToDelete);
-            $idTab = $this->getHostAndServiceId($host, $service);
+            $idTab = $this->serviceObj->getHostAndServiceId($host, $service);
             if (!count($idTab)) {
                 throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
             }
@@ -1023,7 +986,7 @@ class CentreonDependency extends CentreonObject
                 AND host_host_id = ?
                 AND service_service_id = ?";
             list($host, $service) = explode(",", $objectToDelete);
-            $idTab = $this->getHostAndServiceId($host, $service);
+            $idTab = $this->serviceObj->getHostAndServiceId($host, $service);
             if (!count($idTab)) {
                 throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
             }
