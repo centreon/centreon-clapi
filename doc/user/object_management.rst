@@ -16,6 +16,7 @@ Object management
    objects/contact_templates
    objects/contact_groups
    objects/dependencies
+   objects/downtimes
    objects/host_templates
    objects/hosts
    objects/host_categories
