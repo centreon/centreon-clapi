@@ -134,13 +134,13 @@ Parameter	                   Description
 ============================== ===========================================
 Name	                       Name of the recurring downtime
 
-Start time	                   
+Start time	               Start time of the recurring downtime    
 
-End time
+End time                       End time of the recurring downtime
 
-Fixed
+Fixed                          0 for flexible downtime, 1 for fixed
 
-Duration					
+Duration		       Duration of downtime when in flexible mode (seconds)		
 
 Day of week                    Can be written with letters or numbers
                                (1 to 7 or monday to sunday)
@@ -164,13 +164,13 @@ Parameter	                   Description
 ============================== ===========================================
 Name	                       Name of the recurring downtime
 
-Start time	                   
+Start time	               Start time of the recurring downtime    
 
-End time
+End time                       End time of the recurring downtime
 
-Fixed
+Fixed                          0 for flexible downtime, 1 for fixed
 
-Duration					
+Duration                       Duration of downtime when in flexible mode (seconds)
 
 Day of month                   1 to 31
 
@@ -194,13 +194,13 @@ Parameter	                   Description
 ============================== ===========================================
 Name	                       Name of the recurring downtime
 
-Start time	                   
+Start time	               Start time of the recurring downtime
 
-End time
+End time                       End time of the recurring downtime
 
-Fixed
+Fixed                          0 for flexible downtime, 1 for fixed
 
-Duration					
+Duration                       Duration of downtime when in flexible mode (seconds)
 
 Day of week                    Can be written with letters or numbers
                                (1 to 7 or monday to sunday)
