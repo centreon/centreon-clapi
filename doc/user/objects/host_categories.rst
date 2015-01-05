@@ -126,6 +126,7 @@ Delmember
 ---------
 
 In order to remove a host or a host template from a host category, use the **DELMEMBER** action::
+
   [root@centreon ~]# ./centreon -u admin -p centreon -o HC -a delmember -v "Linux;host7" 
   [root@centreon ~]# ./centreon -u admin -p centreon -o HC -a delmember -v "Windows;host8" 
 
