@@ -92,7 +92,7 @@ If you want to retrieve the periods set on a recurring downtime, use the **LISTP
   2;1;00:00:00;02:00:00;1;;;1,2;none
   3;1;13:45:00;14:40:00;1;;5;;first
 
- 
+Columns are the following: 
 
 ============================== ===========================================================================================
 Column                            Description
