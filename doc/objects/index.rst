@@ -3,7 +3,6 @@ Object management
 =================
 
 .. toctree::
- :maxdepth: 2
   
    acl
    acl_action
