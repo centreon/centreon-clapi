@@ -15,7 +15,7 @@ This documentation aims to introduce all the actions you can perform with Centre
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    installation/index
    overview
