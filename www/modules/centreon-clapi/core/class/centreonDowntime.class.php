@@ -177,6 +177,7 @@ class CentreonDowntime extends CentreonObject
         ) . "\n";
         $pos = 1;
         foreach ($rows as $row) {
+            unset($row['dt_id']);
             echo $pos . $this->delim;
             echo implode($this->delim, $row) . "\n";
             $pos++;
