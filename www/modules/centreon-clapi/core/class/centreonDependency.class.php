@@ -541,7 +541,7 @@ class CentreonDependency extends CentreonObject
 
         $str = implode('|', $parents) . $this->delim;
         $str .= implode('|', $children);
-        echo str_replace("||", "|", $str) . "\n";
+        echo str_replace("||", "|", trim($str, "|")) . "\n";
     }
 
     /**
@@ -577,7 +577,7 @@ class CentreonDependency extends CentreonObject
 
         $str = implode('|', $parents) . $this->delim;
         $str .= implode('|', $children);
-        echo str_replace("||", "|", $str) . "\n";
+        echo str_replace("||", "|", trim($str, "|")) . "\n";
     }
 
     /**
@@ -624,10 +624,10 @@ class CentreonDependency extends CentreonObject
             $serviceChildren[] = $row['host_name'] . ',' .$row['service_description'];
         }
 
-        $str = implode('|', $parents) . $this->delim;
-        $str .= implode('|', $hostChildren) . "|";
-        $str .= implode('|', $serviceChildren);
-        echo str_replace("||", "|", $str) . "\n";
+        $strParents = implode('|', $parents) . $this->delim;
+        $strChildren .= implode('|', $hostChildren) . "|";
+        $strChildren .= implode('|', $serviceChildren);
+        echo str_replace("||", "|", $strParents . trim($strChildren, "|")) . "\n";
     }
 
     /**
