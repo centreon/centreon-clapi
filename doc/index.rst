@@ -18,4 +18,7 @@ Contents:
    :maxdepth: 2
 
    installation/index
-   user/index
+   overview
+   engine_management
+   objects/index
+   import_export.rst
