@@ -527,7 +527,7 @@ class CentreonCentbrokerCfg extends CentreonObject
                       $this->delim.$element['config_name'].
                       $this->delim.$this->instanceObj->getInstanceName($element['ns_nagios_server']);
             echo $addStr."\n";
-            echo $this->action.$this->delim."SETPARAM".$this->delim."filename".$this->delim.$element['config_filename']."\n";
+            echo $this->action.$this->delim."SETPARAM".$this->delim.$element['config_name'].$this->delim."filename".$this->delim.$element['config_filename']."\n";
             $sql = "SELECT config_key, config_value, config_group, config_group_id
             		FROM cfg_centreonbroker_info
             		WHERE config_id = ?
@@ -551,6 +551,7 @@ class CentreonCentbrokerCfg extends CentreonObject
                                                                  $this->delim.$row['config_value']."\n";
                     } elseif ($row['config_key'] == 'name') {
                         $addParamStr[$row['config_group'].'_'.$row['config_group_id']] = $this->action.$this->delim."ADD".strtoupper($row['config_group']).
+																						 $this->delim.$element['config_name'].
                                                                                          $this->delim.$row['config_value'];
                     } elseif ($row['config_key'] == 'blockId') {
                         $blockId[$row['config_group'].'_'.$row['config_group_id']] = $row['config_value'];
