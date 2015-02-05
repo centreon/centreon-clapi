@@ -94,14 +94,15 @@ event_queue_max_size     Event queue max size (when number is reached,
 ======================== ==================================================
 
 
-Listinput, Listoutput, Listlogger, Listcorrelation and Listtemporary
---------------------------------------------------------------------
+Listinput, Listoutput, Listlogger, Listcorrelation, Listtemporary and Liststats
+----------------------------------------------------------------------------------
 
 If you want to list specific input output types of Centreon Broker, use one of the following commands:
 listinput
 listoutput
 listlogger
 listcorrelation
+liststats
 
 Example::
 
@@ -120,14 +121,15 @@ ID	    I/O ID
 Name	I/O Name
 ======= ============
 
-Getinput, Getoutput, Getlogger, Getcorrelation and Gettemporary
----------------------------------------------------------------
+Getinput, Getoutput, Getlogger, Getcorrelation, Gettemporary and Getstats
+-------------------------------------------------------------------------
 
 In order to get parameters of a specific I/O object, use one of the following commands:
  - getinput
  - getoutput
  - getlogger
  - getcorrelation
+ - getstats
 
 Example::
 
@@ -158,8 +160,8 @@ Order	 Description
 ======== ===========================
 
 
-Addinput, Addoutput, Addlogger, Addcorrelation and Addtemporary
----------------------------------------------------------------
+Addinput, Addoutput, Addlogger, Addcorrelation, Addtemporary and Addstats
+-------------------------------------------------------------------------
 
 In order to add a new I/O object, use one of the following commands:
  - **ADDINPUT**
@@ -167,6 +169,7 @@ In order to add a new I/O object, use one of the following commands:
  - **ADDLOGGER**
  - **ADDCORRELATION**
  - **ADDTEMPORARY**
+ - **ADDSTATS**
 
 Example::
 
@@ -189,8 +192,8 @@ Order	 Column description
 ======== ============================
 
 
-Delinput, Deloutput, Dellogger, Delcorrelation and Deltemporary
----------------------------------------------------------------
+Delinput, Deloutput, Dellogger, Delcorrelation, Deltemporary and Delstats
+-------------------------------------------------------------------------
 
 In order to remove an I/O object from the Centreon Broker configuration, use one of the following commands:
  - **DELINPUT**
@@ -198,6 +201,7 @@ In order to remove an I/O object from the Centreon Broker configuration, use one
  - **DELLOGGER**
  - **DELCORRELATION**
  - **DELTEMPORARY**
+ - **DELSTATS**
 
 Example::
 
@@ -206,8 +210,8 @@ Example::
 The I/O ID is used for identifying the object to delete.
 
 
-Setintput, Setoutput, Setlogger, Setcorrelation and Settemporary
-----------------------------------------------------------------
+Setintput, Setoutput, Setlogger, Setcorrelation, Settemporary and Setstats
+--------------------------------------------------------------------------
 
 In order to set parameters of an I/O object, use one of the following commands:
  - **SETINPUT**
@@ -215,6 +219,7 @@ In order to set parameters of an I/O object, use one of the following commands:
  - **SETLOGGER**
  - **SETCORRELATION**
  - **SETTEMPORARY**
+ - **SETSTATS**
 
 Example::
 
