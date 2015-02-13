@@ -627,6 +627,7 @@ class CentreonServiceTemplate extends CentreonObject
         $commandObj = new Centreon_Object_Command();
         $tpObj = new Centreon_Object_Timeperiod();
         $extendedObj = new Centreon_Object_Service_Extended();
+		$macroObj = new Centreon_Object_Service_Macro_Custom();
         foreach ($tree as $element) {
             $addStr = $this->action.$this->delim."ADD";
             foreach ($this->insertParams as $param) {
@@ -674,6 +675,10 @@ class CentreonServiceTemplate extends CentreonObject
                     }
                 }
             }
+			$macros = $macroObj->getList("*", -1, 0, null, null, array('svc_svc_id' => $element[$this->object->getPrimaryKey()]), "AND");
+			foreach ($macros as $macro) {
+				echo $this->action.$this->delim."setmacro".$this->delim.$element['service_description'].$this->delim.$this->stripMacro($macro['svc_macro_name']).$this->delim.$macro['svc_macro_value']."\n";
+			}
             if (count($element['children'])) {
                 $this->parseTemplateTree($element['children'], $extendedObj);
             }
