@@ -1,3 +1,9 @@
+centreon-clapi-1.7.1
+====================
+Bugfix: CLAPI Export Miss Macros in Service Templates
+Bugfix: Export CFGBROKER missing some parameters
+
+
 centreon-clapi-1.4.0
 =====================
 Bugfix: Deleting hosts used to leave orphaned services in database
