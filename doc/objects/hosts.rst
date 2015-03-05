@@ -145,7 +145,11 @@ icon_image	                     Icon image
 
 icon_image_alt	                     Icon image text
 
+max_check_attempts                   Maximum number of attempt before a HARD state is declared
+
 name	                             Host name
+
+normal_check_interval                value in minutes
 
 notes	                             Notes
 
@@ -165,19 +169,19 @@ passive_checks_enabled	             Whether or not passive checks are enabled
 
 process_perf_data	             Process performance data command
 
+retain_nonstatus_information         Whether or not there is non-status retention
+
 retain_status_information	     Whether or not there is status retention
 
-retain_nonstatus_information	     Whether or not there is non-status retention
-
-stalking_options	             Comma separated options: 'o' for OK, 'd' for Down, 'u' for Unreachable
-
-retry_check_interval	             Retry check interval
-
-statusmap_image	                     Status map image (used by statusmap
+retry_check_interval                 Retry check interval
 
 snmp_community                       Snmp Community
 
 snmp_version                         Snmp version
+
+stalking_options	             Comma separated options: 'o' for OK, 'd' for Down, 'u' for Unreachable
+
+statusmap_image	                     Status map image (used by statusmap
 
 vrml_image	                     VRML image
 ==================================== =================================================================================

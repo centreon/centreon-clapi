@@ -109,29 +109,50 @@ Parameters that may be modified:
 ================================== ==========================================================================================================
 Parameter	                   Description
 ================================== ==========================================================================================================
-description	                   Service description
+activate                           1 when service is enabled, 0 otherwise
 
-alias	                           Service alias
+description	                   Service template description
 
-comment	                           Comment
+alias	                           Service template alias
 
-activate	                   1 when service is enabled, 0 otherwise
+template                           Name of the service template
 
 is_volatile	                   1 when service is volatile, 0 otherwise
+
+check_period                       Name of the check period
+
+check_command                      Name of the check command
+
+check_command_arguments            Arguments that go along with the check command,
+                                   prepend each argument with the '!' characteri
+
+max_check_attempts                 Maximum number of attempt before a HARD state is declared
+
+normal_check_interval              value in minutes
+
+retry_check_interval               value in minutes
 
 active_checks_enabled	           1 when active checks are enabled, 0 otherwise
 
 passive_checks_enabled	           1 when passive checks are enabled, 0 otherwise
+
+contact_additive_inheritance         Enables contact additive inheritance=
+
+cg_additive_inheritance              Enables contactgroup additive inheritance
+
+notification_interval              value in minutes
+
+notification_period                Name of the notification period
+
+notification_options               Status linked to notifications
+
+first_notification_delay           First notification delay in seconds
 
 parallelize_checks	           1 when parallelize checks are enabled, 0 otherwise
 
 obsess_over_service	           1 when obsess over service is enabled, 0 otherwise
 
 check_freshness	                   1 when check freshness is enabled, 0 otherwise
-
-contact_additive_inheritance         Enables contact additive inheritance
-
-cg_additive_inheritance              Enables contactgroup additive inheritance
 
 freshness_threshold	           Service freshness threshold in seconds
 
@@ -147,25 +168,13 @@ retain_nonstatus_information	   1 when non status information is retained, 0 oth
 
 stalking_options	           Comma separated options: 'o' for OK, 'w' for Warning, 'u' for Unknown and 'c' for Critical
 
-notifications_enabled	           1 when notification is enabled, 0 otherwise
-
-check_command	                   Name of the check command
-
-check_command_arguments	           Arguments that go along with the check command, prepend each argument with the "!" character
-
 event_handler	                   Name of the event handler command
 
 event_handler_arguments	           Arguments that go along with the event handler, prepend each argument with the "!" character
 
-check_period	                   Name of the check period
-
-notification_period	           Name of the notification period
-
 first_notification_delay	   First notification delay in seconds
 
 flap_detection_options	           Flap detection options
-
-template	                   Name of the service template
 
 notes	                           Notes
 
@@ -177,7 +186,9 @@ icon_image	                   Icon image
 
 icon_image_alt	                   Icon image alt text
 
-graphtemplate	                   Graph template name
+graphtemplate	                   Graph template namei
+
+comment                            Comment
 ================================== ==========================================================================================================
 
 .. note::
