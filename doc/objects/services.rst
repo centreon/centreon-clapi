@@ -169,12 +169,12 @@ notifications_enabled	         *1* when notification is enabled, *0* otherwise
 check_command	                 Name of the check command
 
 check_command_arguments	         Arguments that go along with the check command,
-                                 prepend each argument with the "!" character
+                                 prepend each argument with the '!' character
 
 event_handler	                 Name of the event handler command
 
 event_handler_arguments	         Arguments that go along with the event handler, 
-                                 prepend each argument with the "!" character
+                                 prepend each argument with the '!' character
 
 check_period	                 Name of the check period
 
