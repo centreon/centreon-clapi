@@ -91,13 +91,3 @@ In order to do that, use the **APPLYCFG** command::
 
   [root@centreon core]# ./centreon -u admin -p centreon -a APPLYCFG -v 2
 
-Send Centreon trap configuration files to poller
-------------------------------------------------
-
-In order to send trap configuration files to a remote poller, use the **SENDTRAPCFG** command::
-
-  [root@localhost] ./centreon -u admin -p centreon -a SENDTRAPCFG -v "2"
-  Generating SNMPTT configuration files...
-  224 traps for 7 manufacturers are defined.
-  SNMPTT configuration files generated.
-  Return code end : 0
