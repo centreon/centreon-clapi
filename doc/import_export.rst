@@ -31,4 +31,10 @@ You can import configuration from the exported file */tmp/clapi-export* ::
   [root@centreon ~]# ./centreon -u admin -p centreon -i /tmp/clapi-export.txt
 
 In case you have a very large export file, it is advised to redirect the output of the above command to a file.
-Indeed, when errors occur during the import process, CLAPI will print out an error message along with the line number of the file, you might need to store those output message for troubleshooting later on. 
+Indeed, when errors occur during the import process, CLAPI will print out an error message along with the line number of the file, you might need to store those output message for troubleshooting later on.
+
+You can build your own CLAPI command file if you know the straight forward syntax.
+You can use parameter described in Object Management with the syntax you can see in export files ::
+
+  OBJECT;AACTION;Parameter1;Parameter2;Parameter3;...
+
