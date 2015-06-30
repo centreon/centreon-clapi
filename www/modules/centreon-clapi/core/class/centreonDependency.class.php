@@ -1213,9 +1213,10 @@ class CentreonDependency extends CentreonObject
                 $childSql = "SELECT host_name 
                     FROM host h, dependency_hostChild_relation rel
                     WHERE h.host_id = rel.host_host_id
-                    AND rel.dependency_dep_id = ?";
-                $res = $this->db->query($childSql, array($row['dep_id']));
-                $childRows = $res->fetchAll();
+                    AND rel.dependency_dep_id = :dep_id";
+                $childStmt = $this->db->prepare($childSql);
+                $childStmt->execute(array(':dep_id' => $row['dep_id']));
+                $childRows = $childStmt->fetchAll();
                 foreach ($childRows as $childRow) {
                     echo implode(
                         $this->delim,
@@ -1233,9 +1234,10 @@ class CentreonDependency extends CentreonObject
                     FROM host h, service s, dependency_serviceChild_relation rel
                     WHERE h.host_id = rel.host_host_id
                     AND rel.service_service_id = s.service_id
-                    AND rel.dependency_dep_id = ?";
-                $res = $this->db->query($childSql, array($row['dep_id']));
-                $childRows = $res->fetchAll();
+                    AND rel.dependency_dep_id = :dep_id";
+                $childStmt = $this->db->prepare($childSql);
+                $childStmt->execute(array(':dep_id' => $row['dep_id']));
+                $childRows = $childStmt->fetchAll();
                 foreach ($childRows as $childRow) {
                     echo implode(
                         $this->delim,
