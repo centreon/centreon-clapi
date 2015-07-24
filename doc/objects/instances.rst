@@ -106,9 +106,9 @@ Column	                   Description
 ========================== =====================================================
 name	
 
-localhost *1* if it is the main poller, *0* otherwise
+localhost	          *1* if it is the main poller, *0* otherwise
 
-is_default  Is Poller Default? default: 0
+is_default	          Is Poller Default? default: 0
 
 ns_ip_address IP address of the poller
 
