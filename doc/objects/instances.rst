@@ -106,37 +106,37 @@ Column	                   Description
 ========================== =====================================================
 name	
 
-localhost	           *1* if it is the main poller, *0* otherwise
+localhost *1* if it is the main poller, *0* otherwise
 
-is_default	           Is Poller Default? default: 0
+is_default  Is Poller Default? default: 0
 
-ns_ip_address	           IP address of the poller
+ns_ip_address IP address of the poller
 
-ns_activate	           *1* if poller is enabled, *0* otherwise
+ns_activate *1* if poller is enabled, *0* otherwise
 
-init_script	           Init script path
+init_script Init script path
 
-monitoring_engine	   Engine used on poller: *NAGIOS*, *ICINGA*, *SHINKEN*
+monitoring_engine Engine used on poller: *NAGIOS*, *ICINGA*, *SHINKEN*
 
-nagios_bin	           Path of the Scheduler binary
+nagios_bin  Path of the Scheduler binary
 
-nagiostats_bin	           Path of the Nagios Stats binary
+nagiostats_bin  Path of the Nagios Stats binary
 
-nagios_perfdata	           Path of perfdata file
+nagios_perfdata Path of perfdata file
 
-centreonbroker_cfg_path	   Centreon Broker Configuration path
+centreonbroker_cfg_path Centreon Broker Configuration path
 
-centreonbroker_module_path Centreon Broker Module path
+centreonbroker_module_path  Centreon Broker Module path
 
 centreonconnector_path  Connector to connector binary
 
-ssh_port	           SSH Port
+ssh_port  SSH Port
 
-ssh_private_key	           Private key for connect
+ssh_private_key Private key for connect
 
-init_script_centreontrapd	           Path to Centreontrapd Init Script
+init_script_centreontrapd Path to Centreontrapd Init Script
 
-snmp_trapd_path_conf	           Snmp Trapd Path
+snmp_trapd_path_conf  Snmp Trapd Path
 
 ========================== =====================================================
 
