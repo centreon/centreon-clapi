@@ -108,6 +108,8 @@ name
 
 localhost	           *1* if it is the main poller, *0* otherwise
 
+is_default	           Is Poller Default? default: 0
+
 ns_ip_address	           IP address of the poller
 
 ns_activate	           *1* if poller is enabled, *0* otherwise
@@ -122,11 +124,20 @@ nagiostats_bin	           Path of the Nagios Stats binary
 
 nagios_perfdata	           Path of perfdata file
 
-ssh_port	           SSH Port
-
 centreonbroker_cfg_path	   Centreon Broker Configuration path
 
 centreonbroker_module_path Centreon Broker Module path
+
+centreonconnector_path  Connector to connector binary
+
+ssh_port	           SSH Port
+
+ssh_private_key	           Private key for connect
+
+init_script_centreontrapd	           Path to Centreontrapd Init Script
+
+snmp_trapd_path_conf	           Snmp Trapd Path
+
 ========================== =====================================================
 
 
