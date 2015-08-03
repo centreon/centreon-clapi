@@ -325,7 +325,7 @@ class CentreonAPI {
                 if ($this->relationObject[$object]['module'] == 'core') {
                     require_once "./class/centreon" . $this->relationObject[$object]['class'] . ".class.php";
                 } else {
-                    require_once "../../" . $this->relationObject[$object]['module'] . "/class/centreon" . $this->relationObject[$object]['class'] . ".class.php";
+                    require_once "../../" . $this->relationObject[$object]['module'] . "/centreon-clapi/class/centreon" . $this->relationObject[$object]['class'] . ".class.php";
                 }
             }
 
