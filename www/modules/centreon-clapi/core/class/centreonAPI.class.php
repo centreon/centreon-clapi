@@ -55,169 +55,291 @@ require_once "./class/centreon.Config.Poller.class.php";
  *
  */
 class CentreonAPI {
-	public $dateStart;
-	public $login;
-	public $password;
-	public $action;
-	public $object;
-	public $options;
-	public $args;
-	public $DB;
-	public $DBC;
-	public $DBN;
-	public $format;
-	public $xmlObj;
-	public $debug;
-	public $variables;
-	public $centreon_path;
-	public $optGen;
-	private $return_code;
-	private $relationObject;
+    public $dateStart;
+    public $login;
+    public $password;
+    public $action;
+    public $object;
+    public $options;
+    public $args;
+    public $DB;
+    public $DBC;
+    public $DBN;
+    public $format;
+    public $xmlObj;
+    public $debug;
+    public $variables;
+    public $centreon_path;
+    public $optGen;
+    private $return_code;
+    private $relationObject;
 
-	private $objectTable;
+    private $objectTable;
 
-	public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
-		global $version;
+    public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
+        global $version;
 
-		/**
-		 * Set variables
-		 */
-		$this->debug 	= 0;
-		$this->return_code = 0;
+        /**
+         * Set variables
+        */
+        $this->debug 	= 0;
+        $this->return_code = 0;
 
-		if (isset($user)) {
-			$this->login 	= htmlentities($user, ENT_QUOTES);
-		}
-		if (isset($password)) {
-			$this->password = htmlentities($password, ENT_QUOTES);
-		}
-		if (isset($action)) {
-			$this->action 	= htmlentities(strtoupper($action), ENT_QUOTES);
-		}
+        if (isset($user)) {
+            $this->login = htmlentities($user, ENT_QUOTES);
+        }
+        if (isset($password)) {
+            $this->password = htmlentities($password, ENT_QUOTES);
+        }
+        if (isset($action)) {
+            $this->action = htmlentities(strtoupper($action), ENT_QUOTES);
+        }
 
-		$this->options 	= $options;
-		$this->centreon_path = $centreon_path;
+        $this->options = $options;
+        $this->centreon_path = $centreon_path;
 
-		if (isset($options["v"])) {
-			$this->variables = $options["v"];
-		} else {
-			$this->variables = "";
-		}
+        if (isset($options["v"])) {
+            $this->variables = $options["v"];
+        } else {
+            $this->variables = "";
+        }
 
-		if (isset($options["o"])) {
-			$this->object =  htmlentities(strtoupper($options["o"]), ENT_QUOTES);
-		} else {
-			$this->object = "";
-		}
+        if (isset($options["o"])) {
+            $this->object =  htmlentities(strtoupper($options["o"]), ENT_QUOTES);
+        } else {
+            $this->object = "";
+        }
 
-		$this->objectTable = array();
+        $this->objectTable = array();
 
-		/**
-  		 * Centreon DB Connexion
-		 */
-		$this->DB = new CentreonDB();
+        /**
+         * Centreon DB Connexion
+         */
+        $this->DB = new CentreonDB();
         $this->DBC = new CentreonDB('centstorage');
-		$this->dateStart = time();
+        $this->dateStart = time();
 
-		$this->relationObject = array();
-		$this->relationObject["CMD"] = "Command";
-		$this->relationObject["COMMAND"] = "Command";
-		$this->relationObject["HOST"] = "Host";
-		$this->relationObject["SERVICE"] = "Service";
-        $this->relationObject["HGSERVICE"] = "HostGroupService";
-        $this->relationObject["VENDOR"] = "Manufacturer";
-        $this->relationObject["TRAP"] = "Trap";
+        $this->relationObject = array();
+        $this->relationObject["CMD"] = array(
+            'module' => 'core',
+            'class' => 'Command'
+        );
+        $this->relationObject["HOST"] = array(
+            'module' => 'core',
+            'class' => 'Host',
+           'libs' => array(
+                './class/centreonService.class.php',
+                './class/centreonHostGroup.class.php',
+                './class/centreonContact.class.php',
+                './class/centreonContactGroup.class.php'
+            )
+        );
+        $this->relationObject["SERVICE"] = array(
+            'module' => 'core',
+            'class' => 'Service',
+            'libs' => array(
+                './class/centreonHost.class.php'
+            )
+        );
+        $this->relationObject["HGSERVICE"] = array(
+            'module' => 'core',
+            'class' => 'HostGroupService'
+        );
 
-		$this->relationObject["HG"] = "HostGroup";
-		$this->relationObject["HC"] = "HostCategory";
+        $this->relationObject["VENDOR"] = array(
+            'module' => 'core',
+            'class' => 'Manufacturer'
+        );
+        $this->relationObject["TRAP"] = array(
+            'module' => 'core',
+            'class' => 'Trap'
+        );
 
-		$this->relationObject["SG"] = "ServiceGroup";
-		$this->relationObject["SC"] = "ServiceCategory";
+        $this->relationObject["HG"] = array(
+            'module' => 'core',
+            'class' => 'HostGroup'
+        );
+        $this->relationObject["HC"] = array(
+            'module' => 'core',
+            'class' => 'HostCategory'
+        );
 
-		$this->relationObject["CONTACT"] = "Contact";
-		$this->relationObject["CONTACTTPL"] = "ContactTemplate";
-		$this->relationObject["CG"] = "ContactGroup";
+        $this->relationObject["SG"] = array(
+            'module' => 'core',
+            'class' => 'ServiceGroup'
+        );
+        $this->relationObject["SC"] = array(
+            'module' => 'core',
+            'class' => 'ServiceCategory'
+        );
 
-		/* Dependencies */
-		$this->relationObject["DEP"] = "Dependency";
+        $this->relationObject["CONTACT"] = array(
+            'module' => 'core',
+            'class' => 'Contact',
+            'libs' => array(
+                './class/centreonCommand.class.php'
+            )
+        );
+        $this->relationObject["CONTACTTPL"] = array(
+            'module' => 'core',
+            'class' => 'ContactTemplate'
+        );
+        $this->relationObject["CG"] = array(
+            'module' => 'core',
+            'class' => 'ContactGroup'
+        );
 
-		/* Downtimes */
-		$this->relationObject["DOWNTIME"] = "Downtime";
+        /* Dependencies */
+        $this->relationObject["DEP"] = array(
+            'module' => 'core',
+            'class' => 'Dependency'
+        );
 
-		/* Templates */
-		$this->relationObject["HTPL"] = "HostTemplate";
-		$this->relationObject["STPL"] = "ServiceTemplate";
+        /* Downtimes */
+        $this->relationObject["DOWNTIME"] = array(
+            'module' => 'core',
+            'class' => 'Downtime'
+        );
 
-		$this->relationObject["TIMEPERIOD"] = "TimePeriod";
-		$this->relationObject["TP"] = "TimePeriod";
+        /* Templates */
+        $this->relationObject["HTPL"] = array(
+            'module' => 'core',
+            'class' => 'HostTemplate'
+        );
+        $this->relationObject["STPL"] = array(
+            'module' => 'core',
+            'class' => 'ServiceTemplate'
+        );
 
-		$this->relationObject["INSTANCE"] = "Instance";
-		$this->relationObject["NAGIOSCFG"] = "NagiosCfg";
-		$this->relationObject["NDO2DBCFG"] = "Ndo2dbCfg";
-		$this->relationObject["CENTBROKERCFG"] = "CentbrokerCfg";
-		$this->relationObject["NDOMODCFG"] = "NdomodCfg";
-        $this->relationObject["CGICFG"] = "CgiCfg";
-        $this->relationObject["RESOURCECFG"] = "ResourceCfg";
+        $this->relationObject["TIMEPERIOD"] = array(
+            'module' => 'core',
+            'class' => 'TimePeriod'
+        );
+        $this->relationObject["TP"] = array(
+            'module' => 'core',
+            'class' => 'TimePeriod'
+        );
 
-        $this->relationObject["ACL"] = "ACL";
-        $this->relationObject["ACLGROUP"] = "ACLGroup";
-        $this->relationObject["ACLACTION"] = "ACLAction";
-        $this->relationObject["ACLMENU"] = "ACLMenu";
-        $this->relationObject["ACLRESOURCE"] = "ACLResource";
+        $this->relationObject["INSTANCE"] = array(
+            'module' => 'core',
+            'class' => 'Instance'
+        );
+        $this->relationObject["NAGIOSCFG"] = array(
+            'module' => 'core',
+            'class' => 'NagiosCfg'
+        );
+        $this->relationObject["NDO2DBCFG"] = array(
+            'module' => 'core',
+            'class' => 'Ndo2dbCfg'
+        );
+        $this->relationObject["CENTBROKERCFG"] = array(
+            'module' => 'core',
+            'class' => 'CentbrokerCfg'
+        );
+        $this->relationObject["NDOMODCFG"] = array(
+            'module' => 'core',
+            'class' => 'NdomodCfg'
+        );
+        $this->relationObject["CGICFG"] = array(
+            'module' => 'core',
+            'class' => 'CgiCfg'
+        );
+        $this->relationObject["RESOURCECFG"] = array(
+            'module' => 'core',
+            'class' => 'ResourceCfg'
+        );
 
-        $this->relationObject["LDAP"] = "LDAP";
+        $this->relationObject["ACL"] = array(
+            'module' => 'core',
+            'class' => 'ACL'
+        );
+        $this->relationObject["ACLGROUP"] = array(
+            'module' => 'core',
+            'class' => 'ACLGroup'
+        );
+        $this->relationObject["ACLACTION"] = array(
+            'module' => 'core',
+            'class' => 'ACLAction'
+        );
+        $this->relationObject["ACLMENU"] = array(
+            'module' => 'core',
+            'class' => 'ACLMenu'
+        );
+        $this->relationObject["ACLRESOURCE"] = array(
+            'module' => 'core',
+            'class' => 'ACLResource'
+        );
 
-        $this->relationObject["SETTINGS"] = "Settings";
+        $this->relationObject["LDAP"] = array(
+            'module' => 'core',
+            'class' => 'LDAP'
+        );
 
-		/*
-		 * Manage version
-		 */
-		$this->optGen = $this->getOptGen();
-		$version = $this->optGen["version"];
+        $this->relationObject["SETTINGS"] = array(
+            'module' => 'core',
+            'class' => 'Settings'
+        );
+
+        /* Get objects from modules */
+        $objectsPath = array();
+        $DBRESULT = $this->DB->query("SELECT name FROM modules_informations");
+        while ($row = $DBRESULT->fetchRow()) {
+            $objectsPath = array_merge($objectsPath, glob('../../' . $row['name'] . '/centreon-clapi/class/*.php'));
+        }
+
+        foreach ($objectsPath as $objectPath) {
+            if (preg_match('/..\/..\/([\w-]+)\/centreon-clapi\/class\/centreon(\w+).class.php/', $objectPath, $matches)) {
+                if (isset($matches[1]) && isset($matches[2])) {
+                    $this->relationObject[strtoupper($matches[2])] = array (
+                        'module' => $matches[1],
+                        'class' => $matches[2]
+                    );
+                }
+            }
+        }
+
+        /*
+         * Manage version
+         */
+        $this->optGen = $this->getOptGen();
+        $version = $this->optGen["version"];
         $this->delim = ";";
-	}
+    }
 
-	/**
-	 * Set Return Code
-	 *
-	 * @param int $returnCode
-	 * @return void
-	 */
-	public function setReturnCode($returnCode) {
+    /**
+     * Set Return Code
+     *
+     * @param int $returnCode
+     * @return void
+     */
+    public function setReturnCode($returnCode) {
         $this->return_code = $returnCode;
-	}
+    }
 
-	/**
-	 * Centreon Object Management
-	 */
-	protected function requireLibs($object) {
-		if ($object != "") {
-			if (isset($this->relationObject[$object]) && !class_exists("Centreon".$this->relationObject[$object])) {
-				require_once "./class/centreon".$this->relationObject[$object].".class.php";
-			}
-			if (isset($this->relationObject[$object]) && $this->relationObject[$object] == "Host") {
-				require_once "./class/centreonService.class.php";
-				require_once "./class/centreonHostGroup.class.php";
-				require_once "./class/centreonContact.class.php";
-				require_once "./class/centreonContactGroup.class.php";
-			}
-			if (isset($this->relationObject[$object]) && $this->relationObject[$object] == "Service") {
-				require_once "./class/centreonHost.class.php";
-			}
-			if (isset($this->relationObject[$object]) && $this->relationObject[$object] == "Contact") {
-				require_once "./class/centreonCommand.class.php";
-			}
-		    if (isset($this->relationObject[$object]) && $this->relationObject[$object] == "TimePeriod") {
-				require_once "./class/centreonTimePeriod.class.php";
-			}
-		}
+    /**
+     * Centreon Object Management
+     */
+    protected function requireLibs($object) {
+        if ($object != "") {
+            if (isset($this->relationObject[$object]['class']) && isset($this->relationObject[$object]['module']) && !class_exists("Centreon".$this->relationObject[$object])) {
+                if ($this->relationObject[$object]['module'] == 'core') {
+                    require_once "./class/centreon" . $this->relationObject[$object]['class'] . ".class.php";
+                } else {
+                    require_once "../../" . $this->relationObject[$object]['module'] . "/class/centreon" . $this->relationObject[$object]['class'] . ".class.php";
+                }
+            }
 
-		/**
-		 * Default class needed
-		 */
-		require_once "./class/centreonTimePeriod.class.php";
-		require_once "./class/centreonACLResources.class.php";
-	}
+            if (isset($this->relationObject[$object]['libs']) && !array_walk($this->relationObject[$object]['libs'], 'class_exists')) {
+                array_walk($this->relationObject[$object]['libs'], 'require_once');
+            }
+        }
+
+        /**
+         * Default class needed
+         */
+        require_once "./class/centreonTimePeriod.class.php";
+        require_once "./class/centreonACLResources.class.php";
+    }
 
 	/**
 	 * Get General option of Centreon
@@ -409,12 +531,12 @@ class CentreonAPI {
 			/**
 			 * Check class declaration
 			 */
-			if (isset($this->relationObject[$this->object])) {
-           		$objName = "centreon".$this->relationObject[$this->object];
+			if (isset($this->relationObject[$this->object]['class'])) {
+           		$objName = "centreon".$this->relationObject[$this->object]['class'];
 			} else {
             	$objName = "";
             }
-            if (!isset($this->relationObject[$this->object]) || !class_exists($objName)) {
+            if (!isset($this->relationObject[$this->object]['class']) || !class_exists($objName)) {
             	print "Object $this->object not found in Centreon API.\n";
            		return 1;
             }
@@ -501,12 +623,12 @@ class CentreonAPI {
 			/**
 			 * Check class declaration
 			 */
-			if (isset($this->relationObject[$this->object])) {
-           		$objName = "centreon".$this->relationObject[$this->object];
+			if (isset($this->relationObject[$this->object]['class'])) {
+           		$objName = "centreon".$this->relationObject[$this->object]['class'];
 			} else {
             	$objName = "";
             }
-            if (!isset($this->relationObject[$this->object]) || !class_exists($objName)) {
+            if (!isset($this->relationObject[$this->object]['class']) || !class_exists($objName)) {
             	print "Object $this->object not found in Centreon API.\n";
            		return 1;
             }
