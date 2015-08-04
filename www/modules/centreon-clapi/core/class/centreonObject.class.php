@@ -48,6 +48,8 @@ abstract class CentreonObject
     const NAMEALREADYINUSE = "Name is already in use";
     const NB_UPDATE_PARAMS = 3;
     const UNKNOWNPARAMETER = "Unknown parameter";
+    const OBJECTALREADYLINKED = "Objects already linked";
+    const OBJECTNOTLINKED = "Objects are not linked";
 
     /**
      * Db adapter
