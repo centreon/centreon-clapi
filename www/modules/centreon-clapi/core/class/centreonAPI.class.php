@@ -687,7 +687,7 @@ class CentreonAPI {
      * @param unknown_type $objname
      */
     private function iniObject($objname) {
-        $className = 'centreon' . $this->relationObject[$objname];
+        $className = 'centreon' . $this->relationObject[$objname]['class'];
         $this->requireLibs($objname);
         $this->objectTable[$objname] = new $className($this->DB, $objname);
     }
