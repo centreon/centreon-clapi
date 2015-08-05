@@ -122,7 +122,8 @@ class CentreonAPI {
         $this->relationObject = array();
         $this->relationObject["CMD"] = array(
             'module' => 'core',
-            'class' => 'Command'
+            'class' => 'Command',
+            'export' => true
         );
         $this->relationObject["HOST"] = array(
             'module' => 'core',
@@ -132,45 +133,54 @@ class CentreonAPI {
                 './class/centreonHostGroup.class.php',
                 './class/centreonContact.class.php',
                 './class/centreonContactGroup.class.php'
-            )
+            ),
+            'export' => true
         );
         $this->relationObject["SERVICE"] = array(
             'module' => 'core',
             'class' => 'Service',
             'libs' => array(
                 './class/centreonHost.class.php'
-            )
+            ),
+            'export' => true
         );
         $this->relationObject["HGSERVICE"] = array(
             'module' => 'core',
-            'class' => 'HostGroupService'
+            'class' => 'HostGroupService',
+            'export' => true
         );
 
         $this->relationObject["VENDOR"] = array(
             'module' => 'core',
-            'class' => 'Manufacturer'
+            'class' => 'Manufacturer',
+            'export' => true
         );
         $this->relationObject["TRAP"] = array(
             'module' => 'core',
-            'class' => 'Trap'
+            'class' => 'Trap',
+            'export' => true
         );
 
         $this->relationObject["HG"] = array(
             'module' => 'core',
-            'class' => 'HostGroup'
+            'class' => 'HostGroup',
+            'export' => true
         );
         $this->relationObject["HC"] = array(
             'module' => 'core',
-            'class' => 'HostCategory'
+            'class' => 'HostCategory',
+            'export' => true
         );
 
         $this->relationObject["SG"] = array(
             'module' => 'core',
-            'class' => 'ServiceGroup'
+            'class' => 'ServiceGroup',
+            'export' => true
         );
         $this->relationObject["SC"] = array(
             'module' => 'core',
-            'class' => 'ServiceCategory'
+            'class' => 'ServiceCategory',
+            'export' => true
         );
 
         $this->relationObject["CONTACT"] = array(
@@ -178,106 +188,129 @@ class CentreonAPI {
             'class' => 'Contact',
             'libs' => array(
                 './class/centreonCommand.class.php'
-            )
+            ),
+            'export' => true
         );
         $this->relationObject["CONTACTTPL"] = array(
             'module' => 'core',
-            'class' => 'ContactTemplate'
+            'class' => 'ContactTemplate',
+            'export' => false
         );
         $this->relationObject["CG"] = array(
             'module' => 'core',
-            'class' => 'ContactGroup'
+            'class' => 'ContactGroup',
+            'export' => true
         );
 
         /* Dependencies */
         $this->relationObject["DEP"] = array(
             'module' => 'core',
-            'class' => 'Dependency'
+            'class' => 'Dependency',
+            'export' => true
         );
 
         /* Downtimes */
         $this->relationObject["DOWNTIME"] = array(
             'module' => 'core',
-            'class' => 'Downtime'
+            'class' => 'Downtime',
+            'export' => true
         );
 
         /* Templates */
         $this->relationObject["HTPL"] = array(
             'module' => 'core',
-            'class' => 'HostTemplate'
+            'class' => 'HostTemplate',
+            'export' => true
         );
         $this->relationObject["STPL"] = array(
             'module' => 'core',
-            'class' => 'ServiceTemplate'
+            'class' => 'ServiceTemplate',
+            'export' => true
         );
 
         $this->relationObject["TIMEPERIOD"] = array(
             'module' => 'core',
-            'class' => 'TimePeriod'
+            'class' => 'TimePeriod',
+            'export' => false
         );
         $this->relationObject["TP"] = array(
             'module' => 'core',
-            'class' => 'TimePeriod'
+            'class' => 'TimePeriod',
+            'export' => true
         );
 
         $this->relationObject["INSTANCE"] = array(
             'module' => 'core',
-            'class' => 'Instance'
+            'class' => 'Instance',
+            'export' => true
         );
         $this->relationObject["NAGIOSCFG"] = array(
             'module' => 'core',
-            'class' => 'NagiosCfg'
+            'class' => 'NagiosCfg',
+            'export' => false
         );
         $this->relationObject["NDO2DBCFG"] = array(
             'module' => 'core',
-            'class' => 'Ndo2dbCfg'
+            'class' => 'Ndo2dbCfg',
+            'export' => false
         );
         $this->relationObject["CENTBROKERCFG"] = array(
             'module' => 'core',
-            'class' => 'CentbrokerCfg'
+            'class' => 'CentbrokerCfg',
+            'export' => false
         );
         $this->relationObject["NDOMODCFG"] = array(
             'module' => 'core',
-            'class' => 'NdomodCfg'
+            'class' => 'NdomodCfg',
+            'export' => false
         );
         $this->relationObject["CGICFG"] = array(
             'module' => 'core',
-            'class' => 'CgiCfg'
+            'class' => 'CgiCfg',
+            'export' => false
         );
         $this->relationObject["RESOURCECFG"] = array(
             'module' => 'core',
-            'class' => 'ResourceCfg'
+            'class' => 'ResourceCfg',
+            'export' => false
         );
 
         $this->relationObject["ACL"] = array(
             'module' => 'core',
-            'class' => 'ACL'
+            'class' => 'ACL',
+            'export' => false
         );
         $this->relationObject["ACLGROUP"] = array(
             'module' => 'core',
-            'class' => 'ACLGroup'
+            'class' => 'ACLGroup',
+            'export' => false
         );
         $this->relationObject["ACLACTION"] = array(
             'module' => 'core',
-            'class' => 'ACLAction'
+            'class' => 'ACLAction',
+            'export' => false
         );
         $this->relationObject["ACLMENU"] = array(
             'module' => 'core',
-            'class' => 'ACLMenu'
+            'class' => 'ACLMenu',
+            'export' => false
         );
         $this->relationObject["ACLRESOURCE"] = array(
             'module' => 'core',
-            'class' => 'ACLResource'
+            'class' => 'ACLResource',
+            'export' => false
         );
 
         $this->relationObject["LDAP"] = array(
             'module' => 'core',
-            'class' => 'LDAP'
+            'class' => 'LDAP',
+            'export' => false
         );
 
         $this->relationObject["SETTINGS"] = array(
             'module' => 'core',
-            'class' => 'Settings'
+            'class' => 'Settings',
+            'export' => false
         );
 
 
@@ -293,7 +326,8 @@ class CentreonAPI {
                 if (isset($matches[1]) && isset($matches[2])) {
                     $this->relationObject[strtoupper($matches[2])] = array(
                         'module' => $matches[1],
-                        'class' => $matches[2]
+                        'class' => $matches[2],
+                        'export' => true
                     );
                 }
             }
@@ -659,25 +693,14 @@ class CentreonAPI {
         $this->initAllObjects();
         // header
         echo "{OBJECT_TYPE}{$this->delim}{COMMAND}{$this->delim}{PARAMETERS}\n";
-        $this->objectTable['CMD']->export();
-        $this->objectTable['TP']->export();
-        $this->objectTable['CONTACT']->export();
-        $this->objectTable['CG']->export();
-        $this->objectTable['HTPL']->export();
-        $this->objectTable['INSTANCE']->export();
-        $this->objectTable['CENTBROKERCFG']->export();
-        $this->objectTable['TRAP']->export();
-        $this->objectTable['HOST']->export();
-        $this->objectTable['HG']->export();
-        $this->objectTable['STPL']->export();
-        $this->objectTable['HC']->export();
-        $this->objectTable['VENDOR']->export();
-        $this->objectTable['SERVICE']->export();
-        $this->objectTable['HGSERVICE']->export();
-        $this->objectTable['SG']->export();
-        $this->objectTable['SC']->export();
-        $this->objectTable['DEP']->export();
-        $this->objectTable['DOWNTIME']->export();
+        if (isset($this->relationObject) && is_array(($this->relationObject))) {
+            foreach (($this->relationObject) as $sSynonyme => $oObjet) {
+                if ($oObjet['export'] === true && method_exists($this->objectTable[$sSynonyme], 'export')) {
+                    $this->objectTable[$sSynonyme]->export();
+                }
+                
+            }
+        }
     }
 
     /**
@@ -696,25 +719,14 @@ class CentreonAPI {
      * Init All object instance in order to export all informations
      */
     private function initAllObjects() {
-        $this->iniObject('TP');
-        $this->iniObject('CMD');
-        $this->iniObject('INSTANCE');
-        $this->iniObject('CENTBROKERCFG');
-        $this->iniObject('VENDOR');
-        $this->iniObject('TRAP');
-        $this->iniObject('HOST');
-        $this->iniObject('SERVICE');
-        $this->iniObject('HGSERVICE');
-        $this->iniObject('HG');
-        $this->iniObject('HC');
-        $this->iniObject('SG');
-        $this->iniObject('SC');
-        $this->iniObject('CONTACT');
-        $this->iniObject('CG');
-        $this->iniObject('HTPL');
-        $this->iniObject('STPL');
-        $this->iniObject('DEP');
-        $this->iniObject('DOWNTIME');
+        if (isset($this->relationObject) && is_array(($this->relationObject))) {
+            foreach (($this->relationObject) as $sSynonyme => $oObjet) {
+                if ($oObjet['export'] === true) {
+                    $this->iniObject($sSynonyme);
+                }
+                
+            }
+        }
     }
 
     /**
