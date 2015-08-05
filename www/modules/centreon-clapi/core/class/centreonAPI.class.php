@@ -257,7 +257,7 @@ class CentreonAPI {
         $this->relationObject["CENTBROKERCFG"] = array(
             'module' => 'core',
             'class' => 'CentbrokerCfg',
-            'export' => false
+            'export' => true
         );
         $this->relationObject["NDOMODCFG"] = array(
             'module' => 'core',
