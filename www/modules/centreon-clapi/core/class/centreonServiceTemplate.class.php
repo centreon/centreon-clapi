@@ -51,6 +51,12 @@ class CentreonServiceTemplate extends CentreonObject
     const ORDER_SVCTPL   = 2;
     const NB_UPDATE_PARAMS = 3;
 
+    
+    public static $aDepends = array(
+        'Command',
+        'TimePeriod',
+        'Trap'
+    );
     /**
      * Constructor
      *

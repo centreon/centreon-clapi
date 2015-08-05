@@ -65,6 +65,11 @@ class CentreonContact extends CentreonObject
     const SVC_NOTIF_CMD    = "svcnotifcmd";
     const UNKNOWN_LOCALE   = "Invalid locale";
     protected $register;
+    
+    public static $aDepends = array(
+        'Command',
+        'TimePeriod'
+    );
 
 	/**
 	 *

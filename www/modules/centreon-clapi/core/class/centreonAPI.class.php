@@ -75,7 +75,28 @@ class CentreonAPI {
     private $return_code;
     private $relationObject;
     private $objectTable;
-
+    private $aExport = array(
+        'CMD',
+        'TP',
+        'CONTACT',
+        'CG',
+        'HTPL',
+        'INSTANCE',
+        'CENTBROKERCFG',
+        'TRAP',
+        'HOST',
+        'HG',
+        'STPL',
+        'HC',
+        'VENDOR',
+        'SERVICE',
+        'HGSERVICE',
+        'SG',
+        'SC',
+        'DEP',
+        'DOWNTIME'
+    );
+    
     public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
         global $version;
 
@@ -332,7 +353,7 @@ class CentreonAPI {
                 }
             }
         }
-
+        
         /*
          * Manage version
          */
@@ -366,6 +387,20 @@ class CentreonAPI {
 
             if (isset($this->relationObject[$object]['libs']) && !array_walk($this->relationObject[$object]['libs'], 'class_exists')) {
                 array_walk($this->relationObject[$object]['libs'], 'require_once');
+            }
+        } else {
+            foreach ($this->relationObject as $sSynonyme => $oObjet) {
+                    if (isset($oObjet['class']) && isset($oObjet['module']) && !class_exists("Centreon" . $oObjet['class'])) {
+                    if ($oObjet['module'] == 'core') {
+                        require_once "./class/centreon" . $oObjet['class'] . ".class.php";
+                    } else {
+                        require_once "../../" . $oObjet['module'] . "/centreon-clapi/class/centreon" . $oObjet['class'] . ".class.php";
+                    }
+                }
+
+                if (isset($oObjet['libs']) && !array_walk($oObjet['libs'], 'class_exists')) {
+                    array_walk($oObjet['libs'], 'require_once');
+                }
             }
         }
 
@@ -689,14 +724,19 @@ class CentreonAPI {
     /**
      * Export All configuration
      */
-    public function export() {
+    public function export()
+    {    
+        $this->requireLibs("");
+
+        $this->sortClassExport();
+        
         $this->initAllObjects();
         // header
-        echo "{OBJECT_TYPE}{$this->delim}{COMMAND}{$this->delim}{PARAMETERS}\n";
-        if (isset($this->relationObject) && is_array(($this->relationObject))) {
-            foreach (($this->relationObject) as $sSynonyme => $oObjet) {
-                if ($oObjet['export'] === true && method_exists($this->objectTable[$sSynonyme], 'export')) {
-                    $this->objectTable[$sSynonyme]->export();
+        echo "{OBJECT_TYPE}{$this->delim}{COMMAND}{$this->delim}{PARAMETERS}\n";        
+        if (count($this->aExport) > 0) {
+            foreach ($this->aExport as $oObjet) {
+                if (method_exists($this->objectTable[$oObjet], 'export')) {
+                    $this->objectTable[$oObjet]->export();
                 }
                 
             }
@@ -719,12 +759,9 @@ class CentreonAPI {
      * Init All object instance in order to export all informations
      */
     private function initAllObjects() {
-        if (isset($this->relationObject) && is_array(($this->relationObject))) {
-            foreach (($this->relationObject) as $sSynonyme => $oObjet) {
-                if ($oObjet['export'] === true) {
-                    $this->iniObject($sSynonyme);
-                }
-                
+        if (count($this->aExport) > 0) {
+            foreach ($this->aExport as $oObjet) {
+                $this->iniObject($oObjet);
             }
         }
     }
@@ -874,6 +911,45 @@ class CentreonAPI {
             $this->return_code = $poller->execCmd($this->variables);
         }
         return $this->return_code;
+    }
+    /**
+     * This method sort the objects to export
+     */
+    public function sortClassExport()
+    {
+        if (isset($this->relationObject) && is_array(($this->relationObject))) {
+            $aObject = $this->relationObject;
+            while ($oObjet = array_slice($aObject, -1, 1, true)) {
+                $key = key($oObjet);
+                if (isset($oObjet[$key]['class']) && $oObjet[$key]['export'] === true && !in_array($key, $this->aExport)) {
+                    $objName = "centreon" . $oObjet[$key]['class'];
+                   
+                    if (isset($objName::$aDepends)) {
+                        $bInsert = true;
+                        foreach ($objName::$aDepends as $oDependence) {
+                            $keyDep = strtoupper($oDependence);
+                            if (!in_array($keyDep, $this->aExport)) {
+                                $bInsert = false;
+                            }
+                        }
+
+                        if ($bInsert) {
+                             $this->aExport[] = $key;
+                             array_pop($aObject);
+                        } else {
+                            $aObject = array_merge($oObjet, $aObject);
+
+                        }
+                    } else {
+                        $this->aExport[] = $key;
+                        array_pop($aObject);
+                    }
+
+                } else {
+                    array_pop($aObject);
+                }
+            }
+        }
     }
 
 }
