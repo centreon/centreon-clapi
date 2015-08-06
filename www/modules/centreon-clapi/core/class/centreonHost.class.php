@@ -82,6 +82,7 @@ class CentreonHost extends CentreonObject {
         'Command',
         'TimePeriod',
         'Trap',
+        'Instance',
         'HostTemplate'
     );
 
