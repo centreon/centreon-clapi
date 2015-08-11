@@ -52,6 +52,10 @@ class CentreonNagiosCfg extends CentreonObject
     const ORDER_COMMENT           = 2;
     protected $instanceObj;
 
+    public static $aDepends = array(
+        'Instance'
+    );
+
     /**
      * Constructor
      *
