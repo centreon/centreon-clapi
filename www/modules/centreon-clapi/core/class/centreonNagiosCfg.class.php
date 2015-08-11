@@ -314,6 +314,8 @@ class CentreonNagiosCfg extends CentreonObject
                     || $parameter == 'ochp_command' || $parameter == 'ocsp_command') {
                         $tmp = $this->commandObj->getParameters($value, $this->commandObj->getUniqueLabelField());
                         $value = $tmp[$this->commandObj->getUniqueLabelField()];
+                    } else if ($parameter == 'illegal_object_name_chars' || $parameter == 'illegal_macro_output_chars') {
+                        $value = html_entity_decode($value);
                     }
 
                     $value = str_replace("\n", "<br/>", $value);
