@@ -268,7 +268,7 @@ class CentreonAPI {
         $this->relationObject["NAGIOSCFG"] = array(
             'module' => 'core',
             'class' => 'NagiosCfg',
-            'export' => false
+            'export' => true
         );
         $this->relationObject["NDO2DBCFG"] = array(
             'module' => 'core',
