@@ -38,6 +38,7 @@
 require_once "centreonObject.class.php";
 require_once "centreonInstance.class.php";
 require_once "Centreon/Object/Nagios/Nagios.php";
+require_once "Centreon/Object/Nagios/Nagios_Broker_Module.php";
 require_once "Centreon/Object/Command/Command.php";
 
 /**
@@ -60,7 +61,9 @@ class CentreonNagiosCfg extends CentreonObject
     {
         parent::__construct();
         $this->instanceObj = new CentreonInstance();
+        $this->commandObj = new Centreon_Object_Command();
         $this->object = new Centreon_Object_Nagios();
+        $this->brokerModuleObj = new Centreon_Object_Nagios_Broker_Module();
         $this->params = array(  'log_file'                           	  => '/var/log/nagios/nagios.log',
                                 'cfg_dir'                                 => '/etc/nagios/',
                                 'temp_file'                               => '/var/log/nagios/nagios.tmp',
@@ -113,7 +116,7 @@ class CentreonNagiosCfg extends CentreonObject
                                 'ocsp_timeout'                            => '5',
                                 'ochp_timeout'                            => '5',
                                 'perfdata_timeout'                        => '5',
-        						'obsess_over_services'                    => '0',
+        			'obsess_over_services'                    => '0',
                                 'obsess_over_hosts'                       => '2',
                                 'process_performance_data'                => '0',
                                 'host_perfdata_file_mode'                 => '2',
@@ -145,6 +148,9 @@ class CentreonNagiosCfg extends CentreonObject
                             );
         $this->nbOfCompulsoryParams = 3;
         $this->activateField = "nagios_activate";
+        $this->action = 'NAGIOSCFG';
+        $this->insertParams = array($this->object->getUniqueLabelField(), 'nagios_server_id', 'nagios_comment');
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
     }
 
     /**
@@ -184,7 +190,6 @@ class CentreonNagiosCfg extends CentreonObject
         $this->params = array_merge($this->params, $addParams);
         $this->checkParameters();
         $objectId = parent::add();
-        $this->setBrokerModule($objectId, "/usr/lib/nagios/ndomod.o config_file=/etc/nagios/ndomod.cfg");
     }
 
     /**
@@ -202,9 +207,9 @@ class CentreonNagiosCfg extends CentreonObject
         }
         if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
             $commandColumns = array('global_host_event_handler',
-            						'global_service_event_handler',
-            						'host_perfdata_command',
-            						'service_perfdata_command',
+            			    'global_service_event_handler',
+            			    'host_perfdata_command',
+            			    'service_perfdata_command',
                                     'host_perfdata_file_processing_command',
                                     'service_perfdata_file_processing_command',
                                     'ocsp_command',
@@ -272,6 +277,52 @@ class CentreonNagiosCfg extends CentreonObject
             }
             $str = trim($str, $this->delim) . "\n";
             echo $str;
+        }
+    }
+
+    /**
+     * Export
+     *
+     * @return void
+     */
+    public function export() {
+        $elements = $this->object->getList();
+        $tpObj = new Centreon_Object_Timeperiod();
+        foreach ($elements as $element) {
+
+            /* ADD action */
+            $addStr = $this->action . $this->delim . "ADD";
+            foreach ($this->insertParams as $param) {
+                if ($param == 'nagios_server_id') {
+                    $element[$param] = $this->instanceObj->getInstanceName($element[$param]);
+                }
+                $addStr .= $this->delim . $element[$param];
+            }
+            $addStr .= "\n";
+            echo $addStr;
+
+            /* SETPARAM action */
+            foreach ($element as $parameter => $value) {
+                if (!in_array($parameter, $this->exportExcludedParams) && !is_null($value) && $value != "") {
+                    if ($parameter == 'global_host_event_handler' || $parameter == 'global_service_event_handler'
+                    || $parameter == 'host_perfdata_command' || $parameter == 'service_perfdata_command'
+                    || $parameter == 'host_perfdata_file_processing_command' || $parameter == 'service_perfdata_file_processing_command'
+                    || $parameter == 'ochp_command' || $parameter == 'ocsp_command') {
+                        $tmp = $this->commandObj->getParameters($value, $this->commandObj->getUniqueLabelField());
+                        $value = $tmp[$this->commandObj->getUniqueLabelField()];
+                    }
+
+                    $value = str_replace("\n", "<br/>", $value);
+                    $value = CentreonUtils::convertLineBreak($value);
+                    echo $this->action . $this->delim . "setparam" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . $parameter . $this->delim . $value . "\n";
+                }
+            }
+            $modules = $this->brokerModuleObj->getList("broker_module", -1, 0, null, "ASC", array('cfg_nagios_id' => $element[$this->object->getPrimaryKey()]), "AND");
+            $moduleList = array();
+            foreach ($modules as $module) {
+                array_push($moduleList, $module['broker_module']);
+            }
+            echo $this->action . $this->delim . "setparam" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . 'broker_module' . $this->delim . implode('|', $moduleList) . "\n";
         }
     }
 }
