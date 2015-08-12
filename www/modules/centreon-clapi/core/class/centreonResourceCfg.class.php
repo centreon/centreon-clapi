@@ -134,11 +134,11 @@ class CentreonResourceCfg extends CentreonObject
             $instanceIds[] = $this->instanceObj->getInstanceId($instanceName);
         }
         foreach ($instanceIds as $instanceId) {
-            if ($this->isUnique("$".$params[self::ORDER_UNIQUENAME]."$", $instanceId) == false) {
+            if ($this->isUnique($params[self::ORDER_UNIQUENAME], $instanceId) == false) {
                 throw new CentreonClapiException(self::MACRO_ALREADY_IN_USE);
             }
         }
-        $addParams[$this->object->getUniqueLabelField()] = "$".$params[self::ORDER_UNIQUENAME]."$";
+        $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
         $addParams['resource_line'] = $params[self::ORDER_VALUE];
         $addParams['resource_comment'] = $params[self::ORDER_COMMENT];
         $this->params = array_merge($this->params, $addParams);
@@ -159,25 +159,31 @@ class CentreonResourceCfg extends CentreonObject
         if (count($params) < self::NB_UPDATE_PARAMS) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
-        if (($objectId = $params[self::ORDER_UNIQUENAME]) != 0) {
-            if ($params[1] == "instance") {
-                $instanceNames = explode("|", $params[self::ORDER_INSTANCE]);
-                $instanceIds = array();
-                foreach ($instanceNames as $instanceName) {
-                    $instanceIds[] = $this->instanceObj->getInstanceId($instanceName);
-                }
-                $this->setRelations($objectId, $instanceIds);
-            } else {
-                $params[1] = str_replace("value", "line ", $params[1]);
-                if ($params[1] == "name") {
-                    $params[2] = "$".$params[2]."$";
-                }
-                $params[1] = "resource_".$params[1];
-                $updateParams = array($params[1] => $params[2]);
-                parent::setparam($objectId, $updateParams);
-            }
+        if (is_numeric($params[0])) {
+            $objectId = $params[0];
         } else {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
+            $object = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($params[0]));
+            if (isset($object[0][$this->object->getPrimaryKey()])) {
+                $objectId = $object[0][$this->object->getPrimaryKey()];
+            } else {
+                throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]);
+            }
+        }
+        if ($params[1] == "instance") {
+            $instanceNames = explode("|", $params[2]);
+            $instanceIds = array();
+            foreach ($instanceNames as $instanceName) {
+                $instanceIds[] = $this->instanceObj->getInstanceId($instanceName);
+            }
+            $this->setRelations($objectId, $instanceIds);
+        } else {
+            $params[1] = str_replace("value", "line ", $params[1]);
+            if ($params[1] == "name") {
+                $params[2] = $params[2];
+            }
+            $params[1] = "resource_".$params[1];
+            $updateParams = array($params[1] => $params[2]);
+            parent::setparam($objectId, $updateParams);
         }
     }
 
@@ -188,8 +194,18 @@ class CentreonResourceCfg extends CentreonObject
      * @return void
      * @throws Exception
      */
-    public function del($objectId)
+    public function del($objectName)
     {
+        if (is_numeric($objectName)) {
+                $objectId = $objectName;
+        } else {
+            $object = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($objectName));
+            if (isset($object[0][$this->object->getPrimaryKey()])) {
+                $objectId = $object[0][$this->object->getPrimaryKey()];
+            } else {
+                throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[0]);
+            }
+        }
         $this->object->delete($objectId);
     }
 
@@ -273,6 +289,7 @@ class CentreonResourceCfg extends CentreonObject
             /* SETPARAM action */
             foreach ($element as $parameter => $value) {
                 if (!in_array($parameter, $this->exportExcludedParams) && !is_null($value) && $value != "") {
+                    $parameter = str_replace("resource_", "", $parameter);
                     $value = str_replace("\n", "<br/>", $value);
                     $value = CentreonUtils::convertLineBreak($value);
                     echo $this->action . $this->delim . "setparam" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . $parameter . $this->delim . $value . "\n";
