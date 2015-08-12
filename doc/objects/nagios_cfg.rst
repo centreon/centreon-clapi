@@ -79,6 +79,48 @@ Order	Column description
 3	Parameter value
 ======= =================================
 
+
+Addbrokermodule
+---------------
+
+If you want to add new broker module without removing existing modules, use the **ADDBROKERMODULE**::
+  [root@centreon ~]# ./centreon -u admin -p centreon -o NAGIOSCFG -a addbrokermodule -v "Nagios cfg for poller test;/usr/lib64/centreon-engine/externalcmd.so"
+
+
+Arguments are composed of the following columns:
+
+======= =================================
+Order	Column description
+======= =================================
+1	Name of Nagios configuration
+
+2	Module name
+======= =================================
+
+To add multiple modules in one line, it will put the separator "|" between the name of the modules
+  [root@centreon ~]# ./centreon -u admin -p centreon -o NAGIOSCFG -a addbrokermodule -v "Nagios cfg for poller test;/usr/lib64/centreon-engine/externalcmd.so|/etc/centreon-broker/central-module.xml"
+
+
+Delbrokermodule
+---------------
+
+If you want to delete broker module, use the **DELBROKERMODULE**::
+  [root@centreon ~]# ./centreon -u admin -p centreon -o NAGIOSCFG -a delbrokermodule -v "Nagios cfg for poller test;/usr/lib64/centreon-engine/externalcmd.so"
+
+
+Arguments are composed of the following columns:
+
+======= =================================
+Order	Column description
+======= =================================
+1	Name of Nagios configuration
+
+2	Module name
+======= =================================
+
+To delete multiple modules in one line, it will put the separator "|" between the name of the modules
+  [root@centreon ~]# ./centreon -u admin -p centreon -o NAGIOSCFG -a delbrokermodule -v "Nagios cfg for poller test;/usr/lib64/centreon-engine/externalcmd.so|/etc/centreon-broker/central-module.xml"
+
 Parameters that you may change are:
 
 ================ =============================================================================================================================

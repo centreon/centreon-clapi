@@ -331,4 +331,74 @@ class CentreonNagiosCfg extends CentreonObject
             echo $this->action . $this->delim . "setparam" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . 'broker_module' . $this->delim . implode('|', $moduleList) . "\n";
         }
     }
+    
+    public function addbrokermodule($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 2) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            $this->addBkModule($objectId, $params[1]);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
+        }
+    }
+    
+    /**
+     * Set Broker Module
+     *
+     * @param int $objectId
+     * @param string $brokerModule
+     * @return void
+     * @todo we should implement this object in the centreon api so that we don't have to write our own query
+     */
+    protected function addBkModule($objectId, $brokerModule)
+    {
+        $brokerModuleArray = explode("|", $brokerModule);
+        foreach ($brokerModuleArray as $bkModule) {
+            $tab = $this->brokerModuleObj->getIdByParameter('broker_module', array($bkModule)) ;
+            if (count($tab)) {
+                throw new CentreonClapiException(self::OBJECTALREADYEXISTS.":".$bkModule);
+            } else {
+                $this->db->query("INSERT INTO cfg_nagios_broker_module (cfg_nagios_id, broker_module) VALUES (?, ?)", array($objectId, $bkModule));
+            }
+        }
+    }
+    
+    public function delbrokermodule($parameters)
+    {
+        $params = explode($this->delim, $parameters);
+        if (count($params) < 2) {
+            throw new CentreonClapiException(self::MISSINGPARAMETER);
+        }
+        if (($objectId = $this->getObjectId($params[self::ORDER_UNIQUENAME])) != 0) {
+            $this->delBkModule($objectId, $params[1]);
+        } else {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
+        }
+    }
+    
+    /**
+     * Set Broker Module
+     *
+     * @param int $objectId
+     * @param string $brokerModule
+     * @return void
+     * @todo we should implement this object in the centreon api so that we don't have to write our own query
+     */
+    protected function delBkModule($objectId, $brokerModule)
+    {
+        $brokerModuleArray = explode("|", $brokerModule);
+
+        foreach ($brokerModuleArray as $bkModule) {
+            $tab = $this->brokerModuleObj->getIdByParameter('broker_module', array($bkModule));
+            
+            if (count($tab)) {
+                $this->db->query("DELETE FROM cfg_nagios_broker_module WHERE cfg_nagios_id = ? and broker_module = ?", array($objectId, $bkModule));
+            } else {
+                throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$bkModule);
+            }
+        }
+    }
 }
