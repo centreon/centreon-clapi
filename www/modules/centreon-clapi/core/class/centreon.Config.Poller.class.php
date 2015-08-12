@@ -37,6 +37,7 @@
  */
 
 require_once "centreonUtils.class.php";
+require_once "centreonClapiException.class.php";
 
 /**
  *
@@ -286,14 +287,18 @@ class CentreonConfigPoller {
         /**
          * Get Nagios Bin
          */
-        $DBRESULT_Servers =& $this->_DB->query("SELECT `nagios_bin` FROM `nagios_server` WHERE `ns_activate` = '1' AND `localhost` = '1' LIMIT 1");
+        $DBRESULT_Servers =& $this->_DB->query("SELECT `nagios_bin` FROM `nagios_server` WHERE `localhost` = '1' ORDER BY `ns_activate` DESC LIMIT 1");
         $nagios_bin = $DBRESULT_Servers->fetchRow();
         $DBRESULT_Servers->free();
 
         /*
          * Launch test command
          */
-        exec(escapeshellcmd("sudo ".$nagios_bin["nagios_bin"] . " -v ".$this->nagiosCFGPath.$variables."/nagiosCFG.DEBUG"), $lines, $return_code);
+        if (isset($nagios_bin["nagios_bin"])) {
+            exec(escapeshellcmd("sudo ".$nagios_bin["nagios_bin"] . " -v ".$this->nagiosCFGPath.$variables."/nagiosCFG.DEBUG"), $lines, $return_code);
+        } else {
+            throw new CentreonClapiException("Can't find engine binary");
+        }
 
         $msg_debug = "";
         foreach ($lines as $line) {
