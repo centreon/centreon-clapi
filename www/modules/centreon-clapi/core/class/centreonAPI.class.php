@@ -293,7 +293,7 @@ class CentreonAPI {
         $this->relationObject["RESOURCECFG"] = array(
             'module' => 'core',
             'class' => 'ResourceCfg',
-            'export' => false
+            'export' => true
         );
 
         $this->relationObject["ACL"] = array(

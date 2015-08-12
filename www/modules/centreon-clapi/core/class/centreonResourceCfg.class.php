@@ -53,6 +53,10 @@ class CentreonResourceCfg extends CentreonObject
     protected $instanceObj;
     protected $relObj;
 
+    public static $aDepends = array(
+        'Instance'
+    );
+
     /**
      * Constructor
      *
@@ -68,8 +72,11 @@ class CentreonResourceCfg extends CentreonObject
                                 'resource_comment'   	                    => '',
                                 'resource_activate'                         => '1'
                             );
+        $this->insertParams = array($this->object->getUniqueLabelField(), 'resource_line', 'instance_id', 'resource_comment');
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
         $this->nbOfCompulsoryParams = 4;
         $this->activateField = "resource_activate";
+        $this->action = 'RESOURCECFG';
     }
 
     /**
@@ -159,13 +166,6 @@ class CentreonResourceCfg extends CentreonObject
                 foreach ($instanceNames as $instanceName) {
                     $instanceIds[] = $this->instanceObj->getInstanceId($instanceName);
                 }
-                /*
-                foreach ($instanceIds as $instanceId) {
-                    if ($this->isUnique($objectId, $instanceId) == false) {
-                        throw new CentreonClapiException(self::MACRO_ALREADY_IN_USE);
-                    }
-                }
-                */
                 $this->setRelations($objectId, $instanceIds);
             } else {
                 $params[1] = str_replace("value", "line ", $params[1]);
@@ -230,7 +230,7 @@ class CentreonResourceCfg extends CentreonObject
         }
     }
 
-	/**
+    /**
      * Set Instance relations
      *
      * @param int $resourceId
@@ -242,6 +242,42 @@ class CentreonResourceCfg extends CentreonObject
         $this->relObj->delete_resource_id($resourceId);
         foreach ($instances as $instanceId) {
             $this->relObj->insert($instanceId, $resourceId);
+        }
+    }
+
+    /**
+     * Export
+     *
+     * @return void
+     */
+    public function export() {
+        $elements = $this->object->getList();
+        foreach ($elements as $element) {
+            $instanceIds = $this->relObj->getinstance_idFromresource_id(trim($element[$this->object->getPrimaryKey()]));
+
+            /* ADD action */
+            $addStr = $this->action . $this->delim . "ADD";
+            foreach ($this->insertParams as $param) {
+                if ($param == 'instance_id') {
+                    $instances = array();
+                    foreach ($instanceIds as $instanceId) {
+                        $instances[] = $this->instanceObj->getInstanceName($instanceId);
+                    }
+                    $element[$param] = implode('|', $instances);
+                }
+                $addStr .= $this->delim . $element[$param];
+            }
+            $addStr .= "\n";
+            echo $addStr;
+
+            /* SETPARAM action */
+            foreach ($element as $parameter => $value) {
+                if (!in_array($parameter, $this->exportExcludedParams) && !is_null($value) && $value != "") {
+                    $value = str_replace("\n", "<br/>", $value);
+                    $value = CentreonUtils::convertLineBreak($value);
+                    echo $this->action . $this->delim . "setparam" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . $parameter . $this->delim . $value . "\n";
+                }
+            }
         }
     }
 }
