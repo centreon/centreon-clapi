@@ -27,12 +27,19 @@ Columns are the following :
 Column          Description
 =============== ================================================
 ID		ID of contact
+
 Name            Name of contact
+
 Alias           Alias of contact (also login id)
+
 Email           Email of contact
-Pager           Phone number of contact           
+
+Pager           Phone number of contact
+      
 GUI Access      *1* (can access UI) or *0* (cannot access UI)
+
 Admin           *1* (admin) or *0* (non admin)
+
 activate        *1* (enabled) or *0* (disabled)
 =============== ================================================
 
@@ -50,12 +57,19 @@ The required parameters are the following:
 Parameter                  Description
 ========================== ================================================
 Name                       Name of contact
+
 Alias (login)              Alias of contact (also login id)
+
 Email                      Email of contact
+
 Password                   Password of contact
+
 Admin                      *1* (admin) or *0* (non admin)
+
 GUI Access                 *1* (can access UI) or *0* (cannot access UI)
+
 Language                   Language pack has to be installed on Centreon
+
 Authentication type        *local* or *ldap*
 ========================== ================================================
 
@@ -100,30 +114,54 @@ Parameters that you can change are the following:
 Parameter	           Description
 ========================== ============================================================================================
 name	                   Name
+
 alias	                   Alias
-comment	                   Comment
+
+comment                    Comment
+
 email	                   Email Address
+
 password	           User Password
+
 access                     Can reach centreon, *1* if user has access, *0* otherwise
+
 language	           Locale
+
 admin	                   *1* if user is admin, *0* otherwise
+
 authtype	           *ldap* or *local*
+
 hostnotifcmd	           host notification command(s). Multiple commands can be defined with delimiter "|"
+
 svcnotifcmd	           service notification command(s). Multiple commands can be defined with delimiter "|"
+
 hostnotifperiod	           host notification period
+
 svcnotifperiod	           service notification period
-hostnotifopt	           can be d,u,r,f,s,n
+
+hostnotifopt               can be d,u,r,f,s,n
+
 servicenotifopt	           can be w,u,c,r,f,n
+
 address1	           Address #1
+
 address2	           Address #2
+
 address3	           Address #3
+
 address4	           Address #4
+
 address5	           Address #5
+
 address6	           Address #6
-ldap_dn	                   LDAP domain name
+
+ldap_dn                    LDAP domain name
+
 enable_notifications	   *1* when notification is enable, *0* otherwise
+
 autologin_key	           Used for auto login
-template				   Name of the template to apply to the contact
+
+template	           Name of the template to apply to the contact
 ========================== ============================================================================================
 
 .. note::

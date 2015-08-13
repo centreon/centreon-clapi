@@ -79,6 +79,24 @@ Order	Column description
 3	Parameter value
 ======= =================================
 
+Parameters that you may change are:
+
+================ =============================================================================================================================
+Column	         Description
+================ =============================================================================================================================
+nagios_name	 Name
+
+instance	 Instance that is linked to nagios.cfg
+
+broker_module	 example: [...] -v "Nagios CFG 1;broker_module;/usr/local/nagios/bin/ndomod.o config_file=/usr/local/nagios/etc/ndomod.cfg", 
+                 you can use a | delimiter for defining multiple broker modules
+
+nagios_activate	 *1* if activated, *0* otherwise
+
+*	         Centreon CLAPI handles pretty much all the options available in a nagios configuration file. 
+                 Because the list is quite long, it is best to refer to the official documentation of Nagios
+================ =============================================================================================================================
+
 
 Addbrokermodule
 ---------------
@@ -120,21 +138,3 @@ Order	Column description
 
 To delete multiple modules in one line, it will put the separator "|" between the name of the modules
   [root@centreon ~]# ./centreon -u admin -p centreon -o NAGIOSCFG -a delbrokermodule -v "Nagios cfg for poller test;/usr/lib64/centreon-engine/externalcmd.so|/etc/centreon-broker/central-module.xml"
-
-Parameters that you may change are:
-
-================ =============================================================================================================================
-Column	         Description
-================ =============================================================================================================================
-nagios_name	 Name
-
-instance	 Instance that is linked to nagios.cfg
-
-broker_module	 example: [...] -v "Nagios CFG 1;broker_module;/usr/local/nagios/bin/ndomod.o config_file=/usr/local/nagios/etc/ndomod.cfg", 
-                 you can use a | delimiter for defining multiple broker modules
-
-nagios_activate	 *1* if activated, *0* otherwise
-
-*	         Centreon CLAPI handles pretty much all the options available in a nagios configuration file. 
-                 Because the list is quite long, it is best to refer to the official documentation of Nagios
-================ =============================================================================================================================

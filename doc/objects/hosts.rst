@@ -184,6 +184,8 @@ stalking_options	             Comma separated options: 'o' for OK, 'd' for Down,
 statusmap_image	                     Status map image (used by statusmap
 
 vrml_image	                     VRML image
+
+host_notification_options            Notification options (r,w,c,f)
 ==================================== =================================================================================
 
 
@@ -456,4 +458,3 @@ In order to disable a host, use the **DISABLE** action::
 
 .. note::
   You need to generate your configuration file and restart monitoring engine in order to apply changes.
-
