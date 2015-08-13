@@ -78,6 +78,7 @@ class CentreonAPI {
     private $aExport = array(
         'CMD',
         'TP',
+        'CONTACTTPL',
         'CONTACT',
         'CG',
         'HTPL',
@@ -215,7 +216,7 @@ class CentreonAPI {
         $this->relationObject["CONTACTTPL"] = array(
             'module' => 'core',
             'class' => 'ContactTemplate',
-            'export' => false
+            'export' => true
         );
         $this->relationObject["CG"] = array(
             'module' => 'core',

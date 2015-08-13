@@ -69,6 +69,7 @@ class CentreonContact extends CentreonObject {
 
     protected $register;
     public static $aDepends = array(
+        'ContactTemplate',
         'Command',
         'TimePeriod'
     );
@@ -123,7 +124,7 @@ class CentreonContact extends CentreonObject {
         $this->exportExcludedParams = array_merge(
                 $this->insertParams, array(
                     $this->object->getPrimaryKey(), 
-                    "contact_template_id"
+                    "contact_register"
                 )
         );
         $this->action = "CONTACT";
@@ -383,7 +384,7 @@ class CentreonContact extends CentreonObject {
      * @return void
      */
     public function export() {
-        $elements = $this->object->getList("*", -1, 0);
+        $elements = $this->object->getList("*", -1, 0, null, null, array("contact_register" => $this->register), "AND");
         foreach ($elements as $element) {
             $addStr = $this->action . $this->delim . "ADD";
             foreach ($this->insertParams as $param) {
@@ -391,6 +392,7 @@ class CentreonContact extends CentreonObject {
             }
             $addStr .= "\n";
             echo $addStr;
+            
             foreach ($element as $parameter => $value) {
                 if (!is_null($value) && $value != "" && !in_array($parameter, $this->exportExcludedParams)) {
                     if ($parameter == "timeperiod_tp_id") {
@@ -405,6 +407,10 @@ class CentreonContact extends CentreonObject {
                         $parameter = "hostnotifopt";
                     } elseif ($parameter == "contact_service_notification_options") {
                         $parameter = "servicenotifopt";
+                    } elseif ($parameter == "contact_template_id") {
+                        $parameter = "template";
+                        $result = $this->object->getParameters($value, $this->object->getUniqueLabelField());
+                        $value  = $result[$this->object->getUniqueLabelField()];
                     }
                     $value = CentreonUtils::convertLineBreak($value);
                     echo $this->action . $this->delim . "setparam" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . $parameter . $this->delim . $value . "\n";

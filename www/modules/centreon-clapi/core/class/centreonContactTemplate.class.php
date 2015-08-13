@@ -50,5 +50,6 @@ class CentreonContactTemplate extends CentreonContact
         parent::__construct($db);
         $this->params['contact_register'] = 0;
         $this->register = 0;
+        $this->action = "CONTACTTPL";
     }
 }
