@@ -141,7 +141,7 @@ svcnotifperiod	           service notification period
 
 hostnotifopt               can be d,u,r,f,s,n
 
-servicenotifopt	           can be w,u,c,r,f,n
+servicenotifopt	           can be w,u,c,r,f,s,n
 
 address1	           Address #1
 

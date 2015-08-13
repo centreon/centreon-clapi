@@ -206,7 +206,7 @@ icon_image_alt	                 Icon image alt text
 
 comment                          Comment
 
-service_notification_options     Notification options (r,w,c,f)
+service_notification_options     Notification options (w,u,c,r,f,s)
 ================================ =============================================================
 
 .. note::

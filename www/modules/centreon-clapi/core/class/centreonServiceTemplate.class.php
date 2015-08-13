@@ -50,13 +50,29 @@ class CentreonServiceTemplate extends CentreonObject
     const ORDER_SVCALIAS = 1;
     const ORDER_SVCTPL   = 2;
     const NB_UPDATE_PARAMS = 3;
-
+    const UNKNOWN_NOTIFICATION_OPTIONS = "Invalid notifications options";
     
     public static $aDepends = array(
         'Command',
         'TimePeriod',
         'Trap'
     );
+    
+    /**
+     *
+     * @var array 
+     * Contains : list of authorized notifications_options for this objects
+     */
+    public static $aAuthorizedNotificationsOptions = array(
+        'w' => 'Warning',
+        'u' => 'Unreachable',
+        'c' => 'Critical',
+        'r' => 'Recovery', 
+        'f' => 'Flapping', 
+        's' => 'Downtime Scheduled'
+    );
+    
+    
     /**
      * Constructor
      *
@@ -76,7 +92,7 @@ class CentreonServiceTemplate extends CentreonObject
                               'service_flap_detection_enabled'         => '2',
                               'service_process_perf_data'		       => '2',
                               'service_retain_status_information'	   => '2',
-        					  'service_retain_nonstatus_information'   => '2',
+        		      'service_retain_nonstatus_information'   => '2',
                               'service_notifications_enabled'		   => '2',
                               'service_register'					   => '0',
                               'service_activate'				       => '1'
@@ -302,6 +318,14 @@ class CentreonServiceTemplate extends CentreonObject
                 break;
             case "icon_image_alt":
                 $extended = true;
+                break;
+            case "service_notification_options" :
+                $aNotifs = explode(",", $params[2]);
+                foreach ($aNotifs as $notif) {
+                    if (!array_key_exists($notif, self::$aAuthorizedNotificationsOptions)) {
+                        throw new CentreonClapiException(self::UNKNOWN_NOTIFICATION_OPTIONS);
+                    }
+                }
                 break;
             default:
                 if (!preg_match("/^service_/", $params[1])) {

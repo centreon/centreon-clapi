@@ -77,6 +77,7 @@ class CentreonHost extends CentreonObject {
     const ORDER_POLLER = 4;
     const ORDER_HOSTGROUP = 5;
     const MISSING_INSTANCE = "Instance name is mandatory";
+    const UNKNOWN_NOTIFICATION_OPTIONS = "Invalid notifications options";
 
     public static $aDepends = array(
         'Command',
@@ -84,6 +85,18 @@ class CentreonHost extends CentreonObject {
         'Trap',
         'Instance',
         'HostTemplate'
+    );
+    /**
+     *
+     * @var array 
+     * Contains : list of authorized notifications_options for this object
+     */
+    public static $aAuthorizedNotificationsOptions = array(
+        'd' => 'Down', 
+        'u' => 'Unreachable', 
+        'r' => 'Recovery', 
+        'f' => 'Flapping', 
+        's' => 'Downtime Scheduled'
     );
 
     /**
@@ -366,6 +379,14 @@ class CentreonHost extends CentreonObject {
                 case "3d_coords":
                     $extended = true;
                     break;
+                case "host_notification_options" :
+                    $aNotifs = explode(",", $params[2]);
+                    foreach ($aNotifs as $notif) {
+                        if (!array_key_exists($notif, self::$aAuthorizedNotificationsOptions)) {
+                            throw new CentreonClapiException(self::UNKNOWN_NOTIFICATION_OPTIONS);
+                        }
+                    }
+                break;
                 default:
                     if (!preg_match("/^host_/", $params[1])) {
                         $params[1] = "host_" . $params[1];

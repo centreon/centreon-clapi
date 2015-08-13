@@ -189,6 +189,8 @@ icon_image_alt	                   Icon image alt text
 graphtemplate	                   Graph template namei
 
 comment                            Comment
+
+service_notification_options       Notification options (w,u,c,r,f,s)
 ================================== ==========================================================================================================
 
 .. note::

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Copyright 2005-2015 CENTREON
  * Centreon is developped by : Julien Mathis and Romain Le Merlus under
@@ -49,136 +50,159 @@ require_once "Centreon/Object/Relation/Contact/Command/Service.php";
  *
  * @author sylvestre
  */
-class CentreonContact extends CentreonObject
-{
+class CentreonContact extends CentreonObject {
+
     const ORDER_UNIQUENAME = 1;
-    const ORDER_NAME      = 0;
-    const ORDER_MAIL       = 2;
-    const ORDER_PASS       = 3;
-    const ORDER_ADMIN      = 4;
-    const ORDER_ACCESS     = 5;
-    const ORDER_LANG       = 6;
-    const ORDER_AUTHTYPE   = 7;
-    const HOST_NOTIF_TP    = "hostnotifperiod";
-    const SVC_NOTIF_TP     = "svcnotifperiod";
-    const HOST_NOTIF_CMD   = "hostnotifcmd";
-    const SVC_NOTIF_CMD    = "svcnotifcmd";
-    const UNKNOWN_LOCALE   = "Invalid locale";
+    const ORDER_NAME = 0;
+    const ORDER_MAIL = 2;
+    const ORDER_PASS = 3;
+    const ORDER_ADMIN = 4;
+    const ORDER_ACCESS = 5;
+    const ORDER_LANG = 6;
+    const ORDER_AUTHTYPE = 7;
+    const HOST_NOTIF_TP = "hostnotifperiod";
+    const SVC_NOTIF_TP = "svcnotifperiod";
+    const HOST_NOTIF_CMD = "hostnotifcmd";
+    const SVC_NOTIF_CMD = "svcnotifcmd";
+    const UNKNOWN_LOCALE = "Invalid locale";
+    const UNKNOWN_NOTIFICATION_OPTIONS = "Invalid notifications options";
+
     protected $register;
-    
     public static $aDepends = array(
         'Command',
         'TimePeriod'
     );
+    /**
+     *
+     * @var array 
+     * Contains : list of authorized notifications_options for each objects
+     */
+    public static $aAuthorizedNotificationsOptions = array(
+        'host' => array(
+            'd' =>  'Down', 
+            'u' => 'Unreachable', 
+            'r' => 'Recovery', 
+            'f' => 'Flapping', 
+            's' => 'Downtime Scheduled', 
+            'n' => 'None'
+        ),
+        'service' => array(
+            'w' => 'Warning',
+            'u' => 'Unreachable',
+            'c' => 'Critical',
+            'r' => 'Recovery', 
+            'f' => 'Flapping', 
+            's' => 'Downtime Scheduled', 
+            'n' => 'None'
+        )
+    );
 
-	/**
-	 *
-	 * @var CentreonTimePeriod
-	 */
-	protected $tpObject;
+    /**
+     *
+     * @var CentreonTimePeriod
+     */
+    protected $tpObject;
 
-
-	/**
-	 * Constructor
-	 *
-	 * @return void
-	 */
-	public function __construct($db)
-	{
+    /**
+     * Constructor
+     *
+     * @return void
+     */
+    public function __construct($db) {
         parent::__construct();
-		$this->tpObject = new CentreonTimePeriod();
-		$this->object = new Centreon_Object_Contact();
-        $this->params = array('contact_host_notification_options'     => 'n',
-                              'contact_service_notification_options'  => 'n',
-                              'contact_location'			          => '0',
-                              'contact_enable_notifications'          => '0',
-                              'contact_type_msg'                      => 'txt',
-                              'contact_activate'			          => '1',
-        					  'contact_register'                      => '1');
+        $this->tpObject = new CentreonTimePeriod();
+        $this->object = new Centreon_Object_Contact();
+        $this->params = array('contact_host_notification_options' => 'n',
+            'contact_service_notification_options' => 'n',
+            'contact_location' => '0',
+            'contact_enable_notifications' => '0',
+            'contact_type_msg' => 'txt',
+            'contact_activate' => '1',
+            'contact_register' => '1');
         $this->insertParams = array('contact_name', 'contact_alias', 'contact_email', 'contact_passwd', 'contact_admin', 'contact_oreon', 'contact_lang', 'contact_auth_type');
-        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), "contact_template_id"));
+        $this->exportExcludedParams = array_merge(
+                $this->insertParams, array(
+                    $this->object->getPrimaryKey(), 
+                    "contact_template_id"
+                )
+        );
         $this->action = "CONTACT";
         $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->register = 1;
         $this->activateField = 'contact_activate';
-	}
+    }
 
-	/**
-	 * Get contact ID
-	 *
-	 * @param unknown_type $contact_name
-	 */
-	public function getContactID($contact_name = null)
-	{
-		$this->object->setCache(true);
+    /**
+     * Get contact ID
+     *
+     * @param unknown_type $contact_name
+     */
+    public function getContactID($contact_name = null) {
+        $this->object->setCache(true);
         $cIds = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($contact_name));
         $this->object->setCache(false);
         if (!count($cIds)) {
             throw new CentreonClapiException("Unknown contact: " . $contact_name);
         }
         return $cIds[0];
-	}
+    }
 
-	/**
-	 * Validate Name format
-	 *
-	 * @param string $name
-	 */
-	protected function validateName($name)
-	{
-		if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
-			return $this->checkNameformat($name);
-		} else {
-			print "Name '$name' doesn't match with Centreon naming rules.\n";
-			exit (1);
-		}
-	}
+    /**
+     * Validate Name format
+     *
+     * @param string $name
+     */
+    protected function validateName($name) {
+        if (preg_match('/^[0-9a-zA-Z\_\-\ \/\\\.]*$/', $name, $matches) && strlen($name)) {
+            return $this->checkNameformat($name);
+        } else {
+            print "Name '$name' doesn't match with Centreon naming rules.\n";
+            exit(1);
+        }
+    }
 
-	/**
-	 * Checks if language exists
-	 *
-	 * @param string $locale
-	 * @return bool
-	 */
-	protected function checkLang($locale)
-	{
+    /**
+     * Checks if language exists
+     *
+     * @param string $locale
+     * @return bool
+     */
+    protected function checkLang($locale) {
         if (!$locale || $locale == "") {
             return true;
         }
-	    if (strtolower($locale) == "en_us") {
+        if (strtolower($locale) == "en_us") {
             return true;
         }
-	    $dir = CentreonUtils::getCentreonPath() . "/www/locale/$locale";
+        $dir = CentreonUtils::getCentreonPath() . "/www/locale/$locale";
         if (is_dir($dir)) {
             return true;
         }
         return false;
-	}
+    }
 
-	/**
-	 * Delete action
-	 *
-	 * @param string $parameters
-	 */
-	public function del($parameters)
-	{
+    /**
+     * Delete action
+     *
+     * @param string $parameters
+     */
+    public function del($parameters) {
         if (isset($parameters)) {
             $parameters = str_replace(" ", "_", $parameters);
         }
-	    parent::del($parameters);
-	}
+        parent::del($parameters);
+    }
 
-	/**
-	 * Display all contacts
-	 *
-	 * @param string $search
-	 */
-	public function show($parameters = null)
-	{
-	    $filters = array('contact_register' => $this->register);
+    /**
+     * Display all contacts
+     *
+     * @param string $search
+     */
+    public function show($parameters = null) {
+        $filters = array('contact_register' => $this->register);
         if (isset($parameters)) {
             $parameters = str_replace(" ", "_", $parameters);
-            $filters[$this->object->getUniqueLabelField()] = "%".$parameters."%";
+            $filters[$this->object->getUniqueLabelField()] = "%" . $parameters . "%";
         }
         $params = array('contact_id', 'contact_name', 'contact_alias', 'contact_email', 'contact_pager', 'contact_oreon', 'contact_admin', 'contact_activate');
         $paramString = str_replace("contact_", "", implode($this->delim, $params));
@@ -188,16 +212,15 @@ class CentreonContact extends CentreonObject
         foreach ($elements as $tab) {
             echo implode($this->delim, $tab) . "\n";
         }
-	}
+    }
 
-	/**
-	 * Add a contact
-	 *
-	 * @param string $parameters
-	 * @throws CentreonClapiException
-	 */
-	public function add($parameters)
-	{
+    /**
+     * Add a contact
+     *
+     * @param string $parameters
+     * @throws CentreonClapiException
+     */
+    public function add($parameters) {
         $params = explode($this->delim, $parameters);
         if (count($params) < $this->nbOfCompulsoryParams) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
@@ -227,8 +250,7 @@ class CentreonContact extends CentreonObject
      * @return void
      * @throws CentreonClapiException
      */
-    public function setparam($parameters)
-    {
+    public function setparam($parameters) {
         $params = explode($this->delim, $parameters);
         if (count($params) < self::NB_UPDATE_PARAMS) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
@@ -252,7 +274,7 @@ class CentreonContact extends CentreonObject
                     $params[1] = "template_id";
                     $contactId = $this->getContactID($params[2]);
                     if (!isset($contactId) || !$contactId) {
-                        throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[2]);
+                        throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $params[2]);
                     }
                     $params[2] = $contactId;
                 } elseif ($params[1] == "authtype") {
@@ -267,17 +289,30 @@ class CentreonContact extends CentreonObject
                     $params[2] = md5(trim($params[2]));
                 } elseif ($params[1] == "hostnotifopt") {
                     $params[1] = "host_notification_options";
+                    $aNotifs = explode(",", $params[2]);
+                    foreach ($aNotifs as $notif) {
+                        if (!array_key_exists($notif, self::$aAuthorizedNotificationsOptions['host'])) {
+                            throw new CentreonClapiException(self::UNKNOWN_NOTIFICATION_OPTIONS);
+                        }
+                    }
                 } elseif ($params[1] == "servicenotifopt") {
                     $params[1] = "service_notification_options";
+                    $aNotifs = explode(",", $params[2]);
+                    foreach ($aNotifs as $notif) {
+                        if (!array_key_exists($notif, self::$aAuthorizedNotificationsOptions['service'])) {
+                            throw new CentreonClapiException(self::UNKNOWN_NOTIFICATION_OPTIONS);
+                        }
+                    }
                 }
-                $params[1] = "contact_".$params[1];
+                $params[1] = "contact_" . $params[1];
             }
+
             if ($regularParam == true) {
                 $updateParams = array($params[1] => $params[2]);
                 parent::setparam($objectId, $updateParams);
             }
         } else {
-            throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$params[self::ORDER_UNIQUENAME]);
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $params[self::ORDER_UNIQUENAME]);
         }
     }
 
@@ -289,8 +324,7 @@ class CentreonContact extends CentreonObject
      * @param string $commands
      * @throws CentreonClapiException
      */
-    protected function setNotificationCmd($type, $contactId, $commands)
-    {
+    protected function setNotificationCmd($type, $contactId, $commands) {
         $cmds = explode("|", $commands);
         $cmdIds = array();
         $cmdObject = new Centreon_Object_Command();
@@ -299,7 +333,7 @@ class CentreonContact extends CentreonObject
             if (count($tmp)) {
                 $cmdIds[] = $tmp[0];
             } else {
-                throw new CentreonClapiException(self::OBJECT_NOT_FOUND.":".$commandName);
+                throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $commandName);
             }
         }
         if ($type == self::HOST_NOTIF_CMD) {
@@ -321,8 +355,7 @@ class CentreonContact extends CentreonObject
      * @param string $contactName
      * @return void
      */
-    private function exportNotifCommands($objType, $contactId, $contactName)
-    {
+    private function exportNotifCommands($objType, $contactId, $contactName) {
         $commandObj = new Centreon_Object_Command();
         if ($objType == self::HOST_NOTIF_CMD) {
             $obj = new Centreon_Object_Relation_Contact_Command_Host();
@@ -339,23 +372,22 @@ class CentreonContact extends CentreonObject
             $str .= $element[$commandObj->getUniqueLabelField()];
         }
         if ($str) {
-            echo $this->action.$this->delim."setparam".$this->delim.$contactName.$this->delim.$objType.$this->delim.$str."\n";
+            echo $this->action . $this->delim . "setparam" . $this->delim . $contactName . $this->delim . $objType . $this->delim . $str . "\n";
         }
     }
 
-	/**
-	 * Export data
-	 *
-	 * @param string $parameters
-	 * @return void
-	 */
-	public function export()
-	{
-	    $elements = $this->object->getList("*", -1, 0);
+    /**
+     * Export data
+     *
+     * @param string $parameters
+     * @return void
+     */
+    public function export() {
+        $elements = $this->object->getList("*", -1, 0);
         foreach ($elements as $element) {
-            $addStr = $this->action.$this->delim."ADD";
+            $addStr = $this->action . $this->delim . "ADD";
             foreach ($this->insertParams as $param) {
-                $addStr .= $this->delim.$element[$param];
+                $addStr .= $this->delim . $element[$param];
             }
             $addStr .= "\n";
             echo $addStr;
@@ -369,14 +401,19 @@ class CentreonContact extends CentreonObject
                         $value = $this->tpObject->getObjectName($value);
                     } elseif ($parameter == "contact_lang") {
                         $parameter = "locale";
+                    } elseif ($parameter == "contact_host_notification_options") {
+                        $parameter = "hostnotifopt";
+                    } elseif ($parameter == "contact_service_notification_options") {
+                        $parameter = "servicenotifopt";
                     }
                     $value = CentreonUtils::convertLineBreak($value);
-                    echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$parameter.$this->delim.$value."\n";
+                    echo $this->action . $this->delim . "setparam" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . $parameter . $this->delim . $value . "\n";
                 }
             }
             $objId = $element[$this->object->getPrimaryKey()];
             $this->exportNotifCommands(self::HOST_NOTIF_CMD, $objId, $element[$this->object->getUniqueLabelField()]);
             $this->exportNotifCommands(self::SVC_NOTIF_CMD, $objId, $element[$this->object->getUniqueLabelField()]);
         }
-	}
+    }
+
 }

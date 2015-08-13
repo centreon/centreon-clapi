@@ -75,6 +75,7 @@ class CentreonService extends CentreonObject {
     const ORDER_SVCDESC = 1;
     const ORDER_SVCTPL = 2;
     const NB_UPDATE_PARAMS = 4;
+    const UNKNOWN_NOTIFICATION_OPTIONS = "Invalid notifications options";
 
     public static $aDepends = array(
         'Command',
@@ -82,6 +83,20 @@ class CentreonService extends CentreonObject {
         'Trap',
         'Host',
         'ServiceTemplate'
+    );
+    
+    /**
+     *
+     * @var array 
+     * Contains : list of authorized notifications_options for this objects
+     */
+    public static $aAuthorizedNotificationsOptions = array(
+        'w' => 'Warning',
+        'u' => 'Unreachable',
+        'c' => 'Critical',
+        'r' => 'Recovery', 
+        'f' => 'Flapping', 
+        's' => 'Downtime Scheduled'
     );
 
     /**
@@ -402,6 +417,14 @@ class CentreonService extends CentreonObject {
                 break;
             case "icon_image_alt":
                 $extended = true;
+                break;
+            case "service_notification_options" :
+                $aNotifs = explode(",", $params[3]);
+                foreach ($aNotifs as $notif) {
+                    if (!array_key_exists($notif, self::$aAuthorizedNotificationsOptions)) {
+                        throw new CentreonClapiException(self::UNKNOWN_NOTIFICATION_OPTIONS);
+                    }
+                }
                 break;
             default:
                 if (!preg_match("/^service_/", $params[2])) {
