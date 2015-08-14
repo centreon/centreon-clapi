@@ -477,6 +477,10 @@ class CentreonDowntime extends CentreonObject
 
         /* init var */
         $downtimeId = $this->getObjectId($tmp[0]);
+        if ($downtimeId == 0) {
+            throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $tmp[0]);
+        }
+        
         $resources = explode('|', $tmp[1]);
 
         /* retrieve object ids */
@@ -495,7 +499,8 @@ class CentreonDowntime extends CentreonObject
             if (!count($ids)) {
                 throw new CentreonClapiException(sprintf('Could not find service %s on host %s', $service, $host));
             }
-
+            
+          
             /* checks whether or not relationship already exists */
             $sql = "SELECT * 
                 FROM downtime_service_relation 
@@ -512,6 +517,7 @@ class CentreonDowntime extends CentreonObject
 
         /* insert relationship */
         $sql = "INSERT INTO downtime_service_relation (dt_id, host_host_id, service_service_id) VALUES (?, ?, ?)";
+
         foreach ($objectIds as $id) {
             $this->db->query($sql, array($downtimeId, $id[0], $id[1]));
         }
