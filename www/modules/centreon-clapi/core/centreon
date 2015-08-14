@@ -180,6 +180,9 @@ if ($api->login == "" || $api->password == "") {
             print "Please check that your parameters are valid";
             $api->setReturnCode(1);
         }
+    } else {
+        print "Unknown option";
+        $api->setReturnCode(1);
     }
 }
 	$api->close();
