@@ -62,7 +62,7 @@ class CentreonCentbrokerCfg extends CentreonObject
         parent::__construct();
         $this->instanceObj = new CentreonInstance();
         $this->object = new Centreon_Object_Broker();
-        $this->params = array(  'config_filename' => 'centreon-broker.xml',
+        $this->params = array(  'config_filename' => 'central-broker.xml',
                                 'config_activate' => '1'
                                 );
         $this->insertParams = array('name', 'ns_nagios_server');
