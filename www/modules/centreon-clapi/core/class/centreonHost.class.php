@@ -48,7 +48,7 @@ require_once "Centreon/Object/Host/Host.php";
 require_once "Centreon/Object/Host/Extended.php";
 require_once "Centreon/Object/Host/Group.php";
 require_once "Centreon/Object/Host/Category.php";
-require_once "Centreon/Object/Host/Host.php";
+require_once "Centreon/Object/Host/Template.php";
 require_once "Centreon/Object/Host/Macro/Custom.php";
 require_once "Centreon/Object/Service/Service.php";
 require_once "Centreon/Object/Service/Extended.php";
@@ -690,7 +690,7 @@ class CentreonHost extends CentreonObject {
                     $relclass = "Centreon_Object_Relation_Host_Group_Host";
                     break;
                 case "template":
-                    $class = "Centreon_Object_Host";
+                    $class = "Centreon_Object_Host_Tempalte";
                     $relclass = "Centreon_Object_Relation_Host_Template_Host";
                     break;
                 case "parent":
@@ -727,6 +727,7 @@ class CentreonHost extends CentreonObject {
                     $relationTable = array();
                     foreach ($relations as $rel) {
                         $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
+                        
                         if (!count($tab)) {
                             throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $rel);
                         }
