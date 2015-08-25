@@ -63,12 +63,14 @@ class CentreonInstance extends CentreonObject
         $this->params = array('localhost'                => '0',
                               'ns_activate'              => '1',
                               'ssh_port'                 => '22',
-                              'monitoring_engine'        => 'NAGIOS',
-                              'nagios_bin'               => '/usr/sbin/nagios',
-                              'nagiostats_bin'           => '/usr/bin/nagiostats',
-                              'nagios_perfdata'          => '/var/log/nagios/service-perfdata',
-        					  'init_script'              => '/etc/init.d/nagios',
-                              'centreonbroker_cfg_path'  => '/etc/centreon/broker');
+                              'monitoring_engine'        => 'CENGINE',
+                              'nagios_bin'               => '/usr/sbin/centengine',
+                              'nagiostats_bin'           => '/usr/bin/centenginestats',
+                              'nagios_perfdata'          => '/var/log/centreon-engine/service-perfdata',
+                              'init_script'              => '/etc/init.d/centengine',
+                              'centreonbroker_cfg_path'  => '/etc/centreon-broker',
+                              'centreonbroker_module_path'  => '/usr/share/centreon/lib/centreon-broker',
+                              'centreonconnector_path'  => '/usr/lib64/centreon-connector');
         $this->insertParams = array('name', 'ns_ip_address', 'ssh_port', 'monitoring_engine');
         $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), 'last_restart'));
         $this->action = "INSTANCE";
