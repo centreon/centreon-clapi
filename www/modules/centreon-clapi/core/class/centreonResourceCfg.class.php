@@ -138,7 +138,7 @@ class CentreonResourceCfg extends CentreonObject {
         }
 
         foreach ($instanceIds as $instanceId) {
-            if ($this->isUnique($paramName, $instanceId) == false) {
+            if ($this->isUnique($params[self::ORDER_UNIQUENAME], $instanceId) == false) {
                 throw new CentreonClapiException(self::MACRO_ALREADY_IN_USE);
             }
         }
