@@ -124,17 +124,25 @@ class CentreonResourceCfg extends CentreonObject {
         if (count($params) < $this->nbOfCompulsoryParams) {
             throw new CentreonClapiException(self::MISSINGPARAMETER);
         }
+
+        if (!preg_match('/^\$\S+\$$/', $params[self::ORDER_UNIQUENAME])) {
+            $params[self::ORDER_UNIQUENAME] = '$' . $params[self::ORDER_UNIQUENAME] . '$';
+        }
+
         $addParams = array();
         $instanceNames = explode("|", $params[self::ORDER_INSTANCE]);
+
         $instanceIds = array();
         foreach ($instanceNames as $instanceName) {
             $instanceIds[] = $this->instanceObj->getInstanceId($instanceName);
         }
+
         foreach ($instanceIds as $instanceId) {
-            if ($this->isUnique($params[self::ORDER_UNIQUENAME], $instanceId) == false) {
+            if ($this->isUnique($paramName, $instanceId) == false) {
                 throw new CentreonClapiException(self::MACRO_ALREADY_IN_USE);
             }
         }
+
         $addParams[$this->object->getUniqueLabelField()] = $params[self::ORDER_UNIQUENAME];
         $addParams['resource_line'] = $params[self::ORDER_VALUE];
         $addParams['resource_comment'] = $params[self::ORDER_COMMENT];
@@ -175,7 +183,9 @@ class CentreonResourceCfg extends CentreonObject {
         } else {
             $params[1] = str_replace("value", "line ", $params[1]);
             if ($params[1] == "name") {
-                $params[2] = $params[2];
+                if (!preg_match('/^\$\S+\$$/', $params[2])) {
+                    $params[2] = '$' . $params[2] . '$';
+                }
             }
             $params[1] = "resource_" . $params[1];
             $updateParams = array($params[1] => $params[2]);
@@ -194,6 +204,9 @@ class CentreonResourceCfg extends CentreonObject {
         if (is_numeric($objectName)) {
             $objectId = $objectName;
         } else {
+            if (!preg_match('/^\$\S+\$$/', $objectName)) {
+                $objectName = '$' . $objectName . '$';
+            }
             $object = $this->object->getIdByParameter($this->object->getUniqueLabelField(), array($objectName));
             if (isset($object[0][$this->object->getPrimaryKey()])) {
                 $objectId = $object[0][$this->object->getPrimaryKey()];
