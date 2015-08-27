@@ -1,3 +1,12 @@
+centreon-clapi-1.8.0
+====================
+Bugfix: Poller management can use name instead of id
+Bugfix: an host can't be set as a template
+Feature: Possibility to extend centreon-clapi with modules
+Feature: Export complete poller configuration
+Feature: Update default values for poller
+
+
 centreon-clapi-1.7.1
 ====================
 Bugfix: CLAPI Export Miss Macros in Service Templates
