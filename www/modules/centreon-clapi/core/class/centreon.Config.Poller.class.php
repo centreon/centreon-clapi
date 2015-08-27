@@ -224,7 +224,7 @@ class CentreonConfigPoller {
             $msg_restart = exec("sudo " . $nagios_init_script . " reload", $stdout, $return_code);
         } else {
             exec("echo 'RELOAD:".$host["id"]."' >> ". $this->centcore_pipe, $stdout, $return_code);
-            $msg_restart .= _("OK: A reload signal has been sent to ".$host["name"]);
+            $msg_restart .= _("OK: A reload signal has been sent to '".$host["name"]."'");
         }
         print $msg_restart."\n";
         $DBRESULT =& $this->_DB->query("UPDATE `nagios_server` SET `last_restart` = '".time()."' WHERE `id` = '".$this->_DB->escape($variables)."' LIMIT 1");
@@ -310,9 +310,9 @@ class CentreonConfigPoller {
             $msg_restart = exec(escapeshellcmd("sudo " . $nagios_init_script . " restart"), $lines, $return_code);
         } else {
             exec("echo 'RESTART:".$variables."' >> ". $this->centcore_pipe, $stdout, $return_code);
-            $msg_restart = _("OK: A restart signal has been sent to ".$host["name"]);
+            $msg_restart = _("OK: A restart signal has been sent to '".$host["name"]."'");
         }
-        print $msg_restart;
+        print $msg_restart."\n";
         $DBRESULT =& $this->_DB->query("UPDATE `nagios_server` SET `last_restart` = '".time()."' WHERE `id` = '".$this->_DB->escape($variables)."' LIMIT 1");
         return $return_code;
     }
@@ -554,7 +554,7 @@ class CentreonConfigPoller {
             require_once $path."genIndexData.php";
         }
         
-        print "Configuration files generated for poller ".$variables."\n";
+        print "Configuration files generated for poller '".$variables."'\n";
 
         /* free session */
         $pearDB->query("DELETE FROM `session` 
