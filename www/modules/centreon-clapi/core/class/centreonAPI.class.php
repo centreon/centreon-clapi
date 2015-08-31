@@ -56,6 +56,8 @@ require_once "./class/centreon.Config.Poller.class.php";
  */
 class CentreonAPI {
 
+    private static $_instance = null;
+
     public $dateStart;
     public $login;
     public $password;
@@ -98,7 +100,20 @@ class CentreonAPI {
         'DOWNTIME'
     );
     
-    public function CentreonAPI($user, $password, $action, $centreon_path, $options) {
+    /**
+    *
+    * @param void
+    * @return CentreonApi
+    */
+    public static function getInstance($user=null, $password=null, $action=null, $centreon_path=null, $options=null) {
+        if(is_null(self::$_instance)) {
+            self::$_instance = new CentreonAPI($user, $password, $action, $centreon_path, $options);  
+        }
+ 
+        return self::$_instance;
+    }
+    
+    private function CentreonAPI($user, $password, $action, $centreon_path, $options) {
         global $version;
 
         /**
@@ -723,23 +738,44 @@ class CentreonAPI {
     }
 
     /**
+     * Export from a specific object
+     */
+    public function export_filter($action, $filter_id, $filter_name) 
+    {
+        require_once "./class/centreonExported.class.php";
+        $exported = CentreonExported::getInstance();
+
+        if (!isset($this->objectTable[$action])) {
+            print "Unknown object : $action\n";
+            $this->setReturnCode(1);
+            $this->close();
+        }
+        $this->objectTable[$action]->export($filter_id, $filter_name);
+    }
+    
+    /**
      * Export All configuration
      */
     public function export()
-    {    
+    {   
         $this->requireLibs("");
 
         $this->sortClassExport();
         
         $this->initAllObjects();
-        // header
-        echo "{OBJECT_TYPE}{$this->delim}{COMMAND}{$this->delim}{PARAMETERS}\n";        
-        if (count($this->aExport) > 0) {
-            foreach ($this->aExport as $oObjet) {
-                if (method_exists($this->objectTable[$oObjet], 'export')) {
-                    $this->objectTable[$oObjet]->export();
-                }
+        
+        if (isset($this->action) && $this->variables != '') {
+            $this->export_filter($this->action, $this->objectTable[$this->action]->getObjectId($this->variables), $this->variables);
+        } else {
+            // header
+            echo "{OBJECT_TYPE}{$this->delim}{COMMAND}{$this->delim}{PARAMETERS}\n";        
+            if (count($this->aExport) > 0) {
+                foreach ($this->aExport as $oObjet) {
+                    if (method_exists($this->objectTable[$oObjet], 'export')) {
+                        $this->objectTable[$oObjet]->export();
+                    }
                 
+                }
             }
         }
     }

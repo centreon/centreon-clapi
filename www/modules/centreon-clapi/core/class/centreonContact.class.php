@@ -383,8 +383,15 @@ class CentreonContact extends CentreonObject {
      * @param string $parameters
      * @return void
      */
-    public function export() {
-        $elements = $this->object->getList("*", -1, 0, null, null, array("contact_register" => $this->register), "AND");
+    public function export($filter_id=null, $filter_name=null) {
+        $filters = array("contact_register" => $this->register);
+        if (!is_null($filter_id)) {
+            if (CentreonExported::getInstance()->is_exported($this->action, $filter_id, $filter_name)) {
+                return 0;
+            }
+            $filters['contact_id'] = $filter_id;
+        }
+        $elements = $this->object->getList("*", -1, 0, null, null, $filters, "AND");
         foreach ($elements as $element) {
             $addStr = $this->action . $this->delim . "ADD";
             foreach ($this->insertParams as $param) {
@@ -397,10 +404,18 @@ class CentreonContact extends CentreonObject {
                 if (!is_null($value) && $value != "" && !in_array($parameter, $this->exportExcludedParams)) {
                     if ($parameter == "timeperiod_tp_id") {
                         $parameter = self::HOST_NOTIF_TP;
+                        $tmp_id = $value;
                         $value = $this->tpObject->getObjectName($value);
+                        if (!is_null($filter)) {
+                            $this->api->export_filter('TP', $tmp_id, $value);
+                        }
                     } elseif ($parameter == "timeperiod_tp_id2") {
                         $parameter = self::SVC_NOTIF_TP;
+                        $tmp_id = $value;
                         $value = $this->tpObject->getObjectName($value);
+                        if (!is_null($filter)) {
+                            $this->api->export_filter('TP', $tmp_id, $value);
+                        }
                     } elseif ($parameter == "contact_lang") {
                         $parameter = "locale";
                     } elseif ($parameter == "contact_host_notification_options") {
@@ -409,8 +424,12 @@ class CentreonContact extends CentreonObject {
                         $parameter = "servicenotifopt";
                     } elseif ($parameter == "contact_template_id") {
                         $parameter = "template";
+                        $tmp_id = $value;
                         $result = $this->object->getParameters($value, $this->object->getUniqueLabelField());
                         $value  = $result[$this->object->getUniqueLabelField()];
+                        if (!is_null($filter)) {
+                            $this->api->export_filter('CONTACTTPL', $tmp_id, $value);
+                        }
                     }
                     $value = CentreonUtils::convertLineBreak($value);
                     echo $this->action . $this->delim . "setparam" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . $parameter . $this->delim . $value . "\n";

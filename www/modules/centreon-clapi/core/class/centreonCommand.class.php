@@ -171,6 +171,25 @@ class CentreonCommand extends CentreonObject {
         }
         return $id;
     }
+    
+    /**
+	 * Export data
+	 *
+	 * @param string $parameters
+	 * @return void
+	 */
+	public function export($filter_id=null, $filter_name=null)
+	{
+        $filters = null;
+        if (!is_null($filter_id)) {
+            if (CentreonExported::getInstance()->is_exported($this->action, $filter_id, $filter_name)) {
+                return 0;
+            }
+            $filters = array('command_id' => $filter_id);
+        }
+        
+        parent::export($filters);        
+    }
 
 }
 

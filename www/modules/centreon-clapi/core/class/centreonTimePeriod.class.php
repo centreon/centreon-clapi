@@ -285,4 +285,23 @@ class CentreonTimePeriod extends CentreonObject
             $relObj->insert($sourceId, $relId);
         }
     }
+    
+    /**
+	 * Export data
+	 *
+	 * @param string $parameters
+	 * @return void
+	 */
+	public function export($filter_id=null, $filter_name=null)
+	{
+        $filters = null;
+        if (!is_null($filter_id)) {
+            if (CentreonExported::getInstance()->is_exported($this->action, $filter_id, $filter_name)) {
+                return 0;
+            }
+            $filters = array('tp_id' => $filter_id);
+        }
+        
+        parent::export($filters);        
+    }
 }
