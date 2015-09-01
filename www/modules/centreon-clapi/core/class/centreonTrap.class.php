@@ -54,6 +54,10 @@ class CentreonTrap extends CentreonObject
     const UNKNOWN_STATUS          = "Unknown status";
     const INCORRECT_PARAMETER     = "Incorrect parameter";
 
+    public static $aDepends = array(
+        'Manufacturer'
+    );
+
     /**
      * Constructor
      *
