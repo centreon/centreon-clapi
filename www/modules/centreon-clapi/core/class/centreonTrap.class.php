@@ -55,7 +55,7 @@ class CentreonTrap extends CentreonObject
     const INCORRECT_PARAMETER     = "Incorrect parameter";
 
     public static $aDepends = array(
-        'Manufacturer'
+        'Vendor'
     );
 
     /**
