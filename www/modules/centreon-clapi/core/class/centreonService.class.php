@@ -78,11 +78,11 @@ class CentreonService extends CentreonObject {
     const UNKNOWN_NOTIFICATION_OPTIONS = "Invalid notifications options";
 
     public static $aDepends = array(
-        'Command',
-        'TimePeriod',
-        'Trap',
-        'Host',
-        'ServiceTemplate'
+        'CMD',
+        'TP',
+        'TRAP',
+        'HOST',
+        'STPL'
     );
     
     /**

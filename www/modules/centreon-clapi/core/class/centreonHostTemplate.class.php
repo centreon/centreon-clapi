@@ -41,10 +41,10 @@ require_once "centreonHost.class.php";
 class CentreonHostTemplate extends CentreonHost
 {
     public static $aDepends = array(
-        'Command',
-        'TimePeriod',
-        'Trap',
-        'Instance'
+        'CMD',
+        'TP',
+        'TRAP',
+        'INSTANCE'
     );
 
     /**

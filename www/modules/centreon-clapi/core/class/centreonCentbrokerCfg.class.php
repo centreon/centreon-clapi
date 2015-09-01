@@ -52,6 +52,10 @@ class CentreonCentbrokerCfg extends CentreonObject
     const NOENTRYFOUND            = "No entry found";
     protected $instanceObj;
 
+    public static $aDepends = array(
+        'INSTANCE'
+    );
+
     /**
      * Constructor
      *

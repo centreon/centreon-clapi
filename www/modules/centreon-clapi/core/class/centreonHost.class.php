@@ -80,11 +80,11 @@ class CentreonHost extends CentreonObject {
     const UNKNOWN_NOTIFICATION_OPTIONS = "Invalid notifications options";
 
     public static $aDepends = array(
-        'Command',
-        'TimePeriod',
-        'Trap',
-        'Instance',
-        'HostTemplate'
+        'CMD',
+        'TP',
+        'TRAP',
+        'INSTANCE',
+        'HTPL'
     );
     /**
      *

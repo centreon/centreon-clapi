@@ -51,6 +51,10 @@ require_once "Centreon/Object/Relation/Host/Category/Host.php";
  */
 class CentreonHostCategory extends CentreonSeverityAbstract
 {
+    public static $aDepends = array(
+        'HOST'
+    );
+
 	/**
 	 * Constructor
 	 *

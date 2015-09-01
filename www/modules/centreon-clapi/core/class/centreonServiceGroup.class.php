@@ -51,8 +51,13 @@ require_once "Centreon/Object/Relation/Service/Group/Host/Group/Service.php";
  */
 class CentreonServiceGroup extends CentreonObject
 {
-	const ORDER_UNIQUENAME        = 0;
+    const ORDER_UNIQUENAME        = 0;
     const ORDER_ALIAS             = 1;
+
+    public static $aDepends = array(
+        'HOST',
+        'SERVICE'
+    );
 
 	/**
 	 * Constructor

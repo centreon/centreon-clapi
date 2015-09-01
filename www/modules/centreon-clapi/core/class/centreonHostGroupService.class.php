@@ -73,6 +73,11 @@ class CentreonHostGroupService extends CentreonObject
     const ORDER_SVCTPL   = 2;
     const NB_UPDATE_PARAMS = 4;
 
+    public static $aDepends = array(
+        'HOST',
+        'SERVICE'
+    );
+
     /**
      * Constructor
      *

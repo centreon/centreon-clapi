@@ -54,9 +54,9 @@ class CentreonContactGroup extends CentreonObject {
     const ORDER_ALIAS = 1;
 
     public static $aDepends = array(
-        'Command',
-        'TimePeriod',
-        'Contact'
+        'CMD',
+        'TP',
+        'CONTACT'
     );
 
     /**

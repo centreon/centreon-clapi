@@ -51,6 +51,10 @@ require_once "Centreon/Object/Relation/Service/Category/Service.php";
  */
 class CentreonServiceCategory extends CentreonSeverityAbstract
 {
+    public static $aDepends = array(
+        'SERVICE'
+    );
+
     /**
      * Constructor
      *
