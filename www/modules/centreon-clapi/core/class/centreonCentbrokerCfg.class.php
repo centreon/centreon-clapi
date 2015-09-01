@@ -222,7 +222,7 @@ class CentreonCentbrokerCfg extends CentreonObject
                     }
                 }
             } elseif ($matches[1] == "set") {
-        		$multiselect = $this->getMultiselect();	
+                $multiselect = $this->getMultiselect();	
 
                 if (!isset($args[3])) {
                     throw new CentreonClapiException(self::MISSINGPARAMETER);
@@ -244,9 +244,9 @@ class CentreonCentbrokerCfg extends CentreonObject
                 $vals = explode(',', $args[3]);
                 $grplvl = 0;
                 $parentgrpid = null;
-		        if (isset($multiselect[$args[2]])) {
+		if (isset($multiselect[$args[2]])) {
                     $this->db->query($sql, array($configId, $args[1], $multiselect[$args[2]]['groupname'], '', $tagName, 0, null, 1));
-        		    $grplvl = 1;
+        	    $grplvl = 1;
                     $parentgrpid = $multiselect[$args[2]]['groupid'];
                 }
                 foreach ($vals as $v) {
@@ -539,23 +539,23 @@ class CentreonCentbrokerCfg extends CentreonObject
             $resultSet = $res->fetchAll();
             unset($res);
             foreach ($resultSet as $row) {
-                    if ($row['config_key'] != 'name' && $row['config_key'] != 'blockId') {
-                        if (!isset($setParamStr[$row['config_group'].'_'.$row['config_group_id']])) {
-                            $setParamStr[$row['config_group'].'_'.$row['config_group_id']] = "";
-                        }
-                        $row['config_value'] = CentreonUtils::convertLineBreak($row['config_value']);
-                        $setParamStr[$row['config_group'].'_'.$row['config_group_id']] .= $this->action.$this->delim."SET".strtoupper($row['config_group']).
-                                                                 $this->delim.$element['config_name'].
-                                                                 $this->delim.$row['config_group_id'].
-                                                                 $this->delim.$row['config_key'].
-                                                                 $this->delim.$row['config_value']."\n";
-                    } elseif ($row['config_key'] == 'name') {
-                        $addParamStr[$row['config_group'].'_'.$row['config_group_id']] = $this->action.$this->delim."ADD".strtoupper($row['config_group']).
-																						 $this->delim.$element['config_name'].
-                                                                                         $this->delim.$row['config_value'];
-                    } elseif ($row['config_key'] == 'blockId') {
-                        $blockId[$row['config_group'].'_'.$row['config_group_id']] = $row['config_value'];
+                if ($row['config_key'] != 'name' && $row['config_key'] != 'blockId' && $row['config_key'] != 'filters' && $row['config_key'] != 'category') {
+                    if (!isset($setParamStr[$row['config_group'].'_'.$row['config_group_id']])) {
+                        $setParamStr[$row['config_group'].'_'.$row['config_group_id']] = "";
                     }
+                    $row['config_value'] = CentreonUtils::convertLineBreak($row['config_value']);
+                    $setParamStr[$row['config_group'].'_'.$row['config_group_id']] .= $this->action.$this->delim."SET".strtoupper($row['config_group']).
+                        $this->delim.$element['config_name'].
+                        $this->delim.$row['config_group_id'].
+                        $this->delim.$row['config_key'].
+                        $this->delim.$row['config_value']."\n";
+                } elseif ($row['config_key'] == 'name') {
+                    $addParamStr[$row['config_group'].'_'.$row['config_group_id']] = $this->action.$this->delim."ADD".strtoupper($row['config_group']).
+                        $this->delim.$element['config_name'].
+                        $this->delim.$row['config_value'];
+                } elseif ($row['config_key'] == 'blockId') {
+                    $blockId[$row['config_group'].'_'.$row['config_group_id']] = $row['config_value'];
+                }
             }
             foreach ($addParamStr as $id => $add) {
                 if (isset($blockId[$id]) && isset($setParamStr[$id])) {
@@ -565,6 +565,24 @@ class CentreonCentbrokerCfg extends CentreonObject
                     if (isset($rowType['type_shortname'])) {
                         echo $add.$this->delim.$rowType['type_shortname']."\n";
                         echo $setParamStr[$id];
+                        $sql = "SELECT config_key, config_value, config_group, config_group_id
+                            FROM cfg_centreonbroker_info
+                            WHERE config_id = ?
+                            AND config_group_id = ?
+                            AND config_key = 'category'";
+                        $resCategory = $this->db->query($sql, array($element['config_id'], $type));
+                        $resultSet = $resCategory->fetchAll();
+                        $categories = array();
+                        foreach ($resultSet as $row) {
+                            $categories[] = $row['config_value'];
+                        }
+                        if (count($categories)) {
+                            echo $this->action.$this->delim."SET".strtoupper($row['config_group']).
+                                $this->delim.$element['config_name'].
+                                $this->delim.$row['config_group_id'].
+                                $this->delim.$row['config_key'].
+                                $this->delim.implode(',', $categories)."\n"; 
+                        }
                     }
                     unset($resType);
                 }
