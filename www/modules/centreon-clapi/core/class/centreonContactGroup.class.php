@@ -171,7 +171,6 @@ class CentreonContactGroup extends CentreonObject {
                 $relations = explode("|", $relation);
                 $relationTable = array();
                 foreach ($relations as $rel) {
-                    $rel = str_replace(" ", "_", $rel);
                     $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
                     if (!count($tab)) {
                         throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $rel);
