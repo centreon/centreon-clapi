@@ -40,6 +40,7 @@ class CentreonExported {
   private $ariane = array();
   private $filter = 0;
   private $filter_type = null;
+  private $filter_ariane = null;
  
   /**
    * @var Singleton
@@ -56,7 +57,7 @@ class CentreonExported {
     }
  
     public function ariane_push($object, $id, $name) {
-        array_push($this->ariane, $object . ':' . $id . ':' . $name);
+        array_push($this->ariane, $object . ':' . $name . ':' . $id);
     }
     public function ariane_pop() {
         array_pop($this->ariane);
@@ -72,6 +73,27 @@ class CentreonExported {
                 $this->filter_type = array($options['filter-type']);
             }
         }
+        
+        if (isset($options['filter-ariane'])) {
+            $this->filter_ariane = $options['filter-ariane'];
+            if (!is_array($options['filter-ariane'])) {
+                $this->filter_ariane = array($options['filter-ariane']);
+            }
+        }
+    }
+    
+    private function check_ariane($object, $id, $name) {
+        if (!is_null($this->filter_ariane)) {
+            $ariane = join('#', $this->ariane);
+            foreach ($this->filter_ariane as $filter) {
+                if (preg_match('/' . $filter . '/', $ariane)) {
+                    return 0;
+                }
+            }
+            return 1;
+        }
+        
+        return 0;
     }
  
     private function check_filter($object, $id, $name) {
@@ -81,9 +103,10 @@ class CentreonExported {
                     return 0;
                 }
             }
+            return 1;
         }
         
-        return 1;
+        return 0;
     }
  
     public function is_exported($object, $id, $name) {
@@ -97,6 +120,9 @@ class CentreonExported {
         
         # check if there is some filters
         if ($this->check_filter($object, $id, $name)) {
+            return 1;
+        }
+        if ($this->check_ariane($object, $id, $name)) {
             return 1;
         }
        

@@ -733,12 +733,13 @@ class CentreonAPI {
             $this->setReturnCode(1);
             $this->close();
         }
-            
+        
+        $exported->ariane_push($action, $filter_id, $filter_name);
         if ($exported->is_exported($action, $filter_id, $filter_name)) {
+            $exported->ariane_pop();
             return 0;
         }
         
-        $exported->ariane_push($action, $filter_id, $filter_name);
         $this->objectTable[$action]->export($filter_id, $filter_name);
         $exported->ariane_pop();
     }
@@ -769,6 +770,8 @@ class CentreonAPI {
                     $this->close();
                 }
                 $this->export_filter($splits[0], $this->objectTable[$splits[0]]->getObjectId($splits[1]), $splits[1]);
+                # Don't want return \n
+                exit($this->return_code);
             }
         } else {
             // header

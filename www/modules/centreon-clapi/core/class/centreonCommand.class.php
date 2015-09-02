@@ -85,6 +85,7 @@ class CentreonCommand extends CentreonObject {
         $elements = $this->object->getList($params, -1, 0, null, null, $filters);
         foreach ($elements as $tab) {
             $tab['command_line'] = CentreonUtils::convertSpecialPattern(html_entity_decode($tab['command_line']));
+            $tab['command_line'] = CentreonUtils::convertLineBreak($tab['command_line']);
             $tab['command_type'] = $this->typeConversion[$tab['command_type']];
             echo implode($this->delim, $tab) . "\n";
         }

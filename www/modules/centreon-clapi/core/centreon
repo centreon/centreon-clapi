@@ -64,7 +64,8 @@ $shortopts .= "e"; /* Export all configuration */
 
 $longopts  = array(
     "select:",
-    "filter-type:"
+    "filter-type:",
+    "filter-ariane:"
 );
 
 $options = getopt($shortopts, $longopts);
