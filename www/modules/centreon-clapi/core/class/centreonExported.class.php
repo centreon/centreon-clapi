@@ -37,6 +37,7 @@
 class CentreonExported {
 
   private $exported = array();
+  private $ariane = array();
  
   /**
    * @var Singleton
@@ -50,6 +51,13 @@ class CentreonExported {
     * @return void
     */
     private function __construct() {  
+    }
+ 
+    public function ariane_push($object, $id, $name) {
+        array_push($this->ariane, $object . ':' . $id . ':' . $name);
+    }
+    public function ariane_pop() {
+        array_pop($this->ariane);
     }
  
     public function is_exported($object, $id, $name) {

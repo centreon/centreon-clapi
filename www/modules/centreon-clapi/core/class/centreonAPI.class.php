@@ -750,7 +750,9 @@ class CentreonAPI {
             $this->setReturnCode(1);
             $this->close();
         }
+        $exported->ariane_push($action, $filter_id, $filter_name);
         $this->objectTable[$action]->export($filter_id, $filter_name);
+        $exported->ariane_pop();
     }
     
     /**
