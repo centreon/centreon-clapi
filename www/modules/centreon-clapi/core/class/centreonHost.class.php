@@ -81,11 +81,11 @@ class CentreonHost extends CentreonObject {
     const UNKNOWN_NOTIFICATION_OPTIONS = "Invalid notifications options";
 
     public static $aDepends = array(
-        'Command',
-        'TimePeriod',
-        'Trap',
-        'Instance',
-        'HostTemplate'
+        'CMD',
+        'TP',
+        'TRAP',
+        'INSTANCE',
+        'HTPL'
     );
     /**
      *
@@ -720,14 +720,15 @@ class CentreonHost extends CentreonObject {
                     if (!isset($args[1])) {
                         throw new CentreonClapiException(self::MISSINGPARAMETER);
                     }
-                    if ($matches[2] == "contact") {
-                        $args[1] = str_replace(" ", "_", $args[1]);
-                    }
                     $relation = $args[1];
                     $relations = explode("|", $relation);
                     $relationTable = array();
                     foreach ($relations as $rel) {
-                        $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
+                        if ($matches[2] == "contact") {
+                            $tab = $obj->getIdByParameter("contact_name", array($rel));
+                        } else {
+                            $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
+                        }
                         
                         if (!count($tab)) {
                             throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $rel);

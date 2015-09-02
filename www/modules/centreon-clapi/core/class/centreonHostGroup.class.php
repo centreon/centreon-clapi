@@ -58,6 +58,10 @@ class CentreonHostGroup extends CentreonObject
     const ORDER_UNIQUENAME        = 0;
     const ORDER_ALIAS             = 1;
 
+    public static $aDepends = array(
+        'HOST'
+    );
+
     /**
      * Constructor
      *

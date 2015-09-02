@@ -53,7 +53,7 @@ class CentreonNagiosCfg extends CentreonObject
     protected $instanceObj;
 
     public static $aDepends = array(
-        'Instance'
+        'INSTANCE'
     );
 
     /**

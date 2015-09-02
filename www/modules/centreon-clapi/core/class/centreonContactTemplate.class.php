@@ -40,6 +40,11 @@ require_once "centreonContact.class.php";
 
 class CentreonContactTemplate extends CentreonContact
 {
+    public static $aDepends = array(
+        'CMD',
+        'TP'
+    );
+
     /**
      * Constructor
      *

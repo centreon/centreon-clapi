@@ -77,28 +77,7 @@ class CentreonAPI {
     private $return_code;
     private $relationObject;
     private $objectTable;
-    private $aExport = array(
-        'CMD',
-        'TP',
-        'CONTACTTPL',
-        'CONTACT',
-        'CG',
-        'HTPL',
-        'INSTANCE',
-        'CENTBROKERCFG',
-        'TRAP',
-        'HOST',
-        'HG',
-        'STPL',
-        'HC',
-        'VENDOR',
-        'SERVICE',
-        'HGSERVICE',
-        'SG',
-        'SC',
-        'DEP',
-        'DOWNTIME'
-    );
+    private $aExport = array();
     
     /**
     *
