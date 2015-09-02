@@ -39,6 +39,7 @@ class CentreonExported {
   private $exported = array();
   private $ariane = array();
   private $filter = 0;
+  private $filter_type = null;
  
   /**
    * @var Singleton
@@ -64,6 +65,26 @@ class CentreonExported {
     public function set_filter($value=1) {
         $this->filter = $value;
     }
+    public function set_options($options) {
+        if (isset($options['filter-type'])) {
+            $this->filter_type = $options['filter-type'];
+            if (!is_array($options['filter-type'])) {
+                $this->filter_type = array($options['filter-type']);
+            }
+        }
+    }
+ 
+    private function check_filter($object, $id, $name) {
+        if (!is_null($this->filter_type)) {
+            foreach ($this->filter_type as $filter) {
+                if (preg_match('/' . $filter . '/', $object)) {
+                    return 0;
+                }
+            }
+        }
+        
+        return 1;
+    }
  
     public function is_exported($object, $id, $name) {
         if ($this->filter == 0) {
@@ -74,6 +95,11 @@ class CentreonExported {
             return 1;
         }
         
+        # check if there is some filters
+        if ($this->check_filter($object, $id, $name)) {
+            return 1;
+        }
+       
         if (!is_array($this->exported[$object])) {
             $this->exported[$object] = array();
         }

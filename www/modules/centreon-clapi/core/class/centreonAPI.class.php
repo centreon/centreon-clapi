@@ -754,9 +754,22 @@ class CentreonAPI {
         
         $this->initAllObjects();
         
-        if (isset($this->action) && $this->variables != '') {
+        if (isset($this->options['select'])) {
             CentreonExported::getInstance()->set_filter(1);
-            $this->export_filter($this->action, $this->objectTable[$this->action]->getObjectId($this->variables), $this->variables);
+            CentreonExported::getInstance()->set_options($this->options);
+            $selected = $this->options['select'];
+            if (!is_array($this->options['select'])) {
+                $selected = array($this->options['select']);
+            }
+            foreach ($selected as $select) {
+                $splits = explode(';', $select);
+                if (!isset($this->objectTable[$splits[0]])) {
+                    print "Unknown object : $splits[0]\n";
+                    $this->setReturnCode(1);
+                    $this->close();
+                }
+                $this->export_filter($splits[0], $this->objectTable[$splits[0]]->getObjectId($splits[1]), $splits[1]);
+            }
         } else {
             // header
             echo "{OBJECT_TYPE}{$this->delim}{COMMAND}{$this->delim}{PARAMETERS}\n";        
