@@ -769,9 +769,6 @@ class CentreonHost extends CentreonObject {
     public function export($filter_id=null, $filter_name=null) {
         $filters = array("host_register" => $this->register);
         if (!is_null($filter_id)) {
-            if (($return_value = CentreonExported::getInstance()->is_exported($this->action, $filter_id, $filter_name))) {
-                return $return_value;
-            }
             $filters['host_id'] = $filter_id;
         }
     
@@ -850,9 +847,7 @@ class CentreonHost extends CentreonObject {
         }
         $elements = $cgRel->getMergedParameters(array("cg_name", "cg_id"), array($this->object->getUniqueLabelField()), -1, 0, null, null, $filters_cgRel, "AND");
         foreach ($elements as $element) {
-            if (!is_null($filter_id)) {
-                $this->api->export_filter('CG', $element['cg_id'], $element['cg_name']);
-            }
+            $this->api->export_filter('CG', $element['cg_id'], $element['cg_name']);
             echo $this->action . $this->delim . "addcontactgroup" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . $element['cg_name'] . "\n";
         }
         
@@ -863,9 +858,7 @@ class CentreonHost extends CentreonObject {
         }
         $elements = $contactRel->getMergedParameters(array("contact_name", "contact_id"), array($this->object->getUniqueLabelField()), -1, 0, null, null, $filters_contactRel, "AND");
         foreach ($elements as $element) {
-            if (!is_null($filter_id)) {
-                $this->api->export_filter('CONTACT', $element['contact_id'], $element['contact_name']);
-            }
+            $this->api->export_filter('CONTACT', $element['contact_id'], $element['contact_name']);
             echo $this->action . $this->delim . "addcontact" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . $element['contact_name'] . "\n";
         }
         
@@ -876,9 +869,7 @@ class CentreonHost extends CentreonObject {
         }
         $elements = $htplRel->getMergedParameters(array("host_name as host"), array("host_name as template", "host_id as tpl_id"), -1, 0, "host,`order`", "ASC", $filters_htplRel, "AND");
         foreach ($elements as $element) {
-            if (!is_null($filter_id)) {
-                $this->api->export_filter('HTPL', $element['tpl_id'], $element['template']);
-            }
+            $this->api->export_filter('HTPL', $element['tpl_id'], $element['template']);
             echo $this->action . $this->delim . "addtemplate" . $this->delim . $element['host'] . $this->delim . $element['template'] . "\n";
         }
         

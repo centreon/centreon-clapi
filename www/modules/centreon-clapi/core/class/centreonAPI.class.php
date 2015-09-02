@@ -724,11 +724,20 @@ class CentreonAPI {
         require_once "./class/centreonExported.class.php";
         $exported = CentreonExported::getInstance();
 
+        if (is_null($action)) {
+            return 0;
+        }
+        
         if (!isset($this->objectTable[$action])) {
             print "Unknown object : $action\n";
             $this->setReturnCode(1);
             $this->close();
         }
+            
+        if ($exported->is_exported($action, $filter_id, $filter_name)) {
+            return 0;
+        }
+        
         $exported->ariane_push($action, $filter_id, $filter_name);
         $this->objectTable[$action]->export($filter_id, $filter_name);
         $exported->ariane_pop();
@@ -746,6 +755,7 @@ class CentreonAPI {
         $this->initAllObjects();
         
         if (isset($this->action) && $this->variables != '') {
+            CentreonExported::getInstance()->set_filter(1);
             $this->export_filter($this->action, $this->objectTable[$this->action]->getObjectId($this->variables), $this->variables);
         } else {
             // header

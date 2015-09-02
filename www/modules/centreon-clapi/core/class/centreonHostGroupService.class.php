@@ -653,9 +653,6 @@ class CentreonHostGroupService extends CentreonObject
     {
         $filters = array("service_register" => $this->register);
         if (!is_null($filter_id)) {
-            if (($return_value = CentreonExported::getInstance()->is_exported($this->action, $filter_id, $filter_name))) {
-                return $return_value;
-            }
             $filters['hg_id'] = $filter_id;
         }
         $hostRel = new Centreon_Object_Relation_Host_Group_Service();
@@ -673,9 +670,7 @@ class CentreonHostGroupService extends CentreonObject
                     $tmp = $this->object->getParameters($element[$param], 'service_description');
                     if (isset($tmp) && isset($tmp['service_description']) && $tmp['service_description']) {
                         $element[$param] = $tmp['service_description'];
-                        if (!is_null($filter_id)) {
-                            $this->api->export_filter('STPL', $tmp_id, $tmp['service_description']);
-                        }
+                        $this->api->export_filter('STPL', $tmp_id, $tmp['service_description']);
                     }
                     if (!$element[$param]) {
                         $element[$param] = "";
@@ -700,9 +695,7 @@ class CentreonHostGroupService extends CentreonObject
                         if (isset($tmp) && isset($tmp[$tmpObj->getUniqueLabelField()])) {
                             $tmp_id = $value;
                             $value = $tmp[$tmpObj->getUniqueLabelField()];
-                            if (!is_null($filter_id) && !is_null($action_tmp)) {
-                                $this->api->export_filter($action_tmp, $tmp_id, $value);
-                            }
+                            $this->api->export_filter($action_tmp, $tmp_id, $value);
                         }
                         unset($tmpObj);
                     }
@@ -725,17 +718,13 @@ class CentreonHostGroupService extends CentreonObject
             $cgRel = new Centreon_Object_Relation_Contact_Group_Service();
             $cgelements = $cgRel->getMergedParameters(array("cg_name", "cg_id"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service_id" => $element['service_id']), "AND");
             foreach ($cgelements as $cgelement) {
-                if (!is_null($filter_id)) {
-                    $this->api->export_filter('CG', $element['cg_id'], $element['cg_name']);
-                }
+                $this->api->export_filter('CG', $element['cg_id'], $element['cg_name']);
                 echo $this->action.$this->delim."addcontactgroup".$this->delim.$element['hg_name'].$this->delim.$cgelement['service_description'].$this->delim.$cgelement['cg_name']."\n";
             }
             $contactRel = new Centreon_Object_Relation_Contact_Service();
             $celements = $contactRel->getMergedParameters(array("contact_name", "contact_id"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service_id" => $element['service_id']), "AND");
             foreach ($celements as $celement) {
-                if (!is_null($filter_id)) {
-                    $this->api->export_filter('CONTACT', $element['contact_id'], $element['contact_name']);
-                }
+                $this->api->export_filter('CONTACT', $element['contact_id'], $element['contact_name']);
                 echo $this->action.$this->delim."addcontact".$this->delim.$element['hg_name'].$this->delim.$celement['service_description'].$this->delim.$celement['contact_name']."\n";
             }
         }

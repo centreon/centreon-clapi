@@ -38,6 +38,7 @@ class CentreonExported {
 
   private $exported = array();
   private $ariane = array();
+  private $filter = 0;
  
   /**
    * @var Singleton
@@ -60,7 +61,15 @@ class CentreonExported {
         array_pop($this->ariane);
     }
  
+    public function set_filter($value=1) {
+        $this->filter = $value;
+    }
+ 
     public function is_exported($object, $id, $name) {
+        if ($this->filter == 0) {
+            return 1;
+        }
+    
         if (isset($this->exported[$object][$id])) {
             return 1;
         }
