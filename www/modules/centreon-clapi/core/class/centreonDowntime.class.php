@@ -56,6 +56,11 @@ class CentreonDowntime extends CentreonObject
     protected $weekDays;
     protected $serviceObj;
 
+    public static $aDepends = array(
+        'SERVICE',
+        'HOST'
+    );
+
     /**
      * Constructor
      *
