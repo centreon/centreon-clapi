@@ -66,7 +66,7 @@ class CentreonCommand extends CentreonObject {
         $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), "graph_id", "cmd_cat_id"));
         $this->action = "CMD";
         $this->nbOfCompulsoryParams = count($this->insertParams);
-        $this->typeConversion = array("notif" => 1, "check" => 2, "misc" => 3, 1 => "notif", 2 => "check", 3 => "misc");
+        $this->typeConversion = array("notif" => 1, "check" => 2, "misc" => 3, "discovery" => 4, 1 => "notif", 2 => "check", 3 => "misc", 4 => "discovery");
     }
 
     /**
