@@ -58,7 +58,8 @@ class CentreonServiceTemplate extends CentreonObject {
     public static $aDepends = array(
         'CMD',
         'TP',
-        'TRAP'
+        'TRAP',
+        'HTPL'
     );
 
     /**
