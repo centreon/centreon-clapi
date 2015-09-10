@@ -538,6 +538,7 @@ class CentreonCentbrokerCfg extends CentreonObject
             		ORDER BY config_group_id";
             $res = $this->db->query($sql, array($element['config_id']));
             $blockId = array();
+            $categories = array();
             $addParamStr = array();
             $setParamStr = array();
             $resultSet = $res->fetchAll();
@@ -559,6 +560,8 @@ class CentreonCentbrokerCfg extends CentreonObject
                         $this->delim.$row['config_value'];
                 } elseif ($row['config_key'] == 'blockId') {
                     $blockId[$row['config_group'].'_'.$row['config_group_id']] = $row['config_value'];
+                } elseif ($row['config_key'] == 'category') {
+                    $categories[$row['config_group'].'_'.$row['config_group_id']][] = $row['config_value'];
                 }
             }
             foreach ($addParamStr as $id => $add) {
@@ -569,26 +572,16 @@ class CentreonCentbrokerCfg extends CentreonObject
                     if (isset($rowType['type_shortname'])) {
                         echo $add.$this->delim.$rowType['type_shortname']."\n";
                         echo $setParamStr[$id];
-                        $sql = "SELECT config_key, config_value, config_group, config_group_id
-                            FROM cfg_centreonbroker_info
-                            WHERE config_id = ?
-                            AND config_group_id = ?
-                            AND config_key = 'category'";
-                        $resCategory = $this->db->query($sql, array($element['config_id'], $type));
-                        $resultSet = $resCategory->fetchAll();
-                        $categories = array();
-                        foreach ($resultSet as $row) {
-                            $categories[] = $row['config_value'];
-                        }
-                        if (count($categories)) {
-                            echo $this->action.$this->delim."SET".strtoupper($row['config_group']).
-                                $this->delim.$element['config_name'].
-                                $this->delim.$row['config_group_id'].
-                                $this->delim.$row['config_key'].
-                                $this->delim.implode(',', $categories)."\n"; 
-                        }
                     }
                     unset($resType);
+                }
+                if (isset($categories[$id])) {
+                    list($configGroup, $configGroupId) = explode('_', $id);
+                    echo $this->action.$this->delim."SET".strtoupper($configGroup)
+                        .$this->delim.$element['config_name']
+                        .$this->delim.$configGroupId
+                        .$this->delim.'category'
+                        .$this->delim.implode(',', $categories[$id])."\n";
                 }
             }
         }
