@@ -43,11 +43,11 @@ require_once "Centreon/Object/Object.php";
  *
  * @author Toufik MECHOUET
  */
-class Centreon_Object_Host_Template extends Centreon_Object
+class Centreon_Object_Service_Template extends Centreon_Object
 {
-    protected $table = "host";
-    protected $primaryKey = "host_id";
-    protected $uniqueLabelField = "host_name";
+    protected $table = "service";
+    protected $primaryKey = "service_id";
+    protected $uniqueLabelField = "service_description";
     
     
     /**
@@ -73,7 +73,7 @@ class Centreon_Object_Host_Template extends Centreon_Object
         }
         if ($condition) {
             $sql .= $condition;
-            $sql .= " AND ".$this->table.".host_register = '0' ";
+            $sql .= " AND ".$this->table.".service_register = '0' ";
             $rows = $this->getResult($sql, $paramValues, "fetchAll");
             $tab = array();
             foreach ($rows as $val) {

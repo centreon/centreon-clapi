@@ -690,7 +690,7 @@ class CentreonHost extends CentreonObject {
                     $relclass = "Centreon_Object_Relation_Host_Group_Host";
                     break;
                 case "template":
-                    $class = "Centreon_Object_Host_Tempalte";
+                    $class = "Centreon_Object_Host_Template";
                     $relclass = "Centreon_Object_Relation_Host_Template_Host";
                     break;
                 case "parent":
