@@ -17,6 +17,7 @@ Contents:
 .. toctree::
    :maxdepth: 1
 
+   release_notes/index 
    installation/index
    overview
    engine_management
