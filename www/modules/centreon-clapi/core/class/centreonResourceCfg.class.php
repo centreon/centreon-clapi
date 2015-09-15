@@ -55,7 +55,7 @@ class CentreonResourceCfg extends CentreonObject {
     protected $instanceObj;
     protected $relObj;
     public static $aDepends = array(
-        'Instance'
+        'INSTANCE'
     );
 
     /**

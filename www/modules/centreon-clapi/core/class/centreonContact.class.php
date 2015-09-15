@@ -69,9 +69,9 @@ class CentreonContact extends CentreonObject {
 
     protected $register;
     public static $aDepends = array(
-        'ContactTemplate',
-        'Command',
-        'TimePeriod'
+        'CONTACTTPL',
+        'CMD',
+        'TP'
     );
     /**
      *

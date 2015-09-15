@@ -343,6 +343,7 @@ abstract class CentreonObject
             foreach ($elements as $element) {
                 $addStr = $this->action.$this->delim."ADD";
                 foreach ($this->insertParams as $param) {
+                    $element[$param] = CentreonUtils::convertLineBreak($element[$param]);
                     $addStr .= $this->delim.$element[$param];
                 }
                 $addStr .= "\n";

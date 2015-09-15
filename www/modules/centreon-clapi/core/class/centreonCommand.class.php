@@ -66,7 +66,7 @@ class CentreonCommand extends CentreonObject {
         $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), "graph_id", "cmd_cat_id"));
         $this->action = "CMD";
         $this->nbOfCompulsoryParams = count($this->insertParams);
-        $this->typeConversion = array("notif" => 1, "check" => 2, "misc" => 3, 1 => "notif", 2 => "check", 3 => "misc");
+        $this->typeConversion = array("notif" => 1, "check" => 2, "misc" => 3, "discovery" => 4, 1 => "notif", 2 => "check", 3 => "misc", 4 => "discovery");
     }
 
     /**
@@ -170,6 +170,67 @@ class CentreonCommand extends CentreonObject {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $commandName);
         }
         return $id;
+    }
+    
+    /**
+     * Export data
+     *
+     * @param string $parameters
+     * @return void
+     */
+
+    public function export()
+    {
+        $elements = $this->object->getList("*", -1, 0);
+        foreach ($elements as $element) {
+            $addStr = $this->action.$this->delim."ADD";
+            foreach ($this->insertParams as $param) {
+                $addStr .= $this->delim.$element[$param];
+            }
+            $addStr .= "\n";
+            echo $addStr;
+
+            foreach ($element as $parameter => $value) {
+                if (!in_array($parameter, $this->exportExcludedParams)) {
+                    if (!is_null($value) && $value != "") {
+                        $value = CentreonUtils::convertLineBreak($value);
+                        echo $this->action.$this->delim."setparam".$this->delim.$element[$this->object->getUniqueLabelField()].$this->delim.$parameter.$this->delim.$value."\n";
+                    }
+                }
+                if ($parameter == "graph_id" && !empty($value)) {
+                    $graphObject = new Centreon_Object_Graph_Template();
+                    $tmp = $graphObject->getParameters($value, array($graphObject->getUniqueLabelField()));
+                    
+                    if (!count($tmp)) {
+                        throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $value);
+                    }
+                   
+                    $v = $tmp[$graphObject->getUniqueLabelField()];
+                    $v = CentreonUtils::convertLineBreak($v);
+
+                    echo $this->action . $this->delim . "setparam" . $this->delim . $element[$this->object->getUniqueLabelField()] . $this->delim . $this->getClapiActionName($parameter) . $this->delim . $v . "\n";
+                    
+                }
+            }
+        }
+    }
+    
+    /**
+     * Get clapi action name from db column name
+     *
+     * @param string $columnName
+     * @return string
+     */
+    protected function getClapiActionName($columnName) {
+        static $table;
+
+        if (!isset($table)) {
+            $table = array("graph_id" => "graph");
+        }
+        if (isset($table[$columnName])) {
+            return $table[$columnName];
+        }
+        return $columnName;
     }
 
 }

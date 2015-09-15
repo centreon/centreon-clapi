@@ -196,24 +196,24 @@ service_notification_options       Notification options (w,u,c,r,f,s)
 .. note::
   You need to generate your configuration file and restart monitoring engine in order to apply changes.
 
-Addhost and Sethost
+Addhosttemplate and Sethosttemplate
 -------------------
 
-You may want to tie a service template to an extra host template. In order to do so, use the **ADDHOST** or **SETHOST** actions where *add* will append and *set* will overwrite previous definitions::
+You may want to tie a service template to an extra host template. In order to do so, use the **ADDHOSTTEMPLATE** or **SETHOSTTEMPLATE** actions where *add* will append and *set* will overwrite previous definitions::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o STPL -a sethost -v "MyTemplate;generic-host-template" 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o STPL -a addhost -v "MyTemplate;Linux-Servers" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o STPL -a sethosttemplate -v "MyTemplate;generic-host-template" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o STPL -a addhosttemplate -v "MyTemplate;Linux-Servers" 
 
 .. note::
   You need to generate your configuration file and restart monitoring engine in order to apply changes.
 
 
-Delhost
+Delhosttemplate
 --------
 
-In order to remove the relation between a host template and a service template, use the **DELHOST** action::
+In order to remove the relation between a host template and a service template, use the **DELHOSTTEMPLATE** action::
 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o STPL -a delhost -v "MyTemplate;Linux-Servers" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o STPL -a delhosttemplate -v "MyTemplate;Linux-Servers" 
 
 .. note::
   You need to generate your configuration file and restart monitoring engine in order to apply changes.

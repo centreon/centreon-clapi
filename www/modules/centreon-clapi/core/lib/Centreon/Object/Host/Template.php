@@ -43,7 +43,7 @@ require_once "Centreon/Object/Object.php";
  *
  * @author Toufik MECHOUET
  */
-class Centreon_Object_Host_Tempalte extends Centreon_Object
+class Centreon_Object_Host_Template extends Centreon_Object
 {
     protected $table = "host";
     protected $primaryKey = "host_id";

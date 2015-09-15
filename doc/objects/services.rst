@@ -33,23 +33,23 @@ Column	                     Description
 ============================ ===================================================
 Host ID	                     Host ID
 
-Host name	                 Host name
+Host name	             Host name
 
-Service ID	                 Service ID
+Service ID	             Service ID
 
-Service description	         Service description
+Service description	     Service description
 
 Check Command	             Check command
 
-Command arguments	         Check command arguments
+Command arguments	     Check command arguments
 
 Normal check interval	     Normal check interval
 
 Retry check interval	     Retry check interval
 
-Max check attempts	         Maximum check attempts
+Max check attempts	     Maximum check attempts
 
-Active check enable	         *1* when active checks are enabled, *0* otherwise
+Active check enable	     *1* when active checks are enabled, *0* otherwise
 
 Passive check enable	     *1* when passive checks are enabled, *0* otherwise
 
@@ -109,7 +109,7 @@ In order to set a specific paremeter for a particular service, use the **SETPARA
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a setparam -v "test;ping;max_check_attempts;10" 
   [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a setparam -v "test;ping;normal_check_interval;2" 
-  [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a setparam -v "test;ping;normal_check_interval;http://192.168.1.2/admincp" 
+  [root@centreon ~]# ./centreon -u admin -p centreon -o SERVICE -a setparam -v "test;ping;normal_check_interval;10" 
 
 The required fields are:
 

@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Copyright 2005-2015 CENTREON
  * Centreon is developped by : Julien Mathis and Romain Le Merlus under
  * GPL Licence 2.0.
@@ -31,30 +31,56 @@
  *
  * For more information : contact@centreon.com
  *
- * SVN : $URL$
- * SVN : $Id$
+ * SVN : $URL: http://svn.modules.centreon.com/centreon-clapi/trunk/www/modules/centreon-clapi/core/class/centreonHost.class.php $
+ * SVN : $Id: centreonHost.class.php 343 2012-07-05 15:52:30Z shotamchay $
  *
  */
 
-require_once "centreonContact.class.php";
+require_once "Centreon/Object/Object.php";
 
-class CentreonContactTemplate extends CentreonContact
+/**
+ * Used for interacting with hosts
+ *
+ * @author Toufik MECHOUET
+ */
+class Centreon_Object_Service_Template extends Centreon_Object
 {
-    public static $aDepends = array(
-        'CMD',
-        'TP'
-    );
-
+    protected $table = "service";
+    protected $primaryKey = "service_id";
+    protected $uniqueLabelField = "service_description";
+    
+    
     /**
-     * Constructor
+     * Generic method that allows to retrieve object ids
+     * from another object parameter
      *
-     * @return void
+     * @param string $paramName
+     * @param array $paramValues
+     * @return array
      */
-    public function __construct($db)
+    public function getIdByParameter($paramName, $paramValues = array())
     {
-        parent::__construct($db);
-        $this->params['contact_register'] = 0;
-        $this->register = 0;
-        $this->action = "CONTACTTPL";
+        $sql = "SELECT $this->primaryKey FROM $this->table WHERE ";
+        $condition = "";
+        if (!is_array($paramValues)) {
+            $paramValues = array($paramValues);
+        }
+        foreach ($paramValues as $val) {
+            if ($condition != "") {
+                $condition .= " OR ";
+            }
+            $condition .= $paramName . " = ? ";
+        }
+        if ($condition) {
+            $sql .= $condition;
+            $sql .= " AND ".$this->table.".service_register = '0' ";
+            $rows = $this->getResult($sql, $paramValues, "fetchAll");
+            $tab = array();
+            foreach ($rows as $val) {
+                $tab[] = $val[$this->primaryKey];
+            }
+            return $tab;
+        }
+        return array();
     }
 }

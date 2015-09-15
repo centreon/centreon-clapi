@@ -82,9 +82,20 @@ class CentreonConfigPoller {
         $DBRESULT->free();
         unset($row);
     }
-
-    private function testPollerId($id) {
-        $DBRESULT =& $this->_DB->query("SELECT id FROM nagios_server WHERE `id` = '$id'");
+    /**
+     * 
+     * @param type $poller
+     * @return type
+     */
+    private function testPollerId($poller)
+    {
+        if (is_numeric($poller)) {
+            $sQuery = "SELECT id FROM nagios_server WHERE `id` = '".$this->_DB->escape($poller)."'";
+        } else {
+            $sQuery = "SELECT id FROM nagios_server WHERE `name` = '".$this->_DB->escape($poller)."'";
+        }
+        
+        $DBRESULT =& $this->_DB->query($sQuery);
         if ($DBRESULT->numRows() != 0)
             return;
         else {
@@ -92,11 +103,21 @@ class CentreonConfigPoller {
             $this->getPollerList($this->format);
             exit(1);
         }
-
     }
-
-    private function isPollerLocalhost($id) {
-        $DBRESULT =& $this->_DB->query("SELECT localhost FROM nagios_server WHERE `id` = '$id'");
+    /**
+     * 
+     * @param type $poller
+     * @return type
+     */
+    private function isPollerLocalhost($poller)
+    {
+        if (is_numeric($poller)) {
+            $sQuery = "SELECT localhost FROM nagios_server WHERE `id` = '".$this->_DB->escape($poller)."'";
+        } else {
+            $sQuery = "SELECT localhost FROM nagios_server WHERE `name` = '".$this->_DB->escape($poller)."'";
+        }
+        
+        $DBRESULT =& $this->_DB->query($sQuery);
         if ($data =& $DBRESULT->fetchRow())
             return $data["localhost"];
         else {
@@ -110,21 +131,32 @@ class CentreonConfigPoller {
     /**
      * Returns monitoring engines for generation purpose
      *
-     * @param int $pollerId
+     * @param int $poller
      * @return string
      */
-    private function getMonitoringEngine($pollerId) {
-        $res = $this->_DB->query("SELECT monitoring_engine 
-            FROM nagios_server 
-            WHERE `id` = " . $this->_DB->escape($pollerId));
+    private function getMonitoringEngine($poller)
+    {
+        if (is_numeric($poller)) {
+            $sQuery = "SELECT monitoring_engine FROM nagios_server WHERE `id` = " . $this->_DB->escape($poller);
+        } else {
+            $sQuery = "SELECT monitoring_engine FROM nagios_server WHERE `name` = '".$this->_DB->escape($poller)."'";
+        }
+        
+        $res = $this->_DB->query($sQuery);
+        
         $row = $res->fetchRow();
         if (isset($row['monitoring_engine'])) {
             return $row['monitoring_engine'];
         }
         return "";
     }
-
-    public function getPollerList($format) {
+    /**
+     * 
+     * @param type $format
+     * @return int
+     */
+    public function getPollerList($format)
+    {
         $DBRESULT =& $this->_DB->query("SELECT id,name FROM nagios_server WHERE ns_activate = '1' ORDER BY id");
         if ($format == "xml") {
             print "";
@@ -159,11 +191,15 @@ class CentreonConfigPoller {
         $return_value = 0;
 
         if (!isset($variables)) {
-            print "Cannot get poller id.";
+            print "Cannot get poller";
             exit(1);
         }
 
         $this->testPollerId($variables);
+        
+        if (!is_numeric($variables)) {
+            $variables = $this->getPollerId($variables);
+        }
 
         /*
          * Restart broker
@@ -179,7 +215,7 @@ class CentreonConfigPoller {
         (isset($serveurs["init_script"])) ? $nagios_init_script = $serveurs["init_script"] : $nagios_init_script = "/etc/init.d/nagios";
         unset($serveurs);
 
-        $DBRESULT =& $this->_DB->query("SELECT * FROM `nagios_server` WHERE `id` = '$variables'  LIMIT 1");
+        $DBRESULT =& $this->_DB->query("SELECT * FROM `nagios_server` WHERE `id` = '".$this->_DB->escape($variables)."'  LIMIT 1");
         $host = $DBRESULT->fetchRow();
         $DBRESULT->free();
 
@@ -188,10 +224,10 @@ class CentreonConfigPoller {
             $msg_restart = exec("sudo " . $nagios_init_script . " reload", $stdout, $return_code);
         } else {
             exec("echo 'RELOAD:".$host["id"]."' >> ". $this->centcore_pipe, $stdout, $return_code);
-            $msg_restart .= _("OK: A reload signal has been sent to ".$host["name"]);
+            $msg_restart .= _("OK: A reload signal has been sent to '".$host["name"]."'");
         }
-        print $msg_restart;
-        $DBRESULT =& $this->_DB->query("UPDATE `nagios_server` SET `last_restart` = '".time()."' WHERE `id` = '".$variables."' LIMIT 1");
+        print $msg_restart."\n";
+        $DBRESULT =& $this->_DB->query("UPDATE `nagios_server` SET `last_restart` = '".time()."' WHERE `id` = '".$this->_DB->escape($variables)."' LIMIT 1");
         return $return_code;
     }
 
@@ -203,11 +239,17 @@ class CentreonConfigPoller {
      */
     public function execCmd($pollerId)
     {
+        $this->testPollerId($pollerId);
+        
         $instanceClassFile = $this->centreon_path . 'www/class/centreonInstance.class.php';
         if (!is_file($instanceClassFile)) {
             throw new CentreonClapiException('This action is not available in the version of Centreon you are using');
         }
         require_once $instanceClassFile;
+        
+        if (!is_numeric($pollerId)) {
+            $pollerId = $this->getPollerId($pollerId);
+        }
 
         $instanceObj = new CentreonInstance($this->_DB);
         $cmds = $instanceObj->getCommandData($pollerId);
@@ -232,13 +274,18 @@ class CentreonConfigPoller {
      * Restart a serveur
      * @param unknown_type $variables
      */
-    public function pollerRestart($variables) {
+    public function pollerRestart($variables)
+    {
         if (!isset($variables)) {
-            print "Cannot get poller id.";
+            print "Cannot get poller";
             exit(1);
         }
 
         $this->testPollerId($variables);
+        
+        if (!is_numeric($variables)) {
+            $variables = $this->getPollerId($variables);
+        }
 
         /*
          * Restart broker
@@ -254,7 +301,7 @@ class CentreonConfigPoller {
         (isset($serveurs["init_script"])) ? $nagios_init_script = $serveurs["init_script"] : $nagios_init_script = "/etc/init.d/nagios";
         unset($serveurs);
 
-        $DBRESULT =& $this->_DB->query("SELECT * FROM `nagios_server` WHERE `id` = '$variables'  LIMIT 1");
+        $DBRESULT =& $this->_DB->query("SELECT * FROM `nagios_server` WHERE `id` = '".$this->_DB->escape($variables)."'  LIMIT 1");
         $host = $DBRESULT->fetchRow();
         $DBRESULT->free();
 
@@ -263,10 +310,10 @@ class CentreonConfigPoller {
             $msg_restart = exec(escapeshellcmd("sudo " . $nagios_init_script . " restart"), $lines, $return_code);
         } else {
             exec("echo 'RESTART:".$variables."' >> ". $this->centcore_pipe, $stdout, $return_code);
-            $msg_restart = _("OK: A restart signal has been sent to ".$host["name"]);
+            $msg_restart = _("OK: A restart signal has been sent to '".$host["name"]."'");
         }
-        print $msg_restart;
-        $DBRESULT =& $this->_DB->query("UPDATE `nagios_server` SET `last_restart` = '".time()."' WHERE `id` = '".$variables."' LIMIT 1");
+        print $msg_restart."\n";
+        $DBRESULT =& $this->_DB->query("UPDATE `nagios_server` SET `last_restart` = '".time()."' WHERE `id` = '".$this->_DB->escape($variables)."' LIMIT 1");
         return $return_code;
     }
 
@@ -276,13 +323,20 @@ class CentreonConfigPoller {
      * @param unknown_type $format
      * @param unknown_type $variables
      */
-    public function pollerTest($format, $variables) {
+    public function pollerTest($format, $variables)
+    {
         if (!isset($variables)) {
-            print "Cannot get poller id.";
+            print "Cannot get poller";
             exit(1);
         }
 
         $this->testPollerId($variables);
+        
+        if (is_numeric($variables)) {
+            $idPoller = $variables;
+        } else {
+            $idPoller = $this->getPollerId($variables);
+        }
 
         /**
          * Get Nagios Bin
@@ -295,7 +349,7 @@ class CentreonConfigPoller {
          * Launch test command
          */
         if (isset($nagios_bin["nagios_bin"])) {
-            exec(escapeshellcmd("sudo ".$nagios_bin["nagios_bin"] . " -v ".$this->nagiosCFGPath.$variables."/nagiosCFG.DEBUG"), $lines, $return_code);
+            exec(escapeshellcmd("sudo ".$nagios_bin["nagios_bin"] . " -v ".$this->nagiosCFGPath.$idPoller."/nagiosCFG.DEBUG"), $lines, $return_code);
         } else {
             throw new CentreonClapiException("Can't find engine binary");
         }
@@ -396,7 +450,12 @@ class CentreonConfigPoller {
             $oreon->user->version = 3;
         }
         $centreon = $oreon;
-        $tab['id'] = $variables;
+        if (is_numeric($variables)) {
+            $tab['id'] = $variables;
+        } else {
+            $tab['id'] = $this->getPollerId($variables);
+        }
+
         $tab['monitoring_engine'] = $this->getMonitoringEngine($variables);
 
         chdir("./modules/centreon-clapi/core/");
@@ -495,7 +554,7 @@ class CentreonConfigPoller {
             require_once $path."genIndexData.php";
         }
         
-        print "Configuration files generated for poller ".$variables."\n";
+        print "Configuration files generated for poller '".$variables."'\n";
 
         /* free session */
         $pearDB->query("DELETE FROM `session` 
@@ -518,7 +577,7 @@ class CentreonConfigPoller {
 
         require_once "../../../include/configuration/configGenerate/DB-Func.php";
         if (!isset($variables)) {
-            print "Cannot get poller id.";
+            print "Cannot get poller";
             exit(1);
         }
 
@@ -528,15 +587,19 @@ class CentreonConfigPoller {
          * Check poller existance
          */
         $this->testPollerId($variables);
+        
+        if (!is_numeric($variables)) {
+            $variables = $this->getPollerId($variables);
+        }
 
         /**
          * Move files.
          */
-        $DBRESULT_Servers =& $this->_DB->query("SELECT `cfg_dir` FROM `cfg_nagios` WHERE `nagios_server_id` = '$variables' LIMIT 1");
+        $DBRESULT_Servers =& $this->_DB->query("SELECT `cfg_dir` FROM `cfg_nagios` WHERE `nagios_server_id` = '".$this->_DB->escape($variables)."' LIMIT 1");
         $Nagioscfg = $DBRESULT_Servers->fetchRow();
         $DBRESULT_Servers->free();
 
-        $DBRESULT_Servers =& $this->_DB->query("SELECT * FROM `nagios_server` WHERE `id` = '$variables'  LIMIT 1");
+        $DBRESULT_Servers =& $this->_DB->query("SELECT * FROM `nagios_server` WHERE `id` = '".$this->_DB->escape($variables)."'  LIMIT 1");
         $host = $DBRESULT_Servers->fetchRow();
         $DBRESULT_Servers->free();
         if (isset($host['localhost']) && $host['localhost'] == 1) {
@@ -618,6 +681,26 @@ class CentreonConfigPoller {
         }
         $str = "- ".$filename." -> ".$status."\n";
         return $str;
+    }
+    
+    /**
+     * 
+     * @param type $poller
+     * @return type
+     */
+    private function getPollerId($poller)
+    {
+        if (is_string($poller)) {
+            $sQuery = "SELECT id FROM nagios_server WHERE `name` = '".$this->_DB->escape($poller)."'";
+        }
+        
+        $DBRESULT =& $this->_DB->query($sQuery);
+        if ($DBRESULT->numRows() != 1)
+            return;
+        else {
+            $row = $DBRESULT->fetchRow();
+            return $row['id'];
+        }
     }
 }
 ?>

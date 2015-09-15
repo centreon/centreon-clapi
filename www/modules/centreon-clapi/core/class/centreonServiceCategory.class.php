@@ -51,6 +51,10 @@ require_once "Centreon/Object/Relation/Service/Category/Service.php";
  */
 class CentreonServiceCategory extends CentreonSeverityAbstract
 {
+    public static $aDepends = array(
+        'SERVICE'
+    );
+
     /**
      * Constructor
      *
@@ -62,7 +66,7 @@ class CentreonServiceCategory extends CentreonSeverityAbstract
         $this->object = new Centreon_Object_Service_Category();
         $this->params = array('sc_activate' => '1');
         $this->insertParams = array('sc_name', 'sc_description');
-        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), 'level', 'icon_id'));
         $this->action = "SC";
         $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->activateField = "sc_activate";

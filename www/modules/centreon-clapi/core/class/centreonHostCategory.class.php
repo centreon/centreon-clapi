@@ -51,6 +51,10 @@ require_once "Centreon/Object/Relation/Host/Category/Host.php";
  */
 class CentreonHostCategory extends CentreonSeverityAbstract
 {
+    public static $aDepends = array(
+        'HOST'
+    );
+
 	/**
 	 * Constructor
 	 *
@@ -62,7 +66,7 @@ class CentreonHostCategory extends CentreonSeverityAbstract
         $this->object = new Centreon_Object_Host_Category();
         $this->params = array('hc_activate' => '1');
         $this->insertParams = array('hc_name', 'hc_alias');
-        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey()));
+        $this->exportExcludedParams = array_merge($this->insertParams, array($this->object->getPrimaryKey(), 'level', 'icon_id'));
         $this->action = "HC";
         $this->nbOfCompulsoryParams = count($this->insertParams);
         $this->activateField = "hc_activate";

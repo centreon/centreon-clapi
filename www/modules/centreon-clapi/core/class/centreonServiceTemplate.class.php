@@ -38,6 +38,9 @@
  */
 require_once "centreonService.class.php";
 require_once "centreonCommand.class.php";
+require_once "Centreon/Object/Relation/Service/Template/Host.php";
+require_once "Centreon/Object/Host/Template.php";
+require_once "Centreon/Object/Service/Template.php";
 
 /**
  * Class for managing service templates
@@ -53,9 +56,10 @@ class CentreonServiceTemplate extends CentreonObject {
     const UNKNOWN_NOTIFICATION_OPTIONS = "Invalid notifications options";
 
     public static $aDepends = array(
-        'Command',
-        'TimePeriod',
-        'Trap'
+        'CMD',
+        'TP',
+        'TRAP',
+        'HTPL'
     );
 
     /**
@@ -549,10 +553,15 @@ class CentreonServiceTemplate extends CentreonObject {
                     $class = "Centreon_Object_Trap";
                     $relclass = "Centreon_Object_Relation_Trap_Service";
                     break;
+                case "hosttemplate":
+                    $class = "Centreon_Object_Host_Template";
+                    $relclass = "Centreon_Object_Relation_Service_Template_Host";
+                    break;
                 default:
                     throw new CentreonClapiException(self::UNKNOWN_METHOD);
                     break;
             }
+                        
             if (class_exists($relclass) && class_exists($class)) {
                 $relobj = new $relclass();
                 $obj = new $class();
@@ -567,22 +576,25 @@ class CentreonServiceTemplate extends CentreonObject {
                     if (!isset($args[1])) {
                         throw new CentreonClapiException(self::MISSINGPARAMETER);
                     }
-                    if ($matches[2] == "contact") {
-                        $args[1] = str_replace(" ", "_", $args[1]);
-                    }
                     $relation = $args[1];
                     $relations = explode("|", $relation);
                     $relationTable = array();
                     foreach ($relations as $rel) {
-                        $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
+                        if ($matches[2] == "contact") {
+                            $tab = $obj->getIdByParameter("contact_name", array($rel));
+                        } else {
+                            $tab = $obj->getIdByParameter($obj->getUniqueLabelField(), array($rel));
+                        }
                         if (!count($tab)) {
                             throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $rel);
                         }
+
                         $relationTable[] = $tab[0];
                     }
                     if ($matches[1] == "set") {
                         $relobj->delete(null, $serviceId);
                     }
+                    
                     $existingRelationIds = $relobj->getTargetIdFromSourceId($relobj->getFirstKey(), $relobj->getSecondKey(), $serviceId);
                     foreach ($relationTable as $relationId) {
                         if ($matches[1] == "del") {
@@ -595,10 +607,10 @@ class CentreonServiceTemplate extends CentreonObject {
                     }
                 }
             } else {
-                throw new CentreonClapiException(self::UNKNOWN_METHOD);
+                throw new CentreonClapiException(self::UNKNOWN_METHOD."PHP >> ".__LINE__);
             }
         } else {
-            throw new CentreonClapiException(self::UNKNOWN_METHOD);
+            throw new CentreonClapiException(self::UNKNOWN_METHOD."PHP >> ".__LINE__);
         }
     }
 
@@ -731,7 +743,7 @@ class CentreonServiceTemplate extends CentreonObject {
         $hostRel = new Centreon_Object_Relation_Host_Service();
         $helements = $hostRel->getMergedParameters(array("host_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register), "AND");
         foreach ($helements as $helement) {
-            echo $this->action . $this->delim . "addhost" . $this->delim . $helement['service_description'] . $this->delim . $helement['host_name'] . "\n";
+            echo $this->action . $this->delim . "addhosttemplate" . $this->delim . $helement['service_description'] . $this->delim . $helement['host_name'] . "\n";
         }
     }
 
