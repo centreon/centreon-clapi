@@ -225,9 +225,9 @@ Getmacro
 In order to view the custom macro list of a service template, use the **GETMACRO** action::
 
   [root@centreon ~]# ./centreon -u admin -p centreon -o STPL -a getmacro -v "MyTemplate" 
-  macro name;macro value
-  $_SERVICETIME$;80
-  $_SERVICEPL$;400
+  macro name;macro value;description
+  $_SERVICETIME$;80;description of macro1
+  $_SERVICEPL$;400;description of macro2
 
 
 Setmacro

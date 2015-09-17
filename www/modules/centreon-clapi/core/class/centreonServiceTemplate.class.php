@@ -392,10 +392,10 @@ class CentreonServiceTemplate extends CentreonObject {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $serviceDesc);
         }
         $macroObj = new Centreon_Object_Service_Macro_Custom();
-        $macroList = $macroObj->getList(array("svc_macro_name", "svc_macro_value"), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id']));
-        echo "macro name;macro value\n";
+        $macroList = $macroObj->getList(array("svc_macro_name", "svc_macro_value", "description"), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id']));
+        echo "macro name;macro value;description\n";
         foreach ($macroList as $macro) {
-            echo $macro['svc_macro_name'] . $this->delim . $macro['svc_macro_value'] . "\n";
+            echo $macro['svc_macro_name'] . $this->delim . $macro['svc_macro_value'] . $this->delim . $macro['description'] . "\n";
         }
     }
 
@@ -420,11 +420,16 @@ class CentreonServiceTemplate extends CentreonObject {
         $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id'],
             "svc_macro_name" => $this->wrapMacro($params[1])), "AND");
         if (count($macroList)) {
-            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[2]));
+            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[2], 'description' => $params[3] ));
         } else {
-            $macroObj->insert(array('svc_svc_id' => $elements[0]['service_id'],
-                'svc_macro_name' => $this->wrapMacro($params[1]),
-                'svc_macro_value' => $params[2]));
+            $macroObj->insert(
+                    array(
+                        'svc_svc_id' => $elements[0]['service_id'],
+                        'svc_macro_name' => $this->wrapMacro($params[1]),
+                        'svc_macro_value' => $params[2],
+                        'description' => $params[3]
+                    )
+            );
         }
     }
 
@@ -729,7 +734,7 @@ class CentreonServiceTemplate extends CentreonObject {
         // macros
         $macros = $macroObj->getList("*", -1, 0, null, null, array('svc_svc_id' => $element[$this->object->getPrimaryKey()]), "AND");
         foreach ($macros as $macro) {
-            echo $this->action . $this->delim . "setmacro" . $this->delim . $element['service_description'] . $this->delim . $this->stripMacro($macro['svc_macro_name']) . $this->delim . $macro['svc_macro_value'] . "\n";
+            echo $this->action . $this->delim . "setmacro" . $this->delim . $element['service_description'] . $this->delim . $this->stripMacro($macro['svc_macro_name']) . $this->delim . $macro['svc_macro_value'] . $this->delim . "'" .$macro['description'] ."'". "\n";
         }
 
         // traps

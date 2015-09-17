@@ -506,10 +506,10 @@ class CentreonService extends CentreonObject {
             throw new CentreonClapiException(self::OBJECT_NOT_FOUND . ":" . $hostName . "/" . $serviceDescription);
         }
         $macroObj = new Centreon_Object_Service_Macro_Custom();
-        $macroList = $macroObj->getList(array("svc_macro_name", "svc_macro_value", "is_password"), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id']));
-        echo "macro name;macro value;is_password\n";
+        $macroList = $macroObj->getList(array("svc_macro_name", "svc_macro_value", "is_password", "description"), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id']));
+        echo "macro name;macro value;is_password;description\n";
         foreach ($macroList as $macro) {
-            echo $macro['svc_macro_name'] . $this->delim . $macro['svc_macro_value'] . $this->delim . $macro['is_password'] . "\n";
+            echo $macro['svc_macro_name'] . $this->delim . $macro['svc_macro_value'] . $this->delim . $macro['is_password'] . $this->delim . $macro['description'] . "\n";
         }
     }
 
@@ -540,12 +540,17 @@ class CentreonService extends CentreonObject {
         $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id'],
             "svc_macro_name" => $this->wrapMacro($params[2])), "AND");
         if (count($macroList)) {
-            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[3], 'is_password' => $params[4]));
+            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[3], 'is_password' => $params[4], 'description' => $params[5]));
         } else {
-            $macroObj->insert(array('svc_svc_id' => $elements[0]['service_id'],
-                'svc_macro_name' => $this->wrapMacro($params[2]),
-                'svc_macro_value' => $params[3],
-                'is_password' => $params[4]));
+            $macroObj->insert(
+                    array(
+                        'svc_svc_id' => $elements[0]['service_id'],
+                        'svc_macro_name' => $this->wrapMacro($params[2]),
+                        'svc_macro_value' => $params[3],
+                        'is_password' => $params[4], 
+                        'description' => $params[5]
+                    )
+              );
         }
         $this->addAuditLog(
                 'c', $elements[0]['service_id'], $hostName . ' - ' . $serviceDescription, array($params[2] => $params[3])
@@ -856,7 +861,7 @@ class CentreonService extends CentreonObject {
             }
             $macros = $macroObj->getList("*", -1, 0, null, null, array('svc_svc_id' => $element[$this->object->getPrimaryKey()]), "AND");
             foreach ($macros as $macro) {
-                echo $this->action . $this->delim . "setmacro" . $this->delim . $element['host_name'] . $this->delim . $element['service_description'] . $this->delim . $this->stripMacro($macro['svc_macro_name']) . $this->delim . $macro['svc_macro_value'] . "\n";
+                echo $this->action . $this->delim . "setmacro" . $this->delim . $element['host_name'] . $this->delim . $element['service_description'] . $this->delim . $this->stripMacro($macro['svc_macro_name']) . $this->delim . $macro['svc_macro_value'] . $this->delim . $macro['is_password'] . $this->delim . "'" .$macro['description'] ."'" . "\n";
             }
             $cgRel = new Centreon_Object_Relation_Contact_Group_Service();
             $cgelements = $cgRel->getMergedParameters(array("cg_name"), array('service_description'), -1, 0, null, null, array("service_register" => $this->register, "service_id" => $element['service_id']), "AND");
