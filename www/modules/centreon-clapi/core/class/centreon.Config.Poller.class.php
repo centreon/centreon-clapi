@@ -479,35 +479,26 @@ class CentreonConfigPoller {
         /**
          * Generate Configuration
          */
-        $path = "../../../include/configuration/configGenerate/";
-        $path2 = "./include/configuration/configGenerate/";
+        chdir("../../..");
+        $path = "./include/configuration/configGenerate/";
 
         require $path."genCGICFG.php";
-
-        chdir("../../..");
-
-        require $path2."genNagiosCFG.php";
-        require $path2."genNagiosCFG-DEBUG.php";
-
-        chdir("./modules/centreon-clapi/core/");
-
+        require $path."genNagiosCFG.php";
         require $path."genNdomod.php";
         require $path."genNdo2db.php";
         require $path."genCentreonBroker.php";
+        require $path."genNagiosCFG-DEBUG.php";
         require $path."genResourceCFG.php";
         global $Period;
         require $path."genTimeperiods.php";
         require $path."genCommands.php";
-        if (file_exists($path."genConnectors.php")) {
-            require $path."genConnectors.php";
-        }
+        require $path."genConnectors.php";
         require $path."genContacts.php";
-        if (file_exists($path."genContactTemplates.php")) {
-            require $path."genContactTemplates.php";
-        }
+        require $path."genContactTemplates.php";
         require $path."genContactGroups.php";
-        require $path."genHosts.php";
         require $path."genHostTemplates.php";
+        global $critCacheName;
+        require $path."genHosts.php";
         require $path."genHostGroups.php";
         require $path."genServiceTemplates.php";
         require $path."genServices.php";
@@ -516,14 +507,13 @@ class CentreonConfigPoller {
         require $path."genDependencies.php";
         require $path."centreon_pm.php";
 
-        chdir("../../..");
 
         if (isset($tab['localhost']) && $tab['localhost']) {
             $flag_localhost = $tab['localhost'];
             /*
              * Meta Services Generation
              */
-            if ($files = glob("./include/configuration/configGenerate/metaService/*.php")) {
+            if ($files = glob($path . "metaService/*.php")) {
                 foreach ($files as $filename) {
                     require_once($filename);
                 }
