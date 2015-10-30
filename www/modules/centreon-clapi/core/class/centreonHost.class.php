@@ -563,8 +563,9 @@ class CentreonHost extends CentreonObject {
         }else{
            $macroOrder = $maxOrder[0]["max(macro_order)"] + 1;
         }
-
-        if($this->hasMacroFromHostChanged($hostId,$params[1],$params[2],$cmdId = false)){
+        
+        // disable the check if the macro added is already in host template with same value
+        //if($this->hasMacroFromHostChanged($hostId,$params[1],$params[2],$cmdId = false)){
             if (count($macroList)) {
                 $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('host_macro_value' => $params[2], 'is_password' => $params[3], 'description' => $params[4]));
             } else {
@@ -583,7 +584,7 @@ class CentreonHost extends CentreonObject {
             $this->addAuditLog(
                     'c', $hostId, $params[self::ORDER_UNIQUENAME], array($params[1] => $params[2])
             );
-        }
+        //}
     }
 
     /**

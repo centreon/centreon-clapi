@@ -556,8 +556,8 @@ class CentreonService extends CentreonObject {
         }else{
            $macroOrder = $maxOrder[0]["max(macro_order)"] + 1;
         }
-        
-        if($this->hasMacroFromServiceChanged($this->db, $elements[0]['service_id'], $params[2], $params[3])){
+        // disable the check if the macro added is already in service template with same value
+        //if($this->hasMacroFromServiceChanged($this->db, $elements[0]['service_id'], $params[2], $params[3])){
             if (count($macroList)) {
                 $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[3], 'is_password' => $params[4], 'description' => $params[5]));
             } else {
@@ -575,7 +575,7 @@ class CentreonService extends CentreonObject {
             $this->addAuditLog(
                     'c', $elements[0]['service_id'], $hostName . ' - ' . $serviceDescription, array($params[2] => $params[3])
             );
-        }
+        //}
     }
 
     /**
