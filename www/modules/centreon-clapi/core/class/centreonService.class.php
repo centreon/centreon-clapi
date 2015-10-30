@@ -507,9 +507,19 @@ class CentreonService extends CentreonObject {
         }
         $macroObj = new Centreon_Object_Service_Macro_Custom();
         $macroList = $macroObj->getList(array("svc_macro_name", "svc_macro_value", "is_password", "description"), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id']));
-        echo "macro name;macro value;is_password;description\n";
+        $aListTemplate = $this->getListTemplates($this->db, $elements[0]['service_id']);
+        
+        if (!isset($cmdId)) {
+            $cmdId = "";
+        }
+        $macroList = $this->getMacros($elements[0]['service_id'], $aListTemplate, $cmdId);
+        echo "macro name;macro value;is_password;description;source\n";
         foreach ($macroList as $macro) {
-            echo $macro['svc_macro_name'] . $this->delim . $macro['svc_macro_value'] . $this->delim . $macro['is_password'] . $this->delim . $macro['description'] . "\n";
+            $source = "direct";
+            if($macro["source"] == "fromTpl"){
+                $source = $macro["macroTpl"];
+            }
+            echo $macro['svc_macro_name'] . $this->delim . $macro['svc_macro_value'] . $this->delim . $macro['is_password'] . $this->delim . $macro['description'] . $this->delim . $source . "\n";
         }
     }
 
@@ -539,22 +549,33 @@ class CentreonService extends CentreonObject {
         $macroObj = new Centreon_Object_Service_Macro_Custom();
         $macroList = $macroObj->getList($macroObj->getPrimaryKey(), -1, 0, null, null, array("svc_svc_id" => $elements[0]['service_id'],
             "svc_macro_name" => $this->wrapMacro($params[2])), "AND");
-        if (count($macroList)) {
-            $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[3], 'is_password' => $params[4], 'description' => $params[5]));
-        } else {
-            $macroObj->insert(
-                    array(
-                        'svc_svc_id' => $elements[0]['service_id'],
-                        'svc_macro_name' => $this->wrapMacro($params[2]),
-                        'svc_macro_value' => $params[3],
-                        'is_password' => $params[4], 
-                        'description' => $params[5]
-                    )
-              );
+        
+        $maxOrder = $macroObj->getList('max(macro_order)', -1, 0, null, null,array("svc_svc_id" => $elements[0]['service_id']));
+        if(empty($maxOrder)){
+           $macroOrder = 0; 
+        }else{
+           $macroOrder = $maxOrder[0]["max(macro_order)"] + 1;
         }
-        $this->addAuditLog(
-                'c', $elements[0]['service_id'], $hostName . ' - ' . $serviceDescription, array($params[2] => $params[3])
-        );
+        
+        if($this->hasMacroFromServiceChanged($this->db, $elements[0]['service_id'], $params[2], $params[3])){
+            if (count($macroList)) {
+                $macroObj->update($macroList[0][$macroObj->getPrimaryKey()], array('svc_macro_value' => $params[3], 'is_password' => $params[4], 'description' => $params[5]));
+            } else {
+                $macroObj->insert(
+                        array(
+                            'svc_svc_id' => $elements[0]['service_id'],
+                            'svc_macro_name' => $this->wrapMacro($params[2]),
+                            'svc_macro_value' => $params[3],
+                            'is_password' => $params[4], 
+                            'description' => $params[5],
+                            'macro_order' => $macroOrder
+                        )
+                  );
+            }
+            $this->addAuditLog(
+                    'c', $elements[0]['service_id'], $hostName . ' - ' . $serviceDescription, array($params[2] => $params[3])
+            );
+        }
     }
 
     /**
@@ -880,5 +901,303 @@ class CentreonService extends CentreonObject {
             }
         }
     }
+    
+    
+    
+    /**
+     * 
+     * @param type $pearDB
+     * @param integer $service_id
+     * @param string $macroInput
+     * @param string $macroValue
+     * @param boolean $cmdId
+     */
+    public function hasMacroFromServiceChanged($pearDB, $service_id, &$macroInput, &$macroValue, $cmdId = false)
+    {
+        $aListTemplate = $this->getListTemplates($pearDB, $service_id);
+        
+        if (!isset($cmdId)) {
+            $cmdId = "";
+        }
+        $aMacros = $this->getMacros($service_id, $aListTemplate, $cmdId);
+        foreach($aMacros as $macro){
+            if($macroInput == $macro['svc_macro_name'] && $macroValue == $macro["svc_macro_value"]){
+                return false;
+            }
+        }
+        return true;
+    }
+    
+        /**
+     * This method get the macro attached to the service
+     * 
+     * @param int $iServiceId
+     * @param array $aListTemplate
+     * @param int $iIdCommande
+     * 
+     * @return array
+     */
+    public function getMacros($iServiceId, $aListTemplate, $iIdCommande)
+    {
+        
+        $aMacro = array();
+        $macroArray = array();
+        $aMacroInService = array();
+        
+        //Get macro attached to the service
+        $macroArray = $this->getCustomMacroInDb($iServiceId);
+        $iNb = count($macroArray);
+
+        //Get macro attached to the template
+        $aMacroTemplate = array();
+        
+        // clear current template/service from the list.
+        unset($aListTemplate[count($aListTemplate) - 1]);
+        foreach ($aListTemplate as $template) {
+            if (!empty($template)) {
+                $aMacroTemplate[] = $this->getCustomMacroInDb($template['service_id'],$template);
+            }
+        }
+        
+        if(empty($iIdCommande)){
+            foreach($aListTemplate as $template){
+                if(!empty($template['command_command_id'])){
+                    $iIdCommande = $template['command_command_id'];
+                }
+            }
+        }
+        
+        
+        //Get macro attached to the command        
+        if (!empty($iIdCommande)) {
+            $oCommand = new CentreonCommand($this->db);
+            $aMacroInService[] = $oCommand->getMacroByIdAndType($iIdCommande, 'service');
+        }
+        
+        
+
+        //filter a macro
+        $aTempMacro = array();
+        $serv = current($aMacroInService);
+        if (count($aMacroInService) > 0) {
+            for ($i = 0; $i < count($serv); $i++) {
+                $serv[$i]['macroOldValue_#index#'] = $serv[$i]["svc_macro_value"];
+                $serv[$i]['macroFrom_#index#'] = 'fromService';
+                $serv[$i]['source'] = 'fromService';
+                $aTempMacro[] = $serv[$i];
+            }
+        }
+        
+        if (count($aMacroTemplate) > 0) {  
+            foreach ($aMacroTemplate as $key => $macr) {
+                foreach ($macr as $mm) {
+                    $mm['macroOldValue_#index#'] = $mm["svc_macro_value"];
+                    $mm['macroFrom_#index#'] = 'fromTpl';
+                    $mm['source'] = 'fromTpl';
+                    $aTempMacro[] = $mm;
+                }
+            }
+        }
+        
+        if (count($macroArray) > 0) {
+            foreach($macroArray as $directMacro){
+                $directMacro['macroOldValue_#index#'] = $directMacro["svc_macro_value"];
+                $directMacro['macroFrom_#index#'] = 'direct';
+                $directMacro['source'] = 'direct';
+                $aTempMacro[] = $directMacro;
+            }
+        }
+        
+        
+
+        $aFinalMacro = $this->macro_unique($aTempMacro);
+        
+        return $aFinalMacro;
+    }
+    
+    
+    
+        /**
+     * 
+     * @param integer $serviceId
+     * @param array $template
+     * @return array
+     */
+    public function getCustomMacroInDb($serviceId = null, $template = null)
+    {
+        $arr = array();
+        $i = 0;
+        if ($serviceId) {
+            $res = $this->db->query("SELECT svc_macro_name, svc_macro_value, is_password, description
+                                FROM on_demand_macro_service
+                                WHERE svc_svc_id = " .
+                    $serviceId . "
+                                ORDER BY macro_order ASC");
+            while ($row = $res->fetch()) {
+                if (preg_match('/\$_SERVICE(.*)\$$/', $row['svc_macro_name'], $matches)) {
+                    $arr[$i]['svc_macro_name'] = $matches[1];
+                    $arr[$i]['svc_macro_value'] = $row['svc_macro_value'];
+                    $arr[$i]['macroPassword_#index#'] = $row['is_password'] ? 1 : NULL;
+                    $arr[$i]['description'] = $row['description'];
+                    $arr[$i]['macroDescription'] = $row['description'];
+                    if(!is_null($template)){
+                        $arr[$i]['macroTpl'] = $template['service_description'];
+                    }
+                    $i++;
+                }
+            }
+        }
+        return $arr;
+    }
+    
+    public function macro_unique($aTempMacro)
+    {
+        
+        $storedMacros = array();
+        foreach($aTempMacro as $TempMacro){
+            $sInput = $TempMacro['svc_macro_name'];
+            $storedMacros[$sInput][] = $TempMacro;
+        }
+        
+        $finalMacros = array();
+        foreach($storedMacros as $key=>$macros){
+            $choosedMacro = array();
+            foreach($macros as $macro){
+                if(empty($choosedMacro)){
+                    $choosedMacro = $macro;
+                }else{
+                    $choosedMacro = $this->comparaPriority($macro,$choosedMacro,false);
+                }
+            }
+            if(!empty($choosedMacro)){
+                $finalMacros[] = $choosedMacro;
+            }
+        }
+        $this->addInfosToMacro($storedMacros,$finalMacros);
+        return $finalMacros;
+    }
+    
+    private function addInfosToMacro($storedMacros,&$finalMacros){
+        
+        foreach($finalMacros as &$finalMacro){
+            $sInput = $finalMacro['svc_macro_name'];
+            $this->setInheritedDescription($finalMacro,$this->getInheritedDescription($storedMacros[$sInput],$finalMacro));
+            switch($finalMacro['source']){
+                case 'direct' :
+                    $this->setTplValue($this->findTplValue($storedMacros[$sInput]),$finalMacro);
+                    break;
+                case 'fromTpl' : 
+                    break;
+                case 'fromService' :
+                    break;
+                default :
+                    break;
+            }
+            
+        }
+    }
+    
+    private function getInheritedDescription($storedMacros,$finalMacro){
+        $description = "";
+        if(empty($finalMacro['macroDescription'])){
+            $choosedMacro = array();
+            foreach($storedMacros as $storedMacro){
+                if(!empty($storedMacro['macroDescription'])){
+                    if(empty($choosedMacro)){
+                        $choosedMacro = $storedMacro;
+                    }else{
+                        $choosedMacro = $this->comparaPriority($storedMacro,$choosedMacro,false);
+                    }
+                    $description = $choosedMacro['macroDescription'];
+                }
+            }
+        }else{
+            $description = $finalMacro['macroDescription'];
+        }
+        return $description;
+    }
+    
+    private function setInheritedDescription(&$finalMacro,$description){
+        $finalMacro['description'] = $description;
+        $finalMacro['macroDescription'] = $description;
+    }
+    
+    private function setTplValue($tplValue,&$finalMacro){
+        
+        if($tplValue){
+            $finalMacro['macroTplValue_#index#'] = $tplValue;
+            $finalMacro['macroTplValToDisplay_#index#'] = 1;
+        }else{
+            $finalMacro['macroTplValue_#index#'] = "";
+            $finalMacro['macroTplValToDisplay_#index#'] = 0;
+        }
+    }
+    
+    private function findTplValue($storedMacro,$getFirst = false){
+        if($getFirst){
+            foreach($storedMacro as $macros){
+                if($macros['source'] == 'fromTpl'){
+                    return $macros['svc_macro_value'];
+                } 
+            }
+        }else{
+            $macroReturn = false;
+            foreach($storedMacro as $macros){
+                if($macros['source'] == 'fromTpl'){
+                    $macroReturn = $macros['svc_macro_value'];
+                } 
+            }
+            return $macroReturn;
+        }
+        return false;
+    }
+    
+    
+        /**
+     * Return the list of template
+     *
+     * @param int $svcId The service ID
+     * @return array
+     */
+    function getListTemplates($pearDB, $svcId, $alreadyProcessed = array())
+    {
+        $svcTmpl = array();
+        if (in_array($svcId, $alreadyProcessed)) {
+            return $svcTmpl;
+        } else {
+            $alreadyProcessed[] = $svcId;
+
+            $query = "SELECT * FROM service WHERE service_id = ".  intval($svcId);
+            $stmt = $pearDB->query($query);
+            $row = $stmt->fetch();
+            if(!empty($row)){
+                if ($row['service_template_model_stm_id'] !== NULL) {
+                    $svcTmpl = array_merge($svcTmpl, $this->getListTemplates($pearDB, $row['service_template_model_stm_id'], $alreadyProcessed));
+                    $svcTmpl[] = $row;
+                }
+            }
+            return $svcTmpl;
+        }
+    }
+    
+    private function comparaPriority($macroA,$macroB,$getFirst = true){
+        
+        $arrayPrio = array('direct' => 3,'fromTpl' => 2,'fromService' => 1);
+        if($getFirst){
+            if($arrayPrio[$macroA['source']] > $arrayPrio[$macroB['source']]){
+                return $macroA;
+            }else{
+                return $macroB;
+            }
+        }else{
+            if($arrayPrio[$macroA['source']] >= $arrayPrio[$macroB['source']]){
+                return $macroA;
+            }else{
+                return $macroB;
+            }
+        }
+    }
+    
+    
 
 }

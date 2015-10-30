@@ -51,6 +51,17 @@ class CentreonCommand extends CentreonObject {
     const ORDER_COMMAND = 2;
     const UNKNOWN_CMD_TYPE = "Unknown command type";
 
+    public $aTypeCommand = array(
+        'host'    => array(
+            'key' => '$_HOST', 
+            'preg' => '/\$_HOST(\w+)\$/'
+        ),
+        'service' => array(
+            'key' => '$_SERVICE', 
+            'preg' => '/\$_SERVICE(\w+)\$/'
+        ),
+    );
+    
     protected $typeConversion;
 
     /**
@@ -232,6 +243,107 @@ class CentreonCommand extends CentreonObject {
         }
         return $columnName;
     }
+    
+    
+        /**
+     * This method gat the list of command containt a specific macro 
+     * @param int $iIdCommand
+     * @param string $sType
+     * @param int $iWithFormatData
+     * 
+     * @return array
+     */
+    public function getMacroByIdAndType($iIdCommand, $sType, $iWithFormatData = 1)
+    {
+        $inputName = $sType;
+        if($sType == "service"){
+            $inputName = "svc";
+        }
+        $macroToFilter = array("SNMPVERSION","SNMPCOMMUNITY");
+         
+        if (empty($iIdCommand) || !array_key_exists($sType, $this->aTypeCommand)) {
+            return array();
+        }
+        
+        $aDescription = $this->getMacroDescription($iIdCommand);
+
+        $sql = "SELECT command_id, command_name, command_line
+            FROM command
+            WHERE command_type = 2
+            AND command_id = ?
+            AND command_line like '%".$this->aTypeCommand[$sType]['key']."%'
+            ORDER BY command_name";       
+        
+        $res = $this->db->query($sql, array($iIdCommand));
+        $arr = array();
+        $i = 0;
+        
+        if ($iWithFormatData == 1) {
+             while ($row = $res->fetch()) {
+                 
+                preg_match_all($this->aTypeCommand[$sType]['preg'], $row['command_line'], $matches, PREG_SET_ORDER);
+                
+                foreach ($matches as $match) {
+                    if(!in_array($match[1], $macroToFilter)){
+                        $sName = $match[1];
+                        $sDesc = isset($aDescription[$sName]['description']) ? $aDescription[$sName]['description'] : "";
+                        $arr[$i][$inputName.'_macro_name'] = $sName;
+                        $arr[$i][$inputName.'_macro_value'] = "";
+                        $arr[$i]['is_password'] = NULL;
+                        $arr[$i]['macroDescription'] = $sDesc;
+                        $i++;
+                    }
+                }
+            }
+        } else {
+            while ($row = $res->fetch()) {
+                $arr[$row['command_id']] = $row['command_name'];
+            }
+        }
+
+        return $arr;
+        
+    }
+    
+    
+        /**
+     * 
+     * @param type $iIdCmd
+
+     * @return string
+     */
+    public function getMacroDescription($iIdCmd)
+    {
+        $aReturn = array();
+        $sSql = "SELECT * FROM `on_demand_macro_command` WHERE `command_command_id` = ".intval($iIdCmd);
+        
+        $DBRESULT = $this->db->query($sSql);
+        while ($row = $DBRESULT->fetch()){ 
+            $arr['id']   = $row['command_macro_id'];
+            $arr['name'] = $row['command_macro_name'];
+            $arr['description'] = $row['command_macro_desciption'];
+            $arr['type']        = $row['command_macro_type'];
+            
+            $aReturn[$row['command_macro_name']] = $arr;
+        }
+        //$DBRESULT->free();
+        
+        return $aReturn;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 }
 
