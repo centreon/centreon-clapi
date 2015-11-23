@@ -903,10 +903,11 @@ class CentreonAPI {
                 $key = key($oObjet);
                 if (isset($oObjet[$key]['class']) && $oObjet[$key]['export'] === true && !in_array($key, $this->aExport)) {
                     $objName = "centreon" . $oObjet[$key]['class'];
-                   
-                    if (isset($objName::$aDepends)) {
+                    $objVars = get_class_vars($objName);
+
+                    if (isset($objVars['aDepends'])) {
                         $bInsert = true;
-                        foreach ($objName::$aDepends as $oDependence) {
+                        foreach ($objVars['aDepends'] as $oDependence) {
                             $keyDep = strtoupper($oDependence);
                             if (!in_array($keyDep, $this->aExport)) {
                                 $bInsert = false;
