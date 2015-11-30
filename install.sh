@@ -41,7 +41,7 @@ MACRO_FILE_CONF="www/modules/centreon-clapi/etc/api.conf.php"
 
 # Define Centreon Config Books version
 NAME="centreon-clapi"
-VERSION="1.8.0"
+VERSION="1.8.1"
 MODULE=$NAME.$VERSION
 LOG_VERSION="$MODULE installation"
 FILE_CONF="instCentWeb.conf"
