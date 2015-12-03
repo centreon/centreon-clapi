@@ -422,12 +422,7 @@ class CentreonConfigPoller {
         /**
          * Init environnement
          */
-        if (strncmp($this->optGen["version"], "2.1", 3)) {
-            require_once $this->centreon_path."/www/class/centreon.class.php";
-        } else {
-            require_once $this->centreon_path."/www/class/Oreon.class.php";
-        }
-
+        require_once $this->centreon_path."/www/class/centreon.class.php";
         require_once $this->centreon_path."/www/class/centreonDB.class.php";
         require_once $this->centreon_path."/www/class/centreonAuth.class.php";
         require_once $this->centreon_path."/www/class/centreonLog.class.php";
@@ -441,14 +436,10 @@ class CentreonConfigPoller {
 
         $CentreonLog = new CentreonUserLog(-1, $pearDB);
         $centreonAuth = new CentreonAuth($login, $password, 0, $this->_DB, $CentreonLog, NULL);
-        if (strncmp($this->optGen["version"], "2.1", 3)) {
-            $oreon = new Centreon((array)$centreonAuth->userInfos);
-            $oreon->user->version = 3;
-        } else {
-            $user = new User($centreonAuth->userInfos, $this->optGen["nagios_version"]);
-            $oreon = new Oreon($user);
-            $oreon->user->version = 3;
-        }
+        $user = new User($centreonAuth->userInfos, $this->optGen["nagios_version"]);
+        $oreon = new Oreon($user);
+        $oreon->user->version = 3;
+    
         $centreon = $oreon;
         if (is_numeric($variables)) {
             $tab['id'] = $variables;
@@ -544,12 +535,35 @@ class CentreonConfigPoller {
             require_once $path."genIndexData.php";
         }
         
+        /* Change files owner */
+        $setFilesOwner = 1;
+        if (file_exists("/etc/centreon/instCentWeb.conf")) {
+            $stream = file_get_contents("/etc/centreon/instCentWeb.conf");
+            $lines = preg_split("\n", $stream);
+            while ($lines as $line) {
+                if (preg_match('WEB_USER=([a-zA-Z\-]*)', $line, $tabUser)) {
+                    if (isset($tabUser[1]) {
+                        chown($this->centreon_path."/filesGeneration/nagiosCFG/".$tab['id']."/*.cfg", "apache");
+                        chown($this->centreon_path."/filesGeneration/broker/".$tab['id']."/*.cfg", "apache");
+                    } else {
+                        $setFilesOwner = 0;
+                    }
+                }
+            }    
+        } else {
+            $setFilesOwner = 0;
+        }
+
+        if ($setFilesOwner == 0) {
+            print "We can set configuration file owner after the generation. \n";
+            print "Please check that file in the followings directory are writable by apache user : ".$this->centreon_path."/filesGeneration/nagiosCFG/".$tab['id']."/\n";
+            print "Please check that file in the followings directory are writable by apache user : ".$this->centreon_path."/filesGeneration/broker/".$tab['id']."/\n";
+        }
+
         print "Configuration files generated for poller '".$variables."'\n";
 
-        /* free session */
-        $pearDB->query("DELETE FROM `session` 
-            WHERE `session_id` = '1' 
-            AND `user_id` = '".$oreon->user->user_id."'");
+        /* Free session */
+        $pearDB->query("DELETE FROM `session` WHERE `session_id` = '1' AND `user_id` = '".$oreon->user->user_id."'");
 
         return 0;
     }
@@ -693,4 +707,3 @@ class CentreonConfigPoller {
         }
     }
 }
-?>
