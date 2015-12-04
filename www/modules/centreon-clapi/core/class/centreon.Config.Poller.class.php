@@ -68,7 +68,7 @@ class CentreonConfigPoller {
         $this->nagiosCFGPath = "$centreon_path/filesGeneration/nagiosCFG/";
         $this->centreon_path = $centreon_path;
         $this->resultTest = array("warning" => 0, "errors" => 0);
-        $this->centcore_pipe = "@CENTREON_VARLIB@/centcore.cmd";
+        $this->centcore_pipe = "/var/lib/centreon/centcore.cmd";
     }
 
     /**
@@ -436,9 +436,8 @@ class CentreonConfigPoller {
 
         $CentreonLog = new CentreonUserLog(-1, $pearDB);
         $centreonAuth = new CentreonAuth($login, $password, 0, $this->_DB, $CentreonLog, NULL);
-        $user = new User($centreonAuth->userInfos, $this->optGen["nagios_version"]);
-        $oreon = new Oreon($user);
-        $oreon->user->version = 3;
+        $oreon = new Centreon((array)$centreonAuth->userInfos);
+	$oreon->user->version = 3;
     
         $centreon = $oreon;
         if (is_numeric($variables)) {
@@ -539,12 +538,16 @@ class CentreonConfigPoller {
         $setFilesOwner = 1;
         if (file_exists("/etc/centreon/instCentWeb.conf")) {
             $stream = file_get_contents("/etc/centreon/instCentWeb.conf");
-            $lines = preg_split("\n", $stream);
-            while ($lines as $line) {
-                if (preg_match('WEB_USER=([a-zA-Z\-]*)', $line, $tabUser)) {
-                    if (isset($tabUser[1]) {
-                        chown($this->centreon_path."/filesGeneration/nagiosCFG/".$tab['id']."/*.cfg", "apache");
-                        chown($this->centreon_path."/filesGeneration/broker/".$tab['id']."/*.cfg", "apache");
+            $lines = preg_split("/\n/", $stream);
+            foreach ($lines as $line) {
+                if (preg_match('/WEB\_USER\=([a-zA-Z0-9\-]*)/', $line, $tabUser)) {
+                    if (isset($tabUser[1])) {
+			foreach (glob($this->centreon_path."/filesGeneration/nagiosCFG/".$tab['id']."/*.cfg") as $file) {
+				chown($file, $tabUser[1]);
+			}
+                        foreach (glob($this->centreon_path."/filesGeneration/broker/".$tab['id']."/*.cfg") as $file) {
+                                chown($file, $tabUser[1]);
+                        }
                     } else {
                         $setFilesOwner = 0;
                     }
