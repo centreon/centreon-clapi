@@ -135,12 +135,8 @@ class CentreonInstance extends CentreonObject
         if (isset($parameters)) {
             $filters = array($this->object->getUniqueLabelField() => "%".$parameters."%");
         }
-        $params = array('id', 'name', 'localhost', 'ns_ip_address', 'ns_activate', 'ns_status', 'init_script',
-                           'monitoring_engine', 'nagios_bin', 'nagiostats_bin', 'nagios_perfdata', 'ssh_port');
-        $paramString = str_replace("_", " ", implode($this->delim, $params));
-        $paramString = str_replace("ns ", "", $paramString);
-        $paramString = str_replace("nagios ", "", $paramString);
-        $paramString = str_replace("nagiostats", "stats", $paramString);
+        $params = array('id', 'name', 'localhost', 'is_default', 'ns_ip_address', 'ns_activate', 'ns_status', 'init_script', 'monitoring_engine', 'nagios_bin', 'nagiostats_bin', 'nagios_perfdata', 'centreonbroker_cfg_path', 'centreonbroker_module_path', 'centreonconnector_path', 'ssh_port', 'ssh_private_key', 'init_script_centreontrapd', 'snmp_trapd_path_conf');
+        $paramString = implode($this->delim, $params);
         echo $paramString . "\n";
         $elements = $this->object->getList($params, -1, 0, null, null, $filters);
         foreach ($elements as $tab) {
