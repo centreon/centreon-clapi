@@ -283,6 +283,26 @@ class CentreonHost extends CentreonObject {
         $this->db->query("DELETE FROM service WHERE service_register = '1' AND service_id NOT IN (SELECT service_service_id FROM host_service_relation)");
     }
 
+        /**
+    * show_poller Action
+     * Must show_poller to the Host
+     *
+     * @param string $host
+     * @return mixed
+     */
+
+    public function show_poller($host) {
+        /* Regular services */
+        $sql = "SELECT n.ns_ip_address,n.id FROM ns_host_relation ns,host h, nagios_server n WHERE ns.host_host_id=h.host_id AND ns.nagios_server_id=n.id AND h.host_name = '$host'";
+        $res = $this->db->query($sql);
+        $result = $res->fetchAll();
+        foreach ($result as $row) {
+            echo $row['ns_ip_address'];
+            return $row;
+        }
+        /**var_dump($result);*/
+    }
+
     /**
      * Tie host to instance (poller)
      *
