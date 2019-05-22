@@ -12,6 +12,7 @@ This documentation aims to introduce all the actions you can perform with Centre
 .. warning::
   This module is now obsolete and has been integrated into the Centreon Web
   component since version 2.7.0.
+  Please refer to the `Centreon documentation <https://documentation.centreon.com/docs/centreon/en/latest/api/index.html>`_.
 
 Contents:
 
